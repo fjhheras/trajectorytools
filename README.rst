@@ -18,4 +18,7 @@ Contribute
 
 Please.
 
+License
+=======
 
+This project is licensed under the terms of the GNU General Public License v3.0 (See COPYING). This means that you may copy, distribute and modify the software as long as you track changes/dates in source files. However, any modifications to GPL-licensed code must also be made available under the GPL along with build & install instructions.
