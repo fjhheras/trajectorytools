@@ -13,6 +13,12 @@ locally with a symlink:
 
 pip install -e .
 
+Authors
+==========
+
+Francisco J.H. Heras (2017-)
+Francisco Romero Ferrero (2017-)
+
 Contribute
 ==========
 
