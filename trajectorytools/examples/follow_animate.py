@@ -8,14 +8,16 @@ from trajectorytools.constants import dir_of_data
 def simple_implementation(individual = 0, num_neighbours = 15):
     test_trajectories_file = os.path.join(dir_of_data, 'test_trajectories.npy')
     t = np.load(test_trajectories_file)
+    tt.interpolate_nans(t)
     tt.normalise_trajectories(t)
-    s_ = tt.smooth(t, interpolate = True)
-    v_ = tt.smooth_velocity(t, interpolate = True)
+    s_ = tt.smooth(t)
+    v_ = tt.smooth_velocity(t)
     
-    e = tt.normalise(v_[:,individual,:])
+    e_ = tt.normalise(v_[:,individual,:])
     s = tt.center_in_individual(s_,individual)
-    s = tt.fixed_to_comoving(s,e)
-    v = tt.fixed_to_comoving(v_,e)
+    s = tt.fixed_to_comoving(s,e_)
+    v = tt.fixed_to_comoving(v_,e_)
+    center = tt.fixed_to_comoving(-s_[:,[individual],:], e_)
 
     indices = ttsocial.give_indices(s, num_neighbours)
     sn = ttsocial.restrict(s,indices, individual)
@@ -28,6 +30,7 @@ def simple_implementation(individual = 0, num_neighbours = 15):
     anim += ttanimation.scatter_ellipses(s, velocities = v, color = 'c')
     anim += ttanimation.scatter_ellipses(sn, velocities = vn, color = 'b')
     anim += ttanimation.scatter_ellipses(sf, velocities = vf, color = 'r')
+    anim += ttanimation.scatter_circle(center)
     anim.prepare()
     anim.show()
 
