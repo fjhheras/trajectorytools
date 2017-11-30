@@ -1,7 +1,12 @@
 import numpy as np
 
+##### SIMPLE TOOLS
+
 def dot(x,y):
     return np.einsum('...i,...i->...', x, y)
+
+def cross2D(v,w):
+    return v[...,0]*w[...,1] - v[...,1]*w[...,0]
 
 def matrix_dot(matrix, data):
     if len(matrix.shape) == 2:
@@ -16,21 +21,31 @@ def matrix_dot(matrix, data):
     else:
         raise Exception('matrix_dot: wrong input dimension')
 
-def norm(a):
-    return np.linalg.norm(a, axis = -1)
+def norm(a, keepdims=False):
+    return np.linalg.norm(a, axis = -1, keepdims = keepdims)
 
 def normalise(a):
     return a / norm(a)[...,np.newaxis]
 
-#def rotate_to_vector(data, v):
-#    return fixed_to_comoving(data, normalise(v))
+#### GEOMETRY
+
+def curvature(v,a):
+    assert(v.shape[-1]) == 2
+    assert(np.all(v.shape == a.shape))
+    return (v[...,0] * a[...,1] - v[...,1] * a[...,0]) / np.power(norm(v),3)
+
+##### TOOLS FOR ROTATING
 
 def fixed_to_comoving(data, e_y):
     return matrix_dot(matrix_rotate_to_vector(e_y), data)
 
-def matrix_rotate_to_vector(e_y):
+def matrix_rotate_to_normalised_vector(e_y):
     e_x = _ey_to_ex(e_y)
     return np.stack((e_x,e_y), axis = -2)
+
+def matrix_rotate_to_vector(v):
+    e_y = normalise(v)
+    return matrix_rotate_to_normalised_vector(e_y) 
 
 def center_in_trajectory(data, trajectory):
     return data - np.expand_dims(trajectory,1)

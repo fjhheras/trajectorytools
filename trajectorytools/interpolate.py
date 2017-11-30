@@ -59,7 +59,8 @@ def smooth_several(t, sigma = 2, truncate = 5, derivatives = [0], interpolate = 
     return [smooth(t, sigma=sigma, truncate = truncate, derivative = derivative, remove_extremes = remove_extremes) for derivative in derivatives]
 
 def smooth(t, sigma = 2, truncate = 5, derivative = 0, interpolate = False, remove_extremes = True):
-    if interpolate:
+    if interpolate: ### Option to be removed
+        print("Warning: option to be removed")
         interpolate_nans(t)
     smooth = gaussian_filter1d(t, sigma=sigma, axis=0, truncate = truncate, order = derivative)
     if remove_extremes:
