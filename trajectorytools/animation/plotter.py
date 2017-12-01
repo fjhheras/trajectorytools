@@ -15,6 +15,9 @@ def ellipse(color = 'c', size =[.04, .02] ):
         for i, patch in enumerate(patches):
             patch.center = xy[i,:2]
             patch.angle = np.degrees(np.arctan2(xy[i,3],xy[i,2])) 
+            if len(xy[i,:]) > 4: #If there is color information, use it
+                patch.set_facecolor(xy[i,4:])
+                patch.set_edgecolor(xy[i,4:])
             patch.stale = True
         return patches
     return Plotter(first=plot_function, update=update_function)

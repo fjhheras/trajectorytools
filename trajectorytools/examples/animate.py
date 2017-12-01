@@ -1,5 +1,7 @@
 import os
 import numpy as np
+import matplotlib as mpl
+
 import trajectorytools as tt 
 import trajectorytools.plot as ttplot
 import trajectorytools.animation as ttanimation
@@ -12,9 +14,14 @@ if __name__ == '__main__':
     tt.normalise_trajectories(t)
     s_ = tt.smooth(t, interpolate = True)
     v_ = tt.smooth_velocity(t, interpolate = True)
-    #a_ = tt.smooth_acceleration(t, interpolate = True)
+    speed = tt.norm(v_)
+    
+    colornorm = mpl.colors.Normalize(vmin = speed.min(), vmax = speed.max(), clip = True)
+    mapper = mpl.cm.ScalarMappable(norm=colornorm, cmap=mpl.cm.hot)
+    color = mapper.to_rgba(speed)
+    
     anim1 = ttanimation.scatter_vectors(s_, velocities = v_, k = 10)
-    anim2 = ttanimation.scatter_ellipses(s_, velocities = v_)
+    anim2 = ttanimation.scatter_ellipses_color(s_, v_, color)
 
     anim = anim1 + anim2
     anim.prepare()

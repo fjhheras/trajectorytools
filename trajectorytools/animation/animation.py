@@ -63,6 +63,11 @@ def scatter_ellipses(positions, velocities, **kwargs):
     plotters = [plotter.ellipse(**kwargs)]
     return AnimatedScatter([data], plotters = plotters)
 
+def scatter_ellipses_color(positions, velocities, color, **kwargs):
+    data = np.concatenate((positions, velocities, color), axis = -1) 
+    plotters = [plotter.ellipse(**kwargs)]
+    return AnimatedScatter([data], plotters = plotters)
+
 def scatter_vectors(positions, velocities, **kwargs):
     data = np.concatenate((positions, velocities), axis = -1) 
     plotters = [plotter.vectors(**kwargs)]
