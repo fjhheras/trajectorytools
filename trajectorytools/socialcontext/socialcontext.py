@@ -3,17 +3,20 @@ import scipy.spatial
 from sklearn.neighbors import NearestNeighbors
 import numpy as np
 
-def _neighbours_indices_in_frame(positions, num_neighbours):
-    nbrs = NearestNeighbors(n_neighbors=num_neighbours+1, algorithm='ball_tree').fit(positions)
-    return nbrs.kneighbors(positions, return_distance = False)
-
 def _in_convex_hull(positions):
     hull = scipy.spatial.ConvexHull(positions)
     convex_hull = np.zeros(positions.shape[0], dtype = np.bool)
     convex_hull[hull.vertices] = True
     return convex_hull
 
-def radius_of_circumcentre(pa,pb,pc):
+def in_convex_hull(positions):
+    convex_hull_list = [_in_convex_hull(positions_in_frame) for positions_in_frame in positions]
+    return np.stack(convex_hull_list, axis = 0)
+
+def circumradius(pa,pb,pc):
+    '''Radius of the circumcentre
+    defined by three points
+    '''
     # Sides of triangles
     a = np.linalg.norm(pb-pc, axis=-1) 
     b = np.linalg.norm(pc-pa, axis=-1) 
@@ -23,22 +26,48 @@ def radius_of_circumcentre(pa,pb,pc):
     area = np.sqrt(s*(s-a)*(s-b)*(s-c))
     return a*b*c/(4*area)
 
-def _in_alpha_shape(positions, alpha=10.0):
+def _in_alpha_border(positions, alpha=5):
+    '''Calculate vertices in border of alpha-shape
+    by pruning a Delaunay triangulation
+
+    Based on:
+    https://sgillies.net/2012/10/13/the-fading-shape-of-alpha.html
+    '''
     num_individuals, _ = positions.shape
     delaunay = scipy.spatial.Delaunay(positions)
-    pa, pb, pc = [], [], []
-    for triangle in delaunay.simplices:
-        pa.append(triangle[0])
-        pb.append(triangle[1])
-        pc.append(triangle[2])
-    R = radius_of_circumcentre(np.stack(a), np.stack(b), np.stack(c))
     edges = np.zeros((num_individuals, num_individuals), dtype=np.int)
-    #### TODO: Unfinished
+    edges_in_delaunay = np.zeros((num_individuals, num_individuals), dtype=np.bool)
+    for triangle in delaunay.simplices:
+        i,j,k = triangle
+        edges_in_delaunay[i,j] = True
+        edges_in_delaunay[j,i] = True
+        edges_in_delaunay[i,k] = True
+        edges_in_delaunay[k,i] = True
+        edges_in_delaunay[k,j] = True
+        edges_in_delaunay[j,k] = True
+        if circumradius(*positions[triangle]) < 1/alpha:
+            #Accept triangle
+            edges[i,j] += 1
+            edges[j,i] += 1
+            edges[i,k] += 1
+            edges[k,i] += 1
+            edges[k,j] += 1
+            edges[j,k] += 1
+    # Now edges is
+    # 0 iff edge is exterior or not in delaunay
+    # 1 iff edge is in border
+    # 2 iff edge is in interior
+    return np.any(np.logical_and(edges<2, edges_in_delaunay), axis=-1).astype(np.float)
 
+def in_alpha_border(positions):
+    alpha_border_list = [_in_alpha_border(positions_in_frame) for positions_in_frame in positions]
+    return np.stack(alpha_border_list, axis = 0)
 
-def in_convex_hull(positions):
-    convex_hull_list = [_in_convex_hull(positions_in_frame) for positions_in_frame in positions]
-    return np.stack(convex_hull_list, axis = 0)
+### LOCAL NEIGHBOURS
+
+def _neighbours_indices_in_frame(positions, num_neighbours):
+    nbrs = NearestNeighbors(n_neighbors=num_neighbours+1, algorithm='ball_tree').fit(positions)
+    return nbrs.kneighbors(positions, return_distance = False)
 
 def give_indices(positions, num_neighbours):
     total_time_steps = positions.shape[0]
