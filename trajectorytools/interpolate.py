@@ -55,19 +55,20 @@ def normalise_trajectories(t):
     np.divide(t, norm_const, t)
     return norm_const, center_x, center_y
 
-def smooth_several(t, sigma = 2, truncate = 5, derivatives = [0], interpolate = False, remove_extremes = True):
-    return [smooth(t, sigma=sigma, truncate = truncate, derivative = derivative, remove_extremes = remove_extremes) for derivative in derivatives]
+def smooth_several(t, sigma = 2, truncate = 5, derivatives = [0]):
+    return [smooth(t, sigma=sigma, truncate = truncate, derivative = derivative) for derivative in derivatives]
 
-def smooth(t, sigma = 2, truncate = 5, derivative = 0, interpolate = False, remove_extremes = True):
-    if interpolate: ### Option to be removed
-        print("Warning: option to be removed")
-        interpolate_nans(t)
+def smooth(t, sigma = 2, truncate = 5, derivative = 0):#, interpolate = False, remove_extremes = True):
+    #if interpolate: ### Option to be removed
+    #    print("Warning: option to be removed")
+    #    interpolate_nans(t)
     smooth = gaussian_filter1d(t, sigma=sigma, axis=0, truncate = truncate, order = derivative)
-    if remove_extremes:
-        cut = np.int(np.ceil(sigma))
-        return smooth[cut:-cut]
-    else:
-        return smooth
+    #if remove_extremes:
+    #    print("Warning, to be removed")
+    #    cut = np.int(np.ceil(sigma))
+    #    return smooth[cut:-cut]
+    #else:
+    return smooth
 
 def smooth_velocity(t, **kwargs):
     kwargs['derivative'] = 1

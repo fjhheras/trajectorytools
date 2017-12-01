@@ -12,8 +12,8 @@ if __name__ == '__main__':
     test_trajectories_file = os.path.join(dir_of_data, 'test_trajectories.npy')
     t = np.load(test_trajectories_file)
     tt.normalise_trajectories(t)
-    s_ = tt.smooth(t, interpolate = True)
-    v_ = tt.smooth_velocity(t, interpolate = True)
+    tt.interpolate_nans(t)
+    [s_,v_] = tt.smooth_several(t, derivatives=[0,1])
     speed = tt.norm(v_)
     
     colornorm = mpl.colors.Normalize(vmin = speed.min(), vmax = speed.max(), clip = True)
