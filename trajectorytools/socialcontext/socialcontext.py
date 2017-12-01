@@ -1,4 +1,5 @@
 #import joblib #import Parallel, delayed
+import math
 import scipy.spatial
 from sklearn.neighbors import NearestNeighbors
 import numpy as np
@@ -13,17 +14,20 @@ def in_convex_hull(positions):
     convex_hull_list = [_in_convex_hull(positions_in_frame) for positions_in_frame in positions]
     return np.stack(convex_hull_list, axis = 0)
 
+def _quick_distance(x,y):
+    return math.sqrt(math.pow(x[0]-y[0],2) + math.pow(x[1]-y[1], 2) )
+
 def circumradius(pa,pb,pc):
     '''Radius of the circumcentre
     defined by three points
     '''
     # Sides of triangles
-    a = np.linalg.norm(pb-pc, axis=-1) 
-    b = np.linalg.norm(pc-pa, axis=-1) 
-    c = np.linalg.norm(pa-pb, axis=-1) 
+    a = _quick_distance(pb, pc)
+    b = _quick_distance(pc, pa)
+    c = _quick_distance(pa, pb)
     # Area using Heron formula
     s = (a + b + c)/2 # Semiperimeter
-    area = np.sqrt(s*(s-a)*(s-b)*(s-c))
+    area = math.sqrt(s*(s-a)*(s-b)*(s-c))
     return a*b*c/(4*area)
 
 def _in_alpha_border(positions, alpha=5):
@@ -57,7 +61,7 @@ def _in_alpha_border(positions, alpha=5):
     # 0 iff edge is exterior or not in delaunay
     # 1 iff edge is in border
     # 2 iff edge is in interior
-    return np.any(np.logical_and(edges<2, edges_in_delaunay), axis=-1).astype(np.float)
+    return np.any(np.logical_and(edges<2, edges_in_delaunay), axis=-1)#.astype(np.float)
 
 def in_alpha_border(positions):
     alpha_border_list = [_in_alpha_border(positions_in_frame) for positions_in_frame in positions]
