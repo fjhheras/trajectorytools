@@ -19,7 +19,11 @@ def _quick_distance(x,y):
 
 def circumradius(pa,pb,pc):
     '''Radius of the circumcentre
-    defined by three points
+    defined by three points.
+
+    Using math library because I need
+    it to be fast. Candidate for cython
+    in a future...
     '''
     # Sides of triangles
     a = _quick_distance(pb, pc)
@@ -30,7 +34,7 @@ def circumradius(pa,pb,pc):
     area = math.sqrt(s*(s-a)*(s-b)*(s-c))
     return a*b*c/(4*area)
 
-def _in_alpha_border(positions, alpha=5):
+def _in_alpha_border_slow(positions, alpha=5):
     '''Calculate vertices in border of alpha-shape
     by pruning a Delaunay triangulation
 
@@ -62,6 +66,25 @@ def _in_alpha_border(positions, alpha=5):
     # 1 iff edge is in border
     # 2 iff edge is in interior
     return np.any(np.logical_and(edges<2, edges_in_delaunay), axis=-1)#.astype(np.float)
+
+def _in_alpha_border(positions, alpha=5):
+    '''Calculate vertices in border of alpha-shape
+    by pruning a Delaunay triangulation.
+    
+    Border points are either:
+    1. In convex hull
+    2. In rejected triangles
+    '''
+    def radius_too_large(triangle):
+        return circumradius(*positions[triangle]) > 1/alpha
+    num_individuals, _ = positions.shape
+    delaunay = scipy.spatial.Delaunay(positions)
+    in_border = np.zeros(num_individuals, np.bool)
+    in_border[delaunay.convex_hull] = True
+    points_in_rejected_triangles = [p for triangle in delaunay.simplices if radius_too_large(triangle) for p in triangle]
+    in_border[points_in_rejected_triangles]= True
+    return in_border
+
 
 def in_alpha_border(positions):
     alpha_border_list = [_in_alpha_border(positions_in_frame) for positions_in_frame in positions]
