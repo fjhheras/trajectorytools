@@ -14,58 +14,19 @@ def in_convex_hull(positions):
     convex_hull_list = [_in_convex_hull(positions_in_frame) for positions_in_frame in positions]
     return np.stack(convex_hull_list, axis = 0)
 
-def _quick_distance(x,y):
-    return math.sqrt(math.pow(x[0]-y[0],2) + math.pow(x[1]-y[1], 2) )
-
-def circumradius(pa,pb,pc):
+def circumradius(points):
     '''Radius of the circumcentre
     defined by three points.
-
-    Using math library because I need
-    it to be fast. Candidate for cython
-    in a future...
     '''
     # Sides of triangles
-    a = _quick_distance(pb, pc)
-    b = _quick_distance(pc, pa)
-    c = _quick_distance(pa, pb)
-    # Area using Heron formula
-    s = (a + b + c)/2 # Semiperimeter
-    area = math.sqrt(s*(s-a)*(s-b)*(s-c))
+    side_vectors = points - np.roll(points,1,axis=-2)
+    sides = np.sqrt(side_vectors[...,0]**2 + side_vectors[...,1]**2)
+    a = sides[...,0]
+    b = sides[...,1]
+    c = sides[...,2]
+    s = (a+b+c)/2
+    area = np.sqrt((s-a)*(s-b)*(s-c)*s)
     return a*b*c/(4*area)
-
-def _in_alpha_border_slow(positions, alpha=5):
-    '''Calculate vertices in border of alpha-shape
-    by pruning a Delaunay triangulation
-
-    Based on:
-    https://sgillies.net/2012/10/13/the-fading-shape-of-alpha.html
-    '''
-    num_individuals, _ = positions.shape
-    delaunay = scipy.spatial.Delaunay(positions)
-    edges = np.zeros((num_individuals, num_individuals), dtype=np.int)
-    edges_in_delaunay = np.zeros((num_individuals, num_individuals), dtype=np.bool)
-    for triangle in delaunay.simplices:
-        i,j,k = triangle
-        edges_in_delaunay[i,j] = True
-        edges_in_delaunay[j,i] = True
-        edges_in_delaunay[i,k] = True
-        edges_in_delaunay[k,i] = True
-        edges_in_delaunay[k,j] = True
-        edges_in_delaunay[j,k] = True
-        if circumradius(*positions[triangle]) < 1/alpha:
-            #Accept triangle
-            edges[i,j] += 1
-            edges[j,i] += 1
-            edges[i,k] += 1
-            edges[k,i] += 1
-            edges[k,j] += 1
-            edges[j,k] += 1
-    # Now edges is
-    # 0 iff edge is exterior or not in delaunay
-    # 1 iff edge is in border
-    # 2 iff edge is in interior
-    return np.any(np.logical_and(edges<2, edges_in_delaunay), axis=-1)#.astype(np.float)
 
 def _in_alpha_border(positions, alpha=5):
     '''Calculate vertices in border of alpha-shape
@@ -75,16 +36,17 @@ def _in_alpha_border(positions, alpha=5):
     1. In convex hull
     2. In rejected triangles
     '''
-    def radius_too_large(triangle):
-        return circumradius(*positions[triangle]) > 1/alpha
+    def radius_too_large(triangles):
+        return circumradius(triangles) > 1/alpha
     num_individuals, _ = positions.shape
     delaunay = scipy.spatial.Delaunay(positions)
+    triangles = np.array([positions[triangle] for triangle in delaunay.simplices])
+    in_rejected_triangles = radius_too_large(triangles)
+    points_in_rejected_triangles = [p for triangle in delaunay.simplices[in_rejected_triangles] for p in triangle]
     in_border = np.zeros(num_individuals, np.bool)
+    in_border[points_in_rejected_triangles] = True
     in_border[delaunay.convex_hull] = True
-    points_in_rejected_triangles = [p for triangle in delaunay.simplices if radius_too_large(triangle) for p in triangle]
-    in_border[points_in_rejected_triangles]= True
     return in_border
-
 
 def in_alpha_border(positions):
     alpha_border_list = [_in_alpha_border(positions_in_frame) for positions_in_frame in positions]
