@@ -84,5 +84,3 @@ def restrict(data, indices, individual=None):
     return output_data
 
 
-
-
