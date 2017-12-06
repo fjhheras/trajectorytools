@@ -14,7 +14,8 @@ class AnimatedScatter(object):
         self.plotters = plotters
 
     def prepare(self, interval = 20, limits = [-1, 1, -1, 1], axis_off = True):
-        frames = self.datasets[0].shape[0]
+        frames = self.datasets[0].shape[0] - 1
+        print("Frames:", frames)
         self.scatters = [Scatter(self.datasets[i], plotter = self.plotters[i]) for i in range(len(self.datasets))] 
         # Setup the figure and axes...
         self.fig, self.ax = plt.subplots()
@@ -25,7 +26,7 @@ class AnimatedScatter(object):
         self.ax.set_aspect('equal')
         # Then setup FuncAnimation.
         self.ani = animation.FuncAnimation(self.fig, self.update, interval=interval, 
-                                           frames = frames, init_func=self.setup_plot, blit=True)
+                                           frames = frames, init_func=self.setup_plot, blit=True, repeat = False)
     def setup_plot(self):
         """Initial drawing of the scatter plot."""
         scat_tuple = ()

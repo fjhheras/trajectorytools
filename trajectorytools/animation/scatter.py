@@ -17,4 +17,3 @@ class Scatter(object):
             for i in range(self.data.shape[0]):
                 yield self.data[i]
 
-
