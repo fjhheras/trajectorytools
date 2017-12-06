@@ -3,35 +3,50 @@ import numpy as np
 import trajectorytools as tt 
 import trajectorytools.socialcontext as ttsocial
 
+def calculate_center_of_mass(trajectories):
+    center_of_mass = Namespace()
+    center_of_mass_dict = vars(center_of_mass)
+    trajectories_dict = vars(trajectories)
+    center_of_mass_dict.update({k: np.average(v, axis = 1) for k,v in trajectories_dict.items()})
+    return center_of_mass
+
 class Trajectories():
-    def __init__(self, t):
-        tt.normalise_trajectories(t)
-        tt.interpolate_nans(t)
-        [self.s, self.v, self.a] = tt.smooth_several(t, derivatives=[0,1,2])
-        self.speed = tt.norm(self.v)
-        self.acceleration = tt.norm(self.a)
-        self.distance_to_center = tt.norm(self.s)
-        self.e = tt.normalise(self.v)
-        self.curvature = tt.curvature(self.v, self.a)
-        self.center_of_mass = self.calculate_center_of_mass()
+    def __init__(self, trajectories):
+        self.trajectories = trajectories
+        self.center_of_mass = calculate_center_of_mass(trajectories)
+        self.__dict__.update(vars(self.trajectories))
+
+    def view(start = None, end = None):
+        view_trajectories = Namespace()
+        vars(view_trajectories).update({k: v[start:end] for k,v in vars(self.trajectories).items()})
+        return Trajectories(view_trajectories)
+
     @classmethod
     def from_idtracker(cls, trajectories_path):
         trajectories_dict = np.load(trajectories_path, encoding = 'latin1').item()
         ### Bring here the properties that we need from the dictionary
         t = trajectories_dict['trajectories']
-        return cls(t)
+        return cls.from_positions(t)
+    
+    @classmethod
+    def from_positions(cls, t):
+        tt.normalise_trajectories(t)
+        tt.interpolate_nans(t)
+        trajectories = Namespace()
+        [trajectories.s, trajectories.v, trajectories.a] = tt.smooth_several(t, derivatives=[0,1,2])
+        trajectories.speed = tt.norm(trajectories.v)
+        trajectories.acceleration = tt.norm(trajectories.a)
+        trajectories.distance_to_center = tt.norm(trajectories.s)
+        trajectories.e = tt.normalise(trajectories.v)
+        trajectories.curvature = tt.curvature(trajectories.v, trajectories.a)
+        return cls(trajectories) 
+
     @property
     def number_of_frame(self):
         return self.s.shape[0]
     @property
     def number_of_individuals(self):
         return self.s.shape[1]
-    def calculate_center_of_mass(self):
-        s = np.average(self.s, axis = -2)
-        v = np.average(self.v, axis = -2)
-        speed = tt.norm(v) 
-        distance_to_center = tt.norm(s)
-        return Namespace(s = s, v = v, speed = speed, distance_to_center = distance_to_center)
 
 
 
