@@ -1,4 +1,5 @@
 import numpy as np
+import matplotlib
 
 def histogram(v, ax):
     valid = np.logical_not(np.isnan(v[:]))
@@ -15,5 +16,9 @@ def position_histogram(trajectories):
 
     average_histogram_2d = histogram2d / trajectories.shape[1]
     return average_histogram_2d
+
+def get_spaced_colors(n, cmap = 'jet'):
+    RGB_tuples = matplotlib.cm.get_cmap(cmap)
+    return [RGB_tuples(i / n) for i in range(n)]
 
 

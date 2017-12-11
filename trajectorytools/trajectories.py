@@ -42,7 +42,7 @@ class Trajectories():
         return cls(trajectories) 
 
     @property
-    def number_of_frame(self):
+    def number_of_frames(self):
         return self.s.shape[0]
     @property
     def number_of_individuals(self):
