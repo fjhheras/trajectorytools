@@ -29,9 +29,10 @@ class Trajectories():
     
     @classmethod
     def from_positions(cls, t):
+        trajectories = Namespace()
+        trajectories.raw = t.copy()
         tt.normalise_trajectories(t)
         tt.interpolate_nans(t)
-        trajectories = Namespace()
         [trajectories.s, trajectories.v, trajectories.a] = tt.smooth_several(t, derivatives=[0,1,2])
         trajectories.speed = tt.norm(trajectories.v)
         trajectories.acceleration = tt.norm(trajectories.a)
