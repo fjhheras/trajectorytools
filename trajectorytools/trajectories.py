@@ -1,7 +1,6 @@
 from argparse import Namespace
 import numpy as np
 import trajectorytools as tt 
-import trajectorytools.socialcontext as ttsocial
 
 def calculate_center_of_mass(trajectories):
     center_of_mass = Namespace()
