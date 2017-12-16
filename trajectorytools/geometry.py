@@ -2,11 +2,18 @@ import numpy as np
 
 ##### SIMPLE TOOLS
 
-def dot(x,y):
-    return np.einsum('...i,...i->...', x, y)
+def dot(x,y, keepdims = False):
+    result = np.einsum('...i,...i->...', x, y)
+    if keepdims:
+        return np.expand_dims(result, -1)
+    else:
+        return result
 
-def cross2D(v,w):
-    return v[...,0]*w[...,1] - v[...,1]*w[...,0]
+def cross2D(v,w, keepdims = False):
+    if keepdims:
+        return v[...,[0]]*w[...,[1]] - v[...,[1]]*w[...,[0]]
+    else:
+        return v[...,0]*w[...,1] - v[...,1]*w[...,0]
 
 def matrix_dot(matrix, data):
     if len(matrix.shape) == 2:
