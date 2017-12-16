@@ -47,6 +47,14 @@ class Trajectories():
     @property
     def number_of_individuals(self):
         return self.s.shape[1]
+    @property
+    def identity_labels(self): #Placeholder, in case in the future labels are explicitly given
+        return np.arange(self.number_of_individuals)
+    @property
+    def identities_array(self):
+        ones = np.ones(self.raw.shape[:-1] ,dtype = np.int)
+        return np.einsum('ij,j->ij',ones, self.identity_labels)
+
 
 
 
