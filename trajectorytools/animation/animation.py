@@ -44,8 +44,8 @@ class AnimatedScatter(object):
     def show(self):
         plt.show()
     
-    def save(self, video_file_name):
-        mywriter = animation.FFMpegWriter(codec="h264", fps=10)
+    def save(self, video_file_name, fps = 10):
+        mywriter = animation.FFMpegWriter(codec="h264", fps = fps)
         self.ani.save(video_file_name,writer=mywriter)
 
     def __add__(self, other):
