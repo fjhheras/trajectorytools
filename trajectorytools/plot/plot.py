@@ -45,7 +45,8 @@ def plot_individual_distribution(variable, indices, nbins = 25, ticks = False):
         ax.plot(bins_edges[:-1] + np.diff(bins_edges)[0], n)
         if ticks is False:
             no_ticks_no_labels(ax)
-        sns.despine(fig, ax, top = True, left = True)
+            ax.spines['top'].set_visible(False)
+            ax.spines['right'].set_visible(False)
     return fig
 
 @with_ordering
