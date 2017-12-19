@@ -23,8 +23,11 @@ def matrix_dot(matrix, data):
         # Each frame has a matrix
         return np.einsum('kij,k...j->k...i', matrix, data)
     elif len(data.shape) == len(matrix.shape) - 1:
-        # Each frame and individual has a matrix
+        # Each frame, individual (and maybe neighbour) has a matrix
         return np.einsum('...ij,...j->...i', matrix, data)
+    elif len(data.shape) == len(matrix.shape) == 4:
+        # Each frame and individual has a matrix. There are neighbours but all use same matrix
+        return np.einsum('...ij,...kj->...ki', matrix, data)
     else:
         raise Exception('matrix_dot: wrong input dimension')
 
