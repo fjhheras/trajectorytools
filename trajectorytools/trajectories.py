@@ -6,7 +6,7 @@ def calculate_center_of_mass(trajectories):
     center_of_mass = Namespace()
     center_of_mass_dict = vars(center_of_mass)
     trajectories_dict = vars(trajectories)
-    center_of_mass_dict.update({k: np.average(v, axis = 1) for k,v in trajectories_dict.items()})
+    center_of_mass_dict.update({k: np.nanmean(v, axis = 1) for k,v in trajectories_dict.items()})
     return center_of_mass
 
 class Trajectories():
@@ -21,18 +21,19 @@ class Trajectories():
         return Trajectories(view_trajectories)
 
     @classmethod
-    def from_idtracker(cls, trajectories_path):
+    def from_idtracker(cls, trajectories_path, interpolate_nans = True):
         trajectories_dict = np.load(trajectories_path, encoding = 'latin1').item()
         ### Bring here the properties that we need from the dictionary
         t = trajectories_dict['trajectories']
-        return cls.from_positions(t)
+        return cls.from_positions(t, interpolate_nans = interpolate_nans)
     
     @classmethod
-    def from_positions(cls, t):
+    def from_positions(cls, t, interpolate_nans = True):
         trajectories = Namespace()
         trajectories.raw = t.copy()
         tt.normalise_trajectories(t)
-        tt.interpolate_nans(t)
+        if interpolate_nans:
+            tt.interpolate_nans(t)
         [trajectories.s, trajectories.v, trajectories.a] = tt.smooth_several(t, derivatives=[0,1,2])
         trajectories.speed = tt.norm(trajectories.v)
         trajectories.acceleration = tt.norm(trajectories.a)

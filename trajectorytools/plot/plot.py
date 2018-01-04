@@ -13,7 +13,7 @@ def subplots_row_and_colums(number_of_individuals):
     number_of_rows = int(np.ceil(number_of_individuals / number_of_columns))
     return number_of_rows, number_of_columns
 
-def no_ticks_no_labels(ax):
+def no_ticks(ax):
     ax.set_yticklabels([]), ax.set_yticks([])
     ax.set_xticklabels([]), ax.set_xticks([])
 
@@ -44,7 +44,7 @@ def plot_individual_distribution(variable, indices, nbins = 25, ticks = False):
         n, bins_edges = np.histogram(variable[:,identity], bins = bins)
         ax.plot(bins_edges[:-1] + np.diff(bins_edges)[0], n)
         if ticks is False:
-            no_ticks_no_labels(ax)
+            no_ticks(ax)
             ax.spines['top'].set_visible(False)
             ax.spines['right'].set_visible(False)
     return fig
