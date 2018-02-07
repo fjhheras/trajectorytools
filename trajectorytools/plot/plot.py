@@ -1,8 +1,60 @@
 import numpy as np
 import matplotlib
 import matplotlib.pyplot as plt
+from matplotlib.patches import Ellipse, Circle
+from matplotlib.lines import Line2D
 
 # TODO: Ideally, we need to separate functions calculating and plotting histograms
+
+class Fish: 
+    def __init__(self, xy, v, restricted = False, color = 'b', size = 0.04, vel_factor = 10):
+        self._xy = xy
+        self._v = v
+        self.vel_factor = vel_factor
+        self.restricted = restricted
+        self.body = Ellipse(xy=xy,
+                width=size, height=size/2,
+                angle=np.degrees(np.arctan2(v[1],v[0])), fc = color)
+        self.velocity_marker = Circle(xy = self.xy_vel, radius = size/10, fc = 'k') 
+        self.velocity_line = Line2D([xy[0], self.xy_vel[0]], [xy[1], self.xy_vel[1]], color = color, linewidth = 0.3)
+        self.artists = [self.body, self.velocity_marker, self.velocity_line]
+    @property
+    def xy_vel(self):
+        return self.position + self.velocity*self.vel_factor
+    @property
+    def figure(self):
+        return self.body.figure
+    @property
+    def position(self):
+        return self._xy #self.body.center
+    @position.setter
+    def position(self, xy):
+        if not self.restricted:
+            self._xy = xy
+            self.body.center = xy
+            self.velocity_marker.center = self.xy_vel
+            self.velocity_line.set_data([xy[0], self.xy_vel[0]], [xy[1], self.xy_vel[1]])
+            self.body.stale = True
+    @property
+    def velocity(self):
+        return self._v #self.body.center
+    @velocity.setter
+    def velocity(self, v):
+        if self.restricted:
+            v = v.copy()
+            v[1] = max(0,v[1])
+            v[0] = 0.0
+        self._v = v
+        self.body.angle = np.degrees(np.arctan2(v[1],v[0]))
+        self.velocity_marker.center = self.position + v*self.vel_factor
+        self.velocity_line.set_data([self.position[0], self.xy_vel[0]], [self.position[1], self.xy_vel[1]])
+        self.body.stale = True
+    def add_to_axis(self, ax):
+        for artist in self.artists:
+            ax.add_artist(artist)
+            artist.set_clip_box(ax.bbox)
+        self.velocity_line.axes = ax
+        self.axes = ax #self.body.axes
 
 def get_spaced_colors(n, cmap = 'jet'):
     RGB_tuples = matplotlib.cm.get_cmap(cmap)
