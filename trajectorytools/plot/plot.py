@@ -6,7 +6,7 @@ from matplotlib.lines import Line2D
 
 # TODO: Ideally, we need to separate functions calculating and plotting histograms
 
-class Fish: 
+class Fish:
     def __init__(self, xy, v, restricted = False, color = 'b', size = 0.04, vel_factor = 10):
         self._xy = xy
         self._v = v
@@ -15,7 +15,7 @@ class Fish:
         self.body = Ellipse(xy=xy,
                 width=size, height=size/2,
                 angle=np.degrees(np.arctan2(v[1],v[0])), fc = color)
-        self.velocity_marker = Circle(xy = self.xy_vel, radius = size/10, fc = 'k') 
+        self.velocity_marker = Circle(xy = self.xy_vel, radius = size/10, fc = 'k')
         self.velocity_line = Line2D([xy[0], self.xy_vel[0]], [xy[1], self.xy_vel[1]], color = color, linewidth = 0.3)
         self.artists = [self.body, self.velocity_marker, self.velocity_line]
     @property
@@ -120,9 +120,9 @@ def plot_individual_distribution_of_vector(vector, indices, nbins = 10, ticks = 
         H.append(np.histogram2d(vector[:,identity,0].flatten(), vector[:,identity,1].flatten(), bins=(binsX, binsY))[0])
         v_max = max(v_max, H[i].max())
     for i, H_i in enumerate(H):
-        ax[i].imshow(H_i, vmin = 0, vmax = v_max)
+        ax[i].imshow(H_i, vmin = 0, vmax = v_max, cmap = 'jet')
         if ticks is False:
-            no_ticks_no_labels(ax[i])
+            no_ticks(ax[i])
     return fig
 
 ## Old scripts for removal below
@@ -145,6 +145,3 @@ def position_histogram(trajectories):
 
     average_histogram_2d = histogram2d / trajectories.shape[1]
     return average_histogram_2d
-
-
-
