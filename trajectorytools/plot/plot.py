@@ -103,12 +103,14 @@ def plot_individual_distribution(variable, indices, nbins = 25, ticks = False):
 
 @with_ordering
 def plot_individual_distribution_of_vector(vector, indices, nbins = 10, ticks = False):
+    if np.isnan(vector).any():
+        print('Removing NaNs from data')
     number_of_individuals = len(indices)
     number_of_rows, number_of_columns = subplots_row_and_colums(number_of_individuals)
     fig, ax_arr = plt.subplots(number_of_rows, number_of_columns)
     v_max = 0
-    min_x, max_x = np.percentile(vector[:,:,0],1), np.percentile(vector[:,:,0],99)
-    min_y, max_y = np.percentile(vector[:,:,1],1), np.percentile(vector[:,:,1],99)
+    min_x, max_x = np.percentile(vector[:,:,0][~np.isnan(vector[:,:,0])],1), np.percentile(vector[:,:,0][~np.isnan(vector[:,:,0])],99)
+    min_y, max_y = np.percentile(vector[:,:,1][~np.isnan(vector[:,:,1])],1), np.percentile(vector[:,:,1][~np.isnan(vector[:,:,1])],99)
     print("X from {} to {}".format(min_x, max_x))
     print("Y from {} to {}".format(min_y, max_y))
     binsX = np.linspace(min_x, max_x, nbins)
@@ -117,10 +119,13 @@ def plot_individual_distribution_of_vector(vector, indices, nbins = 10, ticks = 
     H = []
     for i, identity in enumerate(indices):
         ax.append(ax_arr[int(i/number_of_columns), i%number_of_columns])
-        H.append(np.histogram2d(vector[:,identity,0].flatten(), vector[:,identity,1].flatten(), bins=(binsX, binsY))[0])
+        H.append(np.histogram2d(vector[:,identity,0][~np.isnan(vector[:,identity,0])].flatten(), vector[:,identity,1][~np.isnan(vector[:,identity,1])].flatten(), bins=(binsX, binsY))[0])
         v_max = max(v_max, H[i].max())
     for i, H_i in enumerate(H):
         ax[i].imshow(H_i, vmin = 0, vmax = v_max, cmap = 'jet')
+        ax[i].set_title(str(indices[i] + 1), fontsize = 8)
+        print(ax[i].get_xlim(), ax[i].get_ylim())
+        # ax[i].set_title(str(indices[i]))
         if ticks is False:
             no_ticks(ax[i])
     return fig
