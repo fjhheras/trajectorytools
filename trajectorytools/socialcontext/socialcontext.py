@@ -31,7 +31,7 @@ def circumradius(points):
 def _in_alpha_border(positions, alpha=5):
     '''Calculate vertices in border of alpha-shape
     by pruning a Delaunay triangulation.
-    
+
     Border points are either:
     1. In convex hull
     2. In rejected triangles
@@ -63,24 +63,22 @@ def give_indices(positions, num_neighbours):
     individuals = positions.shape[1]
     next_neighbours = np.empty([total_time_steps, individuals, num_neighbours+1], dtype = np.int)
     for frame in range(total_time_steps):
-        next_neighbours[frame,...] = _neighbours_indices_in_frame(positions[frame], num_neighbours) 
+        next_neighbours[frame,...] = _neighbours_indices_in_frame(positions[frame], num_neighbours)
     return next_neighbours
 
-def restrict(data, indices, individual=None):
+def restrict(data, indices, individual=None, delay = 0):
     num_restricted = indices.shape[-1]
     total_time_steps = data.shape[0]
     num_individuals = data.shape[1]
     coordinates = data.shape[-1]
-    
+
     if individual is None:
         output_data = np.empty([total_time_steps, num_individuals, num_restricted, coordinates])
         for frame in range(total_time_steps):
-            output_data[frame,...] = data[frame, indices[frame,:],:]
+            output_data[frame,...] = data[frame - delay, indices[frame,:],:]
     else:
         output_data = np.empty([total_time_steps, num_restricted, coordinates])
         for frame in range(total_time_steps):
-            output_data[frame,...] = data[frame, indices[frame,individual],:]
- 
+            output_data[frame,...] = data[frame - delay, indices[frame,individual],:]
+
     return output_data
-
-
