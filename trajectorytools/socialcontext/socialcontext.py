@@ -66,19 +66,23 @@ def give_indices(positions, num_neighbours):
         next_neighbours[frame,...] = _neighbours_indices_in_frame(positions[frame], num_neighbours)
     return next_neighbours
 
-def restrict(data, indices, individual=None, delay = 0):
+def restrict(data, indices, individual=None):
     num_restricted = indices.shape[-1]
     total_time_steps = data.shape[0]
     num_individuals = data.shape[1]
     coordinates = data.shape[-1]
-
     if individual is None:
         output_data = np.empty([total_time_steps, num_individuals, num_restricted, coordinates])
         for frame in range(total_time_steps):
-            output_data[frame,...] = data[frame - delay, indices[frame,:],:]
+            output_data[frame,...] = data[frame, indices[frame,:],:]
     else:
         output_data = np.empty([total_time_steps, num_restricted, coordinates])
         for frame in range(total_time_steps):
-            output_data[frame,...] = data[frame - delay, indices[frame,individual],:]
+            output_data[frame,...] = data[frame, indices[frame,individual],:]
 
     return output_data
+
+
+
+
+
