@@ -16,7 +16,7 @@ def restrict_with_delay(data, indices, individual=None, delay=0):
         raise NotImplementedError
     return restrict(delayed_data, restricted_indices, individual=individual)
 
-def sweep_delays(data, indices, max_delay):
+def sweep_delays(data, indices, max_delay, individual=None):
     ''' This function sweeps delays of whole data
     and outputs an array with an extra dimension 
     '''
@@ -24,9 +24,12 @@ def sweep_delays(data, indices, max_delay):
     total_time_steps = data.shape[0] - max_delay
     num_individuals = data.shape[1]
     coordinates = data.shape[-1]
-    output = np.empty([max_delay, total_time_steps, num_individuals, num_restricted, coordinates]) 
+    if individual is None:
+        output = np.empty([max_delay, total_time_steps, num_individuals, num_restricted, coordinates]) 
+    else:
+        output = np.empty([max_delay, total_time_steps, num_restricted, coordinates]) 
     for delay in range(max_delay):
-        delayed_restricted = restrict_with_delay(data, indices, delay=delay)
+        delayed_restricted = restrict_with_delay(data, indices, delay=delay, individual=individual)
         output[delay,...] = delayed_restricted[:total_time_steps]
     return output
 
