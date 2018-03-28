@@ -46,7 +46,52 @@ def sweep_delayed_orientation_with_neighbours(orientation, indices, max_delay):
     restricted_orientation = orientation[:total_time_steps]
     projected_orientation = np.einsum('...j,i...j->i...',restricted_orientation, sweep_delay_P) 
     # dimensions: delay x time x num_individuals
-    return projected_orientation
+    return projected_orientation, sweep_delay_e
     
+def fleshout_with_delay_slow_(data, indices, sweeped_delays, frame, inplace = None):
+    num_restricted = indices.shape[-1]
+    num_individuals = data.shape[1]
+    max_delay = sweeped_delays.shape[0]
+    if inplace is None:
+        inplace = np.zeros([max_delay, num_individuals, num_individuals], dtype=data.dtype)
+    for i in range(num_individuals):
+        for ij,j in enumerate(indices[frame, i]):
+            sweep_delays_r = sweeped_delays[:,frame,i,ij]
+            orientation = data[frame,i]
+            inplace[:,i,j] += tt.dot(sweep_delays_r, orientation)
+    return inplace
+
+def fleshout_with_delay_(data, indices, sweeped_delays, frame, inplace = None):
+    num_restricted = indices.shape[-1]
+    num_individuals = data.shape[1]
+    max_delay = sweeped_delays.shape[0]
+    if inplace is None:
+        inplace = np.zeros([max_delay, num_individuals, num_individuals], dtype=data.dtype)
+    for i in range(num_individuals):
+        sweeped_delays_r = sweeped_delays[:,frame,i,:]
+        orientation_r = data[frame,i]
+        inplace[:,i,indices[frame,i]] += np.einsum('ijk,k->ij',sweeped_delays_r, orientation_r)
+    return inplace
+
+def fleshout_with_delay(data, indices, sweep_delayed_e, frames):
+    inplace = fleshout_with_delay_(data, indices, sweep_delayed_e, frames[0])
+    for frame in frames:
+        fleshout_with_delay_(data, indices, sweep_delayed_e, frames[0], inplace=inplace)
+    return inplace/len(frames)
+
+def fleshout_with_delay_slow(data, indices, sweep_delayed_e, frames):
+    inplace = fleshout_with_delay_slow_(data, indices, sweep_delayed_e, frames[0])
+    for frame in frames:
+        fleshout_with_delay_slow_(data, indices, sweep_delayed_e, frames[0], inplace=inplace)
+    return inplace/len(frames)
+
+
+
+
+
+
+
+
+
 
 

@@ -14,8 +14,8 @@ class Trajectories():
         self.trajectories = trajectories
         self.center_of_mass = calculate_center_of_mass(trajectories)
         self.__dict__.update(vars(self.trajectories))
-
-    def view(start = None, end = None):
+    
+    def view(self, start = None, end = None):
         view_trajectories = Namespace()
         vars(view_trajectories).update({k: v[start:end] for k,v in vars(self.trajectories).items()})
         return Trajectories(view_trajectories)
