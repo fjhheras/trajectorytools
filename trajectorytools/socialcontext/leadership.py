@@ -5,7 +5,7 @@ from .socialcontext import restrict
 def restrict_with_delay(data, indices, individual=None, delay=0):
     ''' This function works as ttsocial.restrict, but
     if first applies a delay in data, and cuts down the
-    indices accordingly 
+    indices accordingly
     '''
     delayed_data = data[delay:]
     if delay == 0:
@@ -18,16 +18,16 @@ def restrict_with_delay(data, indices, individual=None, delay=0):
 
 def sweep_delays(data, indices, max_delay, individual=None):
     ''' This function sweeps delays of whole data
-    and outputs an array with an extra dimension 
+    and outputs an array with an extra dimension
     '''
     num_restricted = indices.shape[-1]
     total_time_steps = data.shape[0] - max_delay
     num_individuals = data.shape[1]
     coordinates = data.shape[-1]
     if individual is None:
-        output = np.empty([max_delay, total_time_steps, num_individuals, num_restricted, coordinates]) 
+        output = np.empty([max_delay, total_time_steps, num_individuals, num_restricted, coordinates])
     else:
-        output = np.empty([max_delay, total_time_steps, num_restricted, coordinates]) 
+        output = np.empty([max_delay, total_time_steps, num_restricted, coordinates])
     for delay in range(max_delay):
         delayed_restricted = restrict_with_delay(data, indices, delay=delay, individual=individual)
         output[delay,...] = delayed_restricted[:total_time_steps]
@@ -44,10 +44,10 @@ def sweep_delayed_orientation_with_neighbours(orientation, indices, max_delay):
     sweep_delay_P = tt.collective.polarization(sweep_delay_e)
     # dimensions: delay x time x num_individuals x 2
     restricted_orientation = orientation[:total_time_steps]
-    projected_orientation = np.einsum('...j,i...j->i...',restricted_orientation, sweep_delay_P) 
+    projected_orientation = np.einsum('...j,i...j->i...',restricted_orientation, sweep_delay_P)
     # dimensions: delay x time x num_individuals
     return projected_orientation, sweep_delay_e
-    
+
 def fleshout_with_delay_slow_(data, indices, sweeped_delays, frame, inplace = None):
     num_restricted = indices.shape[-1]
     num_individuals = data.shape[1]
@@ -75,23 +75,12 @@ def fleshout_with_delay_(data, indices, sweeped_delays, frame, inplace = None):
 
 def fleshout_with_delay(data, indices, sweep_delayed_e, frames):
     inplace = fleshout_with_delay_(data, indices, sweep_delayed_e, frames[0])
-    for frame in frames:
-        fleshout_with_delay_(data, indices, sweep_delayed_e, frames[0], inplace=inplace)
+    for frame in frames[1:]:
+        inplace = fleshout_with_delay_(data, indices, sweep_delayed_e, frame, inplace=inplace)
     return inplace/len(frames)
 
 def fleshout_with_delay_slow(data, indices, sweep_delayed_e, frames):
     inplace = fleshout_with_delay_slow_(data, indices, sweep_delayed_e, frames[0])
-    for frame in frames:
-        fleshout_with_delay_slow_(data, indices, sweep_delayed_e, frames[0], inplace=inplace)
+    for frame in frames[1:]:
+        inplace = fleshout_with_delay_slow_(data, indices, sweep_delayed_e, frame, inplace=inplace)
     return inplace/len(frames)
-
-
-
-
-
-
-
-
-
-
-
