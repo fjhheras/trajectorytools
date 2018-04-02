@@ -73,14 +73,55 @@ def fleshout_with_delay_(data, indices, sweeped_delays, frame, inplace = None):
         inplace[:,i,indices[frame,i]] += np.einsum('ijk,k->ij',sweeped_delays_r, orientation_r)
     return inplace
 
+def give_connection_matrix(indices_in_frame, inplace = None):
+    num_individuals = indices_in_frame.shape[0]
+    if inplace is None:
+        connection_matrix = np.zeros([num_individuals, num_individuals])  
+    else:
+        connection_matrix = inplace
+    for i in range(num_individuals):
+        connection_matrix[i, indices_in_frame[i,:]] += 1.0
+    return connection_matrix
+
 def fleshout_with_delay(data, indices, sweep_delayed_e, frames):
     inplace = fleshout_with_delay_(data, indices, sweep_delayed_e, frames[0])
     for frame in frames[1:]:
         inplace = fleshout_with_delay_(data, indices, sweep_delayed_e, frame, inplace=inplace)
     return inplace/len(frames)
 
-def fleshout_with_delay_slow(data, indices, sweep_delayed_e, frames):
-    inplace = fleshout_with_delay_slow_(data, indices, sweep_delayed_e, frames[0])
+def sliding_average_fleshout_with_delay(data, indices, sweep_delayed_e, start_frame, end_frame, num_frames_to_average = 50):
+    frames = range(start_frame, end_frame+num_frames_to_average)
+    print(frames)
+    print(data.shape, indices.shape, sweep_delayed_e.shape)
+    fleshout_list = [fleshout_with_delay_(data, indices, sweep_delayed_e, frame) for frame in frames]
+    return [sum(fleshout_list[i:(i+num_frames_to_average)])/num_frames_to_average for i in range(end_frame-start_frame)]
+
+
+### Here be dragons (do not look below this line)
+
+def fleshout_with_delay_soft_window(data, indices, sweep_delayed_e, frames):
+    # Assumes ordered frames
+    # Super time/memory inefficient!!
+    assert(len(frames)%2 == 0) #trivial to extend to the odd case if needed 
+    ## Triangular weights
+    weights = list(range(1,len(frames)//2+1))
+    weights += weights[::-1]
+    ##
+    fleshout_list = [fleshout_with_delay_(data, indices, sweep_delayed_e, frame)*w for w,frame in zip(weights, frames)]
+    return sum(fleshout_list)/sum(weights)
+
+
+def fleshout_with_delay_average_across_nb(data, indices, sweep_delayed_e, frames):
+    max_delay = sweep_delayed_e.shape[0]
+    inplace = fleshout_with_delay_(data, indices, sweep_delayed_e, frames[0])
+    connection_matrix = give_connection_matrix(indices[frames[0]])
     for frame in frames[1:]:
-        inplace = fleshout_with_delay_slow_(data, indices, sweep_delayed_e, frame, inplace=inplace)
-    return inplace/len(frames)
+        inplace = fleshout_with_delay_(data, indices, sweep_delayed_e, frame, inplace=inplace)
+        connection_matrix = give_connection_matrix(indices[frame], inplace = connection_matrix)
+    print(inplace.shape, connection_matrix.shape)
+    for t in range(max_delay):
+        inplace[t,(connection_matrix > 0)]/=connection_matrix
+    return inplace
+
+
+
