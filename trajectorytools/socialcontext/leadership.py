@@ -91,11 +91,24 @@ def fleshout_with_delay(data, indices, sweep_delayed_e, frames):
 
 def sliding_average_fleshout_with_delay(data, indices, sweep_delayed_e, start_frame, end_frame, num_frames_to_average = 50):
     frames = range(start_frame, end_frame+num_frames_to_average)
-    print(frames)
-    print(data.shape, indices.shape, sweep_delayed_e.shape)
     fleshout_list = [fleshout_with_delay_(data, indices, sweep_delayed_e, frame) for frame in frames]
     return [sum(fleshout_list[i:(i+num_frames_to_average)])/num_frames_to_average for i in range(end_frame-start_frame)]
 
+def sliding_average_fleshout_with_delay2(data, indices, sweep_delayed_e, start_frame, end_frame, num_frames_to_average = 50):
+    max_delay = sweep_delayed_e.shape[0]
+    frames = range(start_frame, end_frame+num_frames_to_average)
+    ## The 2-by-2 xcorrelation in sparse matrix: max delay x num_individuals x num_individuals
+    fleshout_list = [fleshout_with_delay_(data, indices, sweep_delayed_e, frame) for frame in frames]
+    ## A binary matrix (num_individuals x num_individuals) telling us whether individuals are neighbours in a given frame
+    connection_matrix_list = [give_connection_matrix(indices[frame]) for frame in frames]
+    output = []
+    for i in range(end_frame-start_frame):
+        sum_fleshout = sum(fleshout_list[i:(i+num_frames_to_average)])
+        sum_connections = sum(connection_matrix_list[i:(i+num_frames_to_average)])
+        for t in range(max_delay):
+            sum_fleshout[t][np.where(sum_connections>0)] /= sum_connections[np.where(sum_connections>0)]
+        output.append(sum_fleshout)
+    return output 
 
 ### Here be dragons (do not look below this line)
 
@@ -120,7 +133,7 @@ def fleshout_with_delay_average_across_nb(data, indices, sweep_delayed_e, frames
         connection_matrix = give_connection_matrix(indices[frame], inplace = connection_matrix)
     print(inplace.shape, connection_matrix.shape)
     for t in range(max_delay):
-        inplace[t,(connection_matrix > 0)]/=connection_matrix
+        inplace[t,(connection_matrix > 0)]/=connection_matrix[np.where(connection_matrix>0)]
     return inplace
 
 
