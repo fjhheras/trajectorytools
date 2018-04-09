@@ -1,6 +1,6 @@
 from argparse import Namespace
 import numpy as np
-import trajectorytools as tt 
+import trajectorytools as tt
 
 def calculate_center_of_mass(trajectories):
     center_of_mass = Namespace()
@@ -14,19 +14,19 @@ class Trajectories():
         self.trajectories = trajectories
         self.center_of_mass = calculate_center_of_mass(trajectories)
         self.__dict__.update(vars(self.trajectories))
-    
+
     def view(self, start = None, end = None):
         view_trajectories = Namespace()
         vars(view_trajectories).update({k: v[start:end] for k,v in vars(self.trajectories).items()})
         return Trajectories(view_trajectories)
 
     @classmethod
-    def from_idtracker(cls, trajectories_path, interpolate_nans = True):
+    def from_idtracker(cls, trajectories_path, interpolate_nans = True, dtype = np.float64):
         trajectories_dict = np.load(trajectories_path, encoding = 'latin1').item()
         ### Bring here the properties that we need from the dictionary
-        t = trajectories_dict['trajectories']
+        t = trajectories_dict['trajectories'].astype(dtype)
         return cls.from_positions(t, interpolate_nans = interpolate_nans)
-    
+
     @classmethod
     def from_positions(cls, t, interpolate_nans = True):
         trajectories = Namespace()
@@ -40,7 +40,7 @@ class Trajectories():
         trajectories.distance_to_center = tt.norm(trajectories.s)
         trajectories.e = tt.normalise(trajectories.v)
         trajectories.curvature = tt.curvature(trajectories.v, trajectories.a)
-        return cls(trajectories) 
+        return cls(trajectories)
 
     @property
     def number_of_frames(self):
@@ -55,8 +55,3 @@ class Trajectories():
     def identities_array(self):
         ones = np.ones(self.raw.shape[:-1] ,dtype = np.int)
         return np.einsum('ij,j->ij',ones, self.identity_labels)
-
-
-
-
-
