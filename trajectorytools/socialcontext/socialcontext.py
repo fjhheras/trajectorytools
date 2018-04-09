@@ -72,11 +72,11 @@ def restrict(data, indices, individual=None):
     num_individuals = data.shape[1]
     coordinates = data.shape[-1]
     if individual is None:
-        output_data = np.empty([total_time_steps, num_individuals, num_restricted, coordinates])
+        output_data = np.empty([total_time_steps, num_individuals, num_restricted, coordinates], dtype=data.dtype)
         for frame in range(total_time_steps):
             output_data[frame,...] = data[frame, indices[frame,:],:]
     else:
-        output_data = np.empty([total_time_steps, num_restricted, coordinates])
+        output_data = np.empty([total_time_steps, num_restricted, coordinates], dtype=data.dtype)
         for frame in range(total_time_steps):
             output_data[frame,...] = data[frame, indices[frame,individual],:]
 
