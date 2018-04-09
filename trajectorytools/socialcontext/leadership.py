@@ -25,9 +25,9 @@ def sweep_delays(data, indices, max_delay, individual=None):
     num_individuals = data.shape[1]
     coordinates = data.shape[-1]
     if individual is None:
-        output = np.empty([max_delay, total_time_steps, num_individuals, num_restricted, coordinates])
+        output = np.empty([max_delay, total_time_steps, num_individuals, num_restricted, coordinates], dtype=data.dtype)
     else:
-        output = np.empty([max_delay, total_time_steps, num_restricted, coordinates])
+        output = np.empty([max_delay, total_time_steps, num_restricted, coordinates], dtype=data.dtype)
     for delay in range(max_delay):
         delayed_restricted = restrict_with_delay(data, indices, delay=delay, individual=individual)
         output[delay,...] = delayed_restricted[:total_time_steps]
