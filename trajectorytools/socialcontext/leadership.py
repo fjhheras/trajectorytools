@@ -3,10 +3,17 @@ import trajectorytools as tt
 from .socialcontext import restrict
 
 def restrict_with_delay(data, indices, individual=None, delay=0):
-    ''' This function works as ttsocial.restrict, but
-    if first applies a delay in data, and cuts down the
+    """restrict_with_delay
+
+    :param data: np.array with dimensions time x individuals x coordinates
+    :param indices: np.array with dimensions time x individuals x subset_of_individuals  
+    :param individual: label of individual to calculate restriction with delay. If None, calculating for all individuals
+    :param delay: 
+    
+    This function works as ttsocial.restrict, but
+    it first applies a delay in data, and cuts down the
     indices accordingly
-    '''
+    """
     delayed_data = data[delay:]
     if delay == 0:
         restricted_indices = indices
@@ -62,7 +69,6 @@ def fleshout_with_delay_slow_(data, indices, sweeped_delays, frame, inplace = No
     return inplace
 
 def fleshout_with_delay_(data, indices, sweeped_delays, frame, inplace = None):
-    num_restricted = indices.shape[-1]
     num_individuals = data.shape[1]
     max_delay = sweeped_delays.shape[0]
     if inplace is None:
@@ -89,12 +95,12 @@ def fleshout_with_delay(data, indices, sweep_delayed_e, frames):
         inplace = fleshout_with_delay_(data, indices, sweep_delayed_e, frame, inplace=inplace)
     return inplace/len(frames)
 
-def sliding_average_fleshout_with_delay(data, indices, sweep_delayed_e, start_frame, end_frame, num_frames_to_average = 50):
+def sliding_average_fleshout_with_delay(data, indices, sweep_delayed_e, start_frame=0, end_frame=None, num_frames_to_average = 50, force_one_thread = False):
     frames = range(start_frame, end_frame+num_frames_to_average)
     fleshout_list = [fleshout_with_delay_(data, indices, sweep_delayed_e, frame) for frame in frames]
     return [sum(fleshout_list[i:(i+num_frames_to_average)])/num_frames_to_average for i in range(end_frame-start_frame)]
 
-def sliding_average_fleshout_with_delay2(data, indices, sweep_delayed_e, start_frame, end_frame, num_frames_to_average = 50):
+def sliding_average_fleshout_with_delay2(data, indices, sweep_delayed_e, start_frame=0, end_frame=None, num_frames_to_average = 50):
     max_delay = sweep_delayed_e.shape[0]
     frames = range(start_frame, end_frame+num_frames_to_average)
     ## The 2-by-2 xcorrelation in sparse matrix: max delay x num_individuals x num_individuals
@@ -109,32 +115,5 @@ def sliding_average_fleshout_with_delay2(data, indices, sweep_delayed_e, start_f
             sum_fleshout[t][np.where(sum_connections>0)] /= sum_connections[np.where(sum_connections>0)]
         output.append(sum_fleshout)
     return output 
-
-### Here be dragons (do not look below this line)
-
-def fleshout_with_delay_soft_window(data, indices, sweep_delayed_e, frames):
-    # Assumes ordered frames
-    # Super time/memory inefficient!!
-    assert(len(frames)%2 == 0) #trivial to extend to the odd case if needed 
-    ## Triangular weights
-    weights = list(range(1,len(frames)//2+1))
-    weights += weights[::-1]
-    ##
-    fleshout_list = [fleshout_with_delay_(data, indices, sweep_delayed_e, frame)*w for w,frame in zip(weights, frames)]
-    return sum(fleshout_list)/sum(weights)
-
-
-def fleshout_with_delay_average_across_nb(data, indices, sweep_delayed_e, frames):
-    max_delay = sweep_delayed_e.shape[0]
-    inplace = fleshout_with_delay_(data, indices, sweep_delayed_e, frames[0])
-    connection_matrix = give_connection_matrix(indices[frames[0]])
-    for frame in frames[1:]:
-        inplace = fleshout_with_delay_(data, indices, sweep_delayed_e, frame, inplace=inplace)
-        connection_matrix = give_connection_matrix(indices[frame], inplace = connection_matrix)
-    print(inplace.shape, connection_matrix.shape)
-    for t in range(max_delay):
-        inplace[t,(connection_matrix > 0)]/=connection_matrix[np.where(connection_matrix>0)]
-    return inplace
-
 
 

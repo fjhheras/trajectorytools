@@ -67,6 +67,13 @@ def give_indices(positions, num_neighbours):
     return next_neighbours
 
 def restrict(data, indices, individual=None):
+    """restrict_with_delay
+
+    :param data: np.array with dimensions time x individuals x coordinates
+    :param indices: np.array with dimensions time x individuals x subset_of_individuals  
+    :param individual: label of individual to calculate restriction with delay. If None, calculating for all individuals
+    """ 
+    
     num_restricted = indices.shape[-1]
     total_time_steps = data.shape[0]
     num_individuals = data.shape[1]
