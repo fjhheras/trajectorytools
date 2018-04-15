@@ -79,6 +79,23 @@ def fleshout_with_delay_(data, indices, sweeped_delays, frame, inplace = None):
         inplace[:,i,indices[frame,i]] += np.einsum('ijk,k->ij',sweeped_delays_r, orientation_r)
     return inplace
 
+def fleshout_with_delay_f(data, indices, sweeped_delays, frame, inplace = None):
+    num_individuals = data.shape[1]
+    max_delay = sweeped_delays.shape[0]
+    if inplace is None:
+        inplace = np.zeros([num_individuals, num_individuals, max_delay], dtype=data.dtype)
+        
+    sweeped_delays_r = sweeped_delays[:,frame]
+    orientation_r = data[frame]
+    #t: delay, i:individual, n:neighbour, k:coordinate
+    a = np.einsum('tink,ik->int',sweeped_delays_r, orientation_r)
+
+    for i in range(num_individuals):
+        inplace[i,indices[frame,i]] += a[i]    
+    return np.transpose(inplace, (2,1,0))
+
+
+
 def give_connection_matrix(indices_in_frame, inplace = None):
     num_individuals = indices_in_frame.shape[0]
     if inplace is None:
