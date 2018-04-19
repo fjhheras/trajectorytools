@@ -3,7 +3,7 @@ import trajectorytools as tt
 from .socialcontext import restrict
 
 def restrict_with_delay(data, indices, individual=None, delay=0):
-    """restrict_with_delay
+    """Restricts data point to neighbours with a delay
 
     :param data: np.array with dimensions time x individuals x coordinates
     :param indices: np.array with dimensions time x individuals x subset_of_individuals  
@@ -55,19 +55,6 @@ def sweep_delayed_orientation_with_neighbours(orientation, indices, max_delay):
     # dimensions: delay x time x num_individuals
     return projected_orientation, sweep_delay_e
 
-def fleshout_with_delay_slow_(data, indices, sweeped_delays, frame, inplace = None):
-    num_restricted = indices.shape[-1]
-    num_individuals = data.shape[1]
-    max_delay = sweeped_delays.shape[0]
-    if inplace is None:
-        inplace = np.zeros([max_delay, num_individuals, num_individuals], dtype=data.dtype)
-    for i in range(num_individuals):
-        for ij,j in enumerate(indices[frame, i]):
-            sweep_delays_r = sweeped_delays[:,frame,i,ij]
-            orientation = data[frame,i]
-            inplace[:,i,j] += tt.dot(sweep_delays_r, orientation)
-    return inplace
-
 def fleshout_with_delay_(data, indices, sweeped_delays, frame, inplace = None):
     num_individuals = data.shape[1]
     max_delay = sweeped_delays.shape[0]
@@ -78,23 +65,6 @@ def fleshout_with_delay_(data, indices, sweeped_delays, frame, inplace = None):
         orientation_r = data[frame,i]
         inplace[:,i,indices[frame,i]] += np.einsum('ijk,k->ij',sweeped_delays_r, orientation_r)
     return inplace
-
-def fleshout_with_delay_f(data, indices, sweeped_delays, frame, inplace = None):
-    num_individuals = data.shape[1]
-    max_delay = sweeped_delays.shape[0]
-    if inplace is None:
-        inplace = np.zeros([num_individuals, num_individuals, max_delay], dtype=data.dtype)
-        
-    sweeped_delays_r = sweeped_delays[:,frame]
-    orientation_r = data[frame]
-    #t: delay, i:individual, n:neighbour, k:coordinate
-    a = np.einsum('tink,ik->int',sweeped_delays_r, orientation_r)
-
-    for i in range(num_individuals):
-        inplace[i,indices[frame,i]] += a[i]    
-    return np.transpose(inplace, (2,1,0))
-
-
 
 def give_connection_matrix(indices_in_frame, inplace = None):
     num_individuals = indices_in_frame.shape[0]
@@ -132,5 +102,21 @@ def sliding_average_fleshout_with_delay2(data, indices, sweep_delayed_e, start_f
             sum_fleshout[t][np.where(sum_connections>0)] /= sum_connections[np.where(sum_connections>0)]
         output.append(sum_fleshout)
     return output 
+
+#### For debugging
+
+def fleshout_with_delay_slow_(data, indices, sweeped_delays, frame, inplace = None):
+    # Only for debugging
+    num_restricted = indices.shape[-1]
+    num_individuals = data.shape[1]
+    max_delay = sweeped_delays.shape[0]
+    if inplace is None:
+        inplace = np.zeros([max_delay, num_individuals, num_individuals], dtype=data.dtype)
+    for i in range(num_individuals):
+        for ij,j in enumerate(indices[frame, i]):
+            sweep_delays_r = sweeped_delays[:,frame,i,ij]
+            orientation = data[frame,i]
+            inplace[:,i,j] += tt.dot(sweep_delays_r, orientation)
+    return inplace
 
 
