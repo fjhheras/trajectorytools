@@ -2,6 +2,7 @@ import numpy as np
 import trajectorytools as tt
 from .socialcontext import restrict
 
+
 def restrict_with_delay(data, indices, individual=None, delay=0):
     """Restricts data point to neighbours with a delay
 
@@ -23,6 +24,7 @@ def restrict_with_delay(data, indices, individual=None, delay=0):
         raise NotImplementedError
     return restrict(delayed_data, restricted_indices, individual=individual)
 
+
 def sweep_delays(data, indices, max_delay, individual=None):
     ''' This function sweeps delays of whole data
     and outputs an array with an extra dimension
@@ -32,13 +34,16 @@ def sweep_delays(data, indices, max_delay, individual=None):
     num_individuals = data.shape[1]
     coordinates = data.shape[-1]
     if individual is None:
-        output = np.empty([max_delay, total_time_steps, num_individuals, num_restricted, coordinates], dtype=data.dtype)
+        output = np.empty([max_delay, total_time_steps, num_individuals, 
+                           num_restricted, coordinates], dtype=data.dtype)
     else:
-        output = np.empty([max_delay, total_time_steps, num_restricted, coordinates], dtype=data.dtype)
+        output = np.empty([max_delay, total_time_steps, 
+                           num_restricted, coordinates], dtype=data.dtype)
     for delay in range(max_delay):
         delayed_restricted = restrict_with_delay(data, indices, delay=delay, individual=individual)
-        output[delay,...] = delayed_restricted[:total_time_steps]
+        output[delay, ...] = delayed_restricted[:total_time_steps]
     return output
+
 
 def sweep_delayed_orientation_with_neighbours(orientation, indices, max_delay):
     # Orientation: time x num_individuals x 2
@@ -55,6 +60,7 @@ def sweep_delayed_orientation_with_neighbours(orientation, indices, max_delay):
     # dimensions: delay x time x num_individuals
     return projected_orientation, sweep_delay_e
 
+
 def fleshout_with_delay_(data, indices, sweeped_delays, frame, inplace = None):
     num_individuals = data.shape[1]
     max_delay = sweeped_delays.shape[0]
@@ -66,6 +72,7 @@ def fleshout_with_delay_(data, indices, sweeped_delays, frame, inplace = None):
         inplace[:,i,indices[frame,i]] += np.einsum('ijk,k->ij',sweeped_delays_r, orientation_r)
     return inplace
 
+
 def give_connection_matrix(indices_in_frame, inplace = None):
     num_individuals = indices_in_frame.shape[0]
     if inplace is None:
@@ -76,16 +83,19 @@ def give_connection_matrix(indices_in_frame, inplace = None):
         connection_matrix[i, indices_in_frame[i,:]] += 1.0
     return connection_matrix
 
+
 def fleshout_with_delay(data, indices, sweep_delayed_e, frames):
     inplace = fleshout_with_delay_(data, indices, sweep_delayed_e, frames[0])
     for frame in frames[1:]:
         inplace = fleshout_with_delay_(data, indices, sweep_delayed_e, frame, inplace=inplace)
     return inplace/len(frames)
 
+
 def sliding_average_fleshout_with_delay(data, indices, sweep_delayed_e, start_frame=0, end_frame=None, num_frames_to_average = 50, force_one_thread = False):
     frames = range(start_frame, end_frame+num_frames_to_average)
     fleshout_list = [fleshout_with_delay_(data, indices, sweep_delayed_e, frame) for frame in frames]
     return [sum(fleshout_list[i:(i+num_frames_to_average)])/num_frames_to_average for i in range(end_frame-start_frame)]
+
 
 def sliding_average_fleshout_with_delay2(data, indices, sweep_delayed_e, start_frame=0, end_frame=None, num_frames_to_average = 50):
     max_delay = sweep_delayed_e.shape[0]
@@ -103,7 +113,8 @@ def sliding_average_fleshout_with_delay2(data, indices, sweep_delayed_e, start_f
         output.append(sum_fleshout)
     return output 
 
-#### For debugging
+# For debugging
+
 
 def fleshout_with_delay_slow_(data, indices, sweeped_delays, frame, inplace = None):
     # Only for debugging
@@ -118,5 +129,3 @@ def fleshout_with_delay_slow_(data, indices, sweeped_delays, frame, inplace = No
             orientation = data[frame,i]
             inplace[:,i,j] += tt.dot(sweep_delays_r, orientation)
     return inplace
-
-
