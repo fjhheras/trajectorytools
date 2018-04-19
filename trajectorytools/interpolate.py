@@ -35,6 +35,17 @@ def _nan_helper(y):
 
     return np.isnan(y), lambda z: z.nonzero()[0]
 
+def find_center(t):
+    """Find center of trajectories
+    
+    TODO: Change this to something more sophisticated
+
+    :param t: trajectory
+    """
+    center_x = (np.nanmax(t[...,0]) + np.nanmin(t[...,0]))/2
+    center_y = (np.nanmax(t[...,1]) + np.nanmin(t[...,1]))/2
+    return center_x, center_y 
+
 def normalise_trajectories(t):
     """Normalise trajectories in place so their values are between -1 and 1
 
@@ -45,11 +56,8 @@ def normalise_trajectories(t):
     norm_const_y = (np.nanmax(t[...,1]) - np.nanmin(t[...,1]))/2
     norm_const = max(norm_const_x, norm_const_y)
     
-    center_x = (np.nanmax(t[...,0]) + np.nanmin(t[...,0]))/2
-    center_y = (np.nanmax(t[...,1]) + np.nanmin(t[...,1]))/2
-    #mean_x = np.nanmean(t[:,:,0])
-    #mean_y = np.nanmean(t[:,:,1])
-    
+    center_x, center_y = find_center(t)
+   
     t[...,0] -= center_x
     t[...,1] -= center_y
     np.divide(t, norm_const, t)
@@ -58,16 +66,8 @@ def normalise_trajectories(t):
 def smooth_several(t, sigma = 2, truncate = 5, derivatives = [0]):
     return [smooth(t, sigma=sigma, truncate = truncate, derivative = derivative) for derivative in derivatives]
 
-def smooth(t, sigma = 2, truncate = 5, derivative = 0):#, interpolate = False, remove_extremes = True):
-    #if interpolate: ### Option to be removed
-    #    print("Warning: option to be removed")
-    #    interpolate_nans(t)
+def smooth(t, sigma = 2, truncate = 5, derivative = 0):
     smooth = gaussian_filter1d(t, sigma=sigma, axis=0, truncate = truncate, order = derivative)
-    #if remove_extremes:
-    #    print("Warning, to be removed")
-    #    cut = np.int(np.ceil(sigma))
-    #    return smooth[cut:-cut]
-    #else:
     return smooth
 
 def smooth_velocity(t, **kwargs):

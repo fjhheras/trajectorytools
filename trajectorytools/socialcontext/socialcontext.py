@@ -54,9 +54,12 @@ def in_alpha_border(positions):
 
 ### LOCAL NEIGHBOURS
 
-def _neighbours_indices_in_frame(positions, num_neighbours):
+def _neighbours_indices_in_frame(positions, num_neighbours, adjacency=False):
     nbrs = NearestNeighbors(n_neighbors=num_neighbours+1, algorithm='ball_tree').fit(positions)
-    return nbrs.kneighbors(positions, return_distance = False)
+    if adjacency:
+        return nbrs.kneighbors_graph(positions).toarray()
+    else:
+        return nbrs.kneighbors(positions, return_distance = False)
 
 def give_indices(positions, num_neighbours):
     total_time_steps = positions.shape[0]
@@ -65,6 +68,14 @@ def give_indices(positions, num_neighbours):
     for frame in range(total_time_steps):
         next_neighbours[frame,...] = _neighbours_indices_in_frame(positions[frame], num_neighbours)
     return next_neighbours
+
+def give_adjacency_matrix(positions, num_neighbours):
+    total_time_steps = positions.shape[0]
+    individuals = positions.shape[1]
+    adjacency_matrix = np.empty([total_time_steps, individuals, individuals], dtype = np.bool)
+    for frame in range(total_time_steps):
+        adjacency_matrix[frame,...] = _neighbours_indices_in_frame(positions[frame], num_neighbours, adjacency = True)
+    return adjacency_matrix
 
 def restrict(data, indices, individual=None):
     """restrict_with_delay

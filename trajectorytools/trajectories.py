@@ -14,11 +14,17 @@ class Trajectories():
         self.trajectories = trajectories
         self.center_of_mass = calculate_center_of_mass(trajectories)
         self.__dict__.update(vars(self.trajectories))
-
-    def view(self, start = None, end = None):
+    
+    def __getitem__(self, val):
         view_trajectories = Namespace()
-        vars(view_trajectories).update({k: v[start:end] for k,v in vars(self.trajectories).items()})
+        vars(view_trajectories).update({k: v[val] for k,v in vars(self.trajectories).items()})
         return Trajectories(view_trajectories)
+    
+    def view(self, start = None, end = None):
+        return self[slice(start,end)]
+        #view_trajectories = Namespace()
+        #vars(view_trajectories).update({k: v[start:end] for k,v in vars(self.trajectories).items()})
+        #return Trajectories(view_trajectories)
 
     @classmethod
     def from_idtracker(cls, trajectories_path, interpolate_nans = True, dtype = np.float64):
