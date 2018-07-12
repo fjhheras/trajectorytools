@@ -62,7 +62,6 @@ def find_enclosing_circle(t):
         assert not np.isnan(t).any()
         flat_t = t.reshape((-1, 2))
         P = [(x[0], x[1]) for x in flat_t]
-        print(P)
         mb = miniball.Miniball(P)
         center_x, center_y = mb.center()
         radius = np.sqrt(mb.squared_radius())

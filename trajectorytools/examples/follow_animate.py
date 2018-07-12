@@ -1,18 +1,18 @@
 import os
 import numpy as np
-import trajectorytools as tt 
+import trajectorytools as tt
 import trajectorytools.animation as ttanimation
 import trajectorytools.socialcontext as ttsocial
 from trajectorytools.constants import dir_of_data
 
-def simple_implementation(individual = 0, num_neighbours = 15):
+def animate_and_follow(individual = 0, num_neighbours = 15):
     test_trajectories_file = os.path.join(dir_of_data, 'test_trajectories.npy')
     t = np.load(test_trajectories_file)
     tt.interpolate_nans(t)
     tt.normalise_trajectories(t)
     s_ = tt.smooth(t)
     v_ = tt.smooth_velocity(t)
-    
+
     e_ = tt.normalise(v_[:,individual,:])
     s = tt.center_in_individual(s_,individual)
     s = tt.fixed_to_comoving(s,e_)
@@ -25,7 +25,7 @@ def simple_implementation(individual = 0, num_neighbours = 15):
 
     sf = s[:,[individual],:]
     vf = v[:,[individual],:]
-    
+
     anim = ttanimation.scatter_vectors(s, velocities = v, k = 10)
     anim += ttanimation.scatter_ellipses(s, velocities = v, color = 'c')
     anim += ttanimation.scatter_ellipses(sn, velocities = vn, color = 'b')
@@ -35,6 +35,6 @@ def simple_implementation(individual = 0, num_neighbours = 15):
     anim.show()
 
 if __name__ == '__main__':
-    simple_implementation()
+    animate_and_follow()
 
 
