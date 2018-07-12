@@ -1,7 +1,6 @@
 from collections import namedtuple
 import numpy as np
 import matplotlib as mpl
-import matplotlib.pyplot as plt
 
 Plotter = namedtuple('Plotter', 'first update')
 
@@ -14,7 +13,7 @@ def ellipse(color = 'c', size =[.04, .02] ):
     def update_function(xy, ax, patches):
         for i, patch in enumerate(patches):
             patch.center = xy[i,:2]
-            patch.angle = np.degrees(np.arctan2(xy[i,3],xy[i,2])) 
+            patch.angle = np.degrees(np.arctan2(xy[i,3],xy[i,2]))
             if len(xy[i,:]) > 4: #If there is color information, use it
                 patch.set_facecolor(xy[i,4:])
                 patch.set_edgecolor(xy[i,4:])
@@ -25,7 +24,7 @@ def ellipse(color = 'c', size =[.04, .02] ):
 #def identities():
 #    ##Changing this https://matplotlib.org/users/text_intro.html
 #    def plot_function(xy, ax):
-#        for 
+#        for
 #        patches = tuple(plt.text(x[0],x[1],str size[0],size[1],np.degrees(np.arctan2(x[3],x[2])), color = color, animated = True) for x in xy)
 #        for patch in patches:
 #            ax.add_patch(patch)
@@ -33,7 +32,7 @@ def ellipse(color = 'c', size =[.04, .02] ):
 #    def update_function(xy, ax, patches):
 #        for i, patch in enumerate(patches):
 #            patch.center = xy[i,:2]
-#            patch.angle = np.degrees(np.arctan2(xy[i,3],xy[i,2])) 
+#            patch.angle = np.degrees(np.arctan2(xy[i,3],xy[i,2]))
 #            patch.stale = True
 #        return patches
 #    return Plotter(first=plot_function, update=update_function)

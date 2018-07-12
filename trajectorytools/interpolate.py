@@ -1,3 +1,5 @@
+import traceback
+import logging
 import numpy as np
 from scipy.ndimage.filters import gaussian_filter1d
 
@@ -38,16 +40,41 @@ def _nan_helper(y):
     return np.isnan(y), lambda z: z.nonzero()[0]
 
 
-def find_center(t):
+def find_enclosing_circle_simple(t):
+    center_x = (np.nanmax(t[..., 0]) + np.nanmin(t[..., 0]))/2
+    center_y = (np.nanmax(t[..., 1]) + np.nanmin(t[..., 1]))/2
+    r_x = (np.nanmax(t[..., 0]) - np.nanmin(t[..., 0]))/2
+    r_y = (np.nanmax(t[..., 1]) - np.nanmin(t[..., 1]))/2
+    radius = max(r_x, r_y)
+    return center_x, center_y, radius
+
+
+def find_enclosing_circle(t):
     """Find center of trajectories
 
-    TODO: Change this to something more sophisticated
+    It first tries to use external library miniball. If it fails, it resorts
+    to a simpler algorithm.
 
     :param t: trajectory
     """
-    center_x = (np.nanmax(t[..., 0]) + np.nanmin(t[..., 0]))/2
-    center_y = (np.nanmax(t[..., 1]) + np.nanmin(t[..., 1]))/2
-    return center_x, center_y
+    try:
+        import miniball
+        assert not np.isnan(t).any()
+        flat_t = t.reshape((-1, 2))
+        P = [(x[0], x[1]) for x in flat_t]
+        print(P)
+        mb = miniball.Miniball(P)
+        center_x, center_y = mb.center()
+        radius = np.sqrt(mb.squared_radius())
+    except ImportError:
+        logging.error("Miniball was not used for centre detection")
+        logging.error("Please, install https://github.com/weddige/miniball")
+        center_x, center_y, radius = find_enclosing_circle_simple(t)
+    except Exception:
+        logging.error(traceback.format_exc())
+        logging.error("Miniball was not used for centre detection")
+        center_x, center_y, radius = find_enclosing_circle_simple(t)
+    return center_x, center_y, radius
 
 
 def normalise_trajectories(t):
@@ -56,16 +83,12 @@ def normalise_trajectories(t):
     :param t: trajectory, to be modified in place. Last dimension is (x,y)
     :returns: scale and shift to recover unnormalised trajectory
     """
-    norm_const_x = (np.nanmax(t[..., 0]) - np.nanmin(t[..., 0]))/2
-    norm_const_y = (np.nanmax(t[..., 1]) - np.nanmin(t[..., 1]))/2
-    norm_const = max(norm_const_x, norm_const_y)
-
-    center_x, center_y = find_center(t)
+    center_x, center_y, radius = find_enclosing_circle(t)
 
     t[..., 0] -= center_x
     t[..., 1] -= center_y
-    np.divide(t, norm_const, t)
-    return norm_const, center_x, center_y
+    np.divide(t, radius, t)
+    return radius, center_x, center_y
 
 
 def smooth_several(t, sigma=2, truncate=5, derivatives=[0]):
