@@ -63,11 +63,12 @@ def in_alpha_border(positions):
 # LOCAL NEIGHBOURS
 
 
-def _neighbours_indices_in_frame(positions, num_neighbours, adjacency=False):
+def _neighbours_indices_in_frame(positions, num_neighbours,
+                                 adjacency=False, mode='connectivity'):
     nbrs = NearestNeighbors(n_neighbors=num_neighbours+1,
                             algorithm='ball_tree').fit(positions)
     if adjacency:
-        return nbrs.kneighbors_graph(positions).toarray()
+        return nbrs.kneighbors_graph(positions, mode=mode).toarray()
     else:
         return nbrs.kneighbors(positions, return_distance=False)
 
@@ -83,22 +84,37 @@ def give_indices(positions, num_neighbours):
     return next_neighbours
 
 
-def give_adjacency_matrix(positions, num_neighbours):
+def give_adjacency_matrix(*args, **kwargs):
+    print("give_adjacency_matrix deprecated. Use adjacency_matrix")
+    raise NotImplementedError
+
+
+def adjacency_matrix(positions, num_neighbours=None, mode='connectivity'):
     total_time_steps = positions.shape[0]
     individuals = positions.shape[1]
-    adjacency_matrix = np.empty([total_time_steps, individuals,
+    if num_neighbours is None:
+        num_neighbours = individuals-1
+    if mode == 'connectivity':
+        adjacency_m = np.empty([total_time_steps, individuals,
                                 individuals], dtype=np.bool)
+    elif mode == 'distance':
+        adjacency_m = np.empty([total_time_steps, individuals,
+                                individuals], dtype=positions.dtype)
+    else:
+        raise ValueError("mode should be 'connectivity' or 'distance'")
+
     for frame in range(total_time_steps):
-        adjacency_matrix[frame, ...] = _neighbours_indices_in_frame(
-                    positions[frame], num_neighbours, adjacency=True)
-    return adjacency_matrix
+        adjacency_m[frame, ...] = _neighbours_indices_in_frame(
+                                            positions[frame], num_neighbours,
+                                            adjacency=True, mode=mode)
+    return adjacency_m
 
 
 def restrict(data, indices, individual=None):
     """restrict_with_delay
 
     :param data: np.array with dimensions time x individuals x coordinates
-    :param indices: np.array with dimensions time x individuals x subset_of_individuals  
+    :param indices: np.array with dimensions time x individuals x subset_of_individuals
     :param individual: label of individual to calculate restriction with delay. If None, calculating for all individuals
     """
     num_restricted = indices.shape[-1]
