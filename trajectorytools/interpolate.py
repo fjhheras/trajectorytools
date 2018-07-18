@@ -66,8 +66,8 @@ def find_enclosing_circle(t):
         center_x, center_y = mb.center()
         radius = np.sqrt(mb.squared_radius())
     except ImportError:
-        logging.error("Miniball was not used for centre detection")
-        logging.error("Please, install https://github.com/weddige/miniball")
+        logging.warning("Miniball was not used for centre detection")
+        logging.warning("Please, install https://github.com/weddige/miniball")
         center_x, center_y, radius = find_enclosing_circle_simple(t)
     except Exception:
         logging.error(traceback.format_exc())
