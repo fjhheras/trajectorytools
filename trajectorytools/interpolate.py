@@ -1,7 +1,7 @@
 import traceback
 import logging
 import numpy as np
-from scipy.ndimage.filters import gaussian_filter1d
+from scipy.ndimage.filters import gaussian_filter1d, convolve1d
 
 
 def interpolate_nans(t):
@@ -95,8 +95,13 @@ def smooth_several(t, sigma=2, truncate=5, derivatives=[0]):
                    derivative=derivative) for derivative in derivatives]
 
 
-def smooth(t, sigma=2, truncate=5, derivative=0):
-    smoothed = gaussian_filter1d(t, sigma=sigma, axis=0,
+def smooth(t, sigma=2, truncate=5, derivative=0, only_past=False):
+    if only_past:
+        kernel = np.exp(-np.arange(0.0,5.0)/sigma)
+        kernel /= kernel.sum()
+        smoothed = convolve1d(t, kernel, axis=0)
+    else:
+        smoothed = gaussian_filter1d(t, sigma=sigma, axis=0,
                                  truncate=truncate, order=derivative)
     return smoothed
 
@@ -111,7 +116,7 @@ def smooth_acceleration(t, **kwargs):
     return smooth(t, **kwargs)
 
 
-def velocity_acceleration_backwards(t, k_v_history=0.01):
+def velocity_acceleration_backwards(t, k_v_history=0.0):
     v = (1-k_v_history)*(t[2:] - t[1:-1]) + k_v_history*(t[1:-1] - t[:-2])
     a = t[2:] - 2*t[1:-1] + t[:-2]
     return t[2:], v, a
