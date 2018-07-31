@@ -76,17 +76,21 @@ def find_enclosing_circle(t):
     return center_x, center_y, radius
 
 
-def normalise_trajectories(t):
+def normalise_trajectories(t, body_length=None):
     """Normalise trajectories in place so their values are between -1 and 1
 
     :param t: trajectory, to be modified in place. Last dimension is (x,y)
     :returns: scale and shift to recover unnormalised trajectory
     """
     center_x, center_y, radius = find_enclosing_circle(t)
-
+    if body_length is not None:
+        np.divide(t, body_length, t)
+        center_x = center_x/body_length
+        center_y = center_y/body_length
     t[..., 0] -= center_x
     t[..., 1] -= center_y
-    np.divide(t, radius, t)
+    if body_length is None:
+        np.divide(t, radius, t)
     return radius, center_x, center_y
 
 

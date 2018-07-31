@@ -29,21 +29,23 @@ class Trajectories():
 
     @classmethod
     def from_idtracker(cls, trajectories_path,
-                       interpolate_nans=True, normalise=True,
+                       interpolate_nans=True, normalise=True, body_length=None,
                        smooth_sigma=0, diff_backwards=True, dtype=np.float64):
         traj_dict = np.load(trajectories_path, encoding='latin1').item()
         # Bring here the properties that we need from the dictionary
         t = traj_dict['trajectories'].astype(dtype)
+        body_length = traj_dict.get('body_length', body_length) 
         return cls.from_positions(t, interpolate_nans=interpolate_nans,
                                   smooth_sigma=smooth_sigma,
-                                  diff_backwards=diff_backwards)
+                                  diff_backwards=diff_backwards,
+                                  body_length=body_length)
 
     @classmethod
     def from_positions(cls, t, interpolate_nans=True, smooth_sigma=0,
-                       diff_backwards=True):
+                       diff_backwards=True, body_length=None):
         trajectories = Namespace()
         trajectories.raw = t.copy()
-        tt.normalise_trajectories(t)
+        tt.normalise_trajectories(t, body_length)
         if interpolate_nans:
             tt.interpolate_nans(t)
         if smooth_sigma > 0:
