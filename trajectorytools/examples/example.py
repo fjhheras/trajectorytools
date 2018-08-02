@@ -13,22 +13,23 @@ if __name__ == '__main__':
 
     n = t.shape[1]
     print("Number of fish: ", n)
+    n_to_plot = 4
 
     v = tt.norm(v_)
     a = tt.norm(a_)
 
     fig, ax_hist = plt.subplots(5)
-    for i in range(5):
-        ttplot.histogram(v[:,i], ax_hist[i])
+    for i in range(n_to_plot):
+        ax_hist[i].hist(v[:,i])
 
     e_ = tt.normalise(v_)
     fig, ax = plt.subplots(2)
-    for i in range(n):
+    for i in range(n_to_plot):
         ax[0].plot(v[:,i])
         ax[1].plot(a[:,i])
 
     fig, ax_trajectories = plt.subplots()
-    for i in range(n):
+    for i in range(n_to_plot):
         ax_trajectories.plot(s_[:,i,0], s_[:,i,1])
 
     plt.show()

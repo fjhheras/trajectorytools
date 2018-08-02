@@ -97,9 +97,11 @@ def smooth_several(t, sigma=2, truncate=5, derivatives=[0]):
 
 def smooth(t, sigma=2, truncate=5, derivative=0, only_past=False):
     if only_past:
-        kernel = np.exp(-np.arange(0.0,5.0)/sigma)
+        kernel_radius = 2 #TODO: change dynamically with input
+        kernel_size = kernel_radius*2 + 1.0
+        kernel = np.exp(-np.arange(0.0,kernel_size)**2/2/sigma**2)
         kernel /= kernel.sum()
-        smoothed = convolve1d(t, kernel, axis=0)
+        smoothed = convolve1d(t, kernel, axis=0, origin=-kernel_radius)
     else:
         smoothed = gaussian_filter1d(t, sigma=sigma, axis=0,
                                  truncate=truncate, order=derivative)
