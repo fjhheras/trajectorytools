@@ -83,13 +83,11 @@ def normalise_trajectories(t, body_length=None):
     :returns: scale and shift to recover unnormalised trajectory
     """
     center_x, center_y, radius = find_enclosing_circle(t)
-    if body_length is not None:
-        np.divide(t, body_length, t)
-        center_x = center_x/body_length
-        center_y = center_y/body_length
     t[..., 0] -= center_x
     t[..., 1] -= center_y
-    if body_length is None:
+    if body_length is not None:
+        np.divide(t, body_length, t)
+    else:
         np.divide(t, radius, t)
     return radius, center_x, center_y
 
@@ -101,6 +99,7 @@ def smooth_several(t, sigma=2, truncate=5, derivatives=[0]):
 
 def smooth(t, sigma=2, truncate=5, derivative=0, only_past=False):
     if only_past:
+        assert derivative == 0 # Not implemented for more
         kernel_radius = 2 #TODO: change dynamically with input
         kernel_size = kernel_radius*2 + 1.0
         kernel = np.exp(-np.arange(0.0,kernel_size)**2/2/sigma**2)
