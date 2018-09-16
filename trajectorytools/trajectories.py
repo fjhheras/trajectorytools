@@ -49,9 +49,9 @@ class Trajectories():
                        only_past=True, body_length=None, frame_rate=None):
         trajectories = Namespace()
         trajectories.raw = t.copy()
-        tt.normalise_trajectories(t, body_length)
         if interpolate_nans:
             tt.interpolate_nans(t)
+        tt.normalise_trajectories(t, body_length)
         if smooth_sigma > 0:
             t_smooth = tt.smooth(t, sigma=smooth_sigma,
                                  only_past=only_past)
