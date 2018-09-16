@@ -41,11 +41,12 @@ class Trajectories():
         return cls.from_positions(t, interpolate_nans=interpolate_nans,
                                   smooth_sigma=smooth_sigma,
                                   only_past=only_past,
-                                  body_length=body_length)
+                                  body_length=body_length,
+                                  frame_rate=traj_dict['frames_per_second'])
 
     @classmethod
     def from_positions(cls, t, interpolate_nans=True, smooth_sigma=0,
-                       only_past=True, body_length=None):
+                       only_past=True, body_length=None, frame_rate=None):
         trajectories = Namespace()
         trajectories.raw = t.copy()
         tt.normalise_trajectories(t, body_length)
