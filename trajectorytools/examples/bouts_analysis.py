@@ -2,13 +2,13 @@ import os
 import numpy as np
 from matplotlib import pyplot as plt
 import trajectorytools as tt
-from trajectorytools.fish_bouts import get_bouts_1
+from trajectorytools.fish_bouts import get_bouts
 from trajectorytools.constants import dir_of_data
 
 
 def plot_bouts(ax, starting_frame, focal):
-    time_range = (starting_frame, starting_frame + 290)  # in frames
-    frame_range = range(time_range[0], time_range[1], 1)  # Select only the first 60 seconds for plotting
+    time_range = (starting_frame, starting_frame + 290)
+    frame_range = range(time_range[0], time_range[1], 1)
     starting_bouts = all_starting_bouts[focal][
         np.where((all_starting_bouts[focal] > frame_range[0]) &
                  ((all_starting_bouts[focal] < frame_range[-1])))]
@@ -30,12 +30,9 @@ if __name__ == '__main__':
                                         smooth_sigma=.5,
                                         interpolate_nans=True)
 
-    all_starting_bouts, all_bout_peaks = get_bouts_1(tr,
+    all_starting_bouts, all_bout_peaks = get_bouts(tr,
                                                      prominence=(0.002, None),
                                                      distance=3)
-
-
-
 
     fig, ax = plt.subplots(10, figsize=(20, 20), sharex=True, sharey=True)
     for i in range(10):

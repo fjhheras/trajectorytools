@@ -1,9 +1,8 @@
 import numpy as np
 from scipy import signal
-import trajectorytools as tt
 
 
-def get_bouts_1(tr, prominence, distance):
+def get_bouts(tr, prominence, distance):
     all_starting_bouts = []
     all_bout_peaks = []
     for focal in range(tr.number_of_individuals):
