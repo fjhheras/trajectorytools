@@ -131,7 +131,7 @@ def plot_individual_distribution_of_vector(vector, indices, nbins = 10, ticks = 
     return fig
 
 ## Old scripts for removal below
-#import warnings
+import warnings
 #
 #def histogram(v, ax):
 #    valid = np.logical_not(np.isnan(v[:]))
@@ -139,14 +139,14 @@ def plot_individual_distribution_of_vector(vector, indices, nbins = 10, ticks = 
 #    ax.hist(vv)
 #    warnings.warn("Fraction to be removed!", DeprecationWarning)
 #
-#def position_histogram(trajectories):
-#    warnings.warn("Fuction to be removed!", DeprecationWarning)
-#    nbinsX = 100
-#    nbinsY = 100
-#    histogram2d = np.zeros((nbinsX, nbinsY))
-#    for i in range(trajectories.shape[1]):
-#        H, xedges, yedges = np.histogram2d(trajectories[:,i,0], trajectories[:,i,1], bins=(nbinsX, nbinsY))
-#        histogram2d += H
-#
-#    average_histogram_2d = histogram2d / trajectories.shape[1]
-#    return average_histogram_2d
+def position_histogram(trajectories):
+   warnings.warn("Fuction to be removed!", DeprecationWarning)
+   nbinsX = 100
+   nbinsY = 100
+   histogram2d = np.zeros((nbinsX, nbinsY))
+   for i in range(trajectories.shape[1]):
+       H, xedges, yedges = np.histogram2d(trajectories[:,i,0], trajectories[:,i,1], bins=(nbinsX, nbinsY))
+       histogram2d += H
+
+   average_histogram_2d = histogram2d / trajectories.shape[1]
+   return average_histogram_2d
