@@ -35,6 +35,7 @@ def get_bouts(tr, prominence, distance):
                         bouts.append(bout)
                         bout = []
             else:
+                print('pass')
                 bout = []
         starting_bouts, bout_peaks = zip(*bouts)
         starting_bouts = np.asarray(starting_bouts)
