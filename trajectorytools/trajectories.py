@@ -51,7 +51,8 @@ class Trajectories():
         trajectories.raw = t.copy()
         if interpolate_nans:
             tt.interpolate_nans(t)
-        tt.normalise_trajectories(t, body_length)
+        radius, center_x, center_y = \
+            tt.normalise_trajectories(t, body_length)
         if smooth_sigma > 0:
             t_smooth = tt.smooth(t, sigma=smooth_sigma,
                                  only_past=only_past)
@@ -73,7 +74,14 @@ class Trajectories():
         trajectories.curvature = tt.curvature(trajectories.v, trajectories.a)
         trajectories.normal_acceleration = \
             np.square(trajectories.speed)*trajectories.curvature
-        return cls(trajectories)
+        traj = cls(trajectories)
+        traj.params = {"frame_rate": frame_rate,
+                       "body_length": body_length,
+                       "center_x": center_x,
+                       "center_y": center_y,
+                       "radius": radius}
+        return traj
+
 
     @property
     def number_of_frames(self):
