@@ -18,7 +18,7 @@ def cross2D(v,w, keepdims = False):
 def matrix_dot(matrix, data):
     if len(matrix.shape) == 2:
         # Same matrix for everyone
-        return np.einsum('ij,...j->...i')
+        return np.einsum('ij,...j->...i', matrix, data)
     elif len(matrix.shape) == 3:
         # Each frame has a matrix
         return np.einsum('kij,k...j->k...i', matrix, data)
@@ -49,13 +49,16 @@ def curvature(v,a):
 def fixed_to_comoving(data, e_y):
     return matrix_dot(matrix_rotate_to_vector(e_y), data)
 
+#def comoving_to_fixed(data, e_y):
+#    return matrix_dot(matrix_rotate_to_vector(e_y).transpose(), data)
+
 def matrix_rotate_to_normalised_vector(e_y):
     e_x = _ey_to_ex(e_y)
     return np.stack((e_x,e_y), axis = -2)
 
 def matrix_rotate_to_vector(v):
     e_y = normalise(v)
-    return matrix_rotate_to_normalised_vector(e_y) 
+    return matrix_rotate_to_normalised_vector(e_y)
 
 def center_in_trajectory(data, trajectory):
     return data - np.expand_dims(trajectory,1)
