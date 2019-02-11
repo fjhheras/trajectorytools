@@ -87,10 +87,10 @@ def normalise_trajectories(t, body_length=None):
     t[..., 1] -= center_y
     if body_length is not None:
         np.divide(t, body_length, t)
-        return radius/body_length, center_x/body_length, center_y/body_length
+        return radius/body_length, center_x/body_length, center_y/body_length, body_length
     else:
         np.divide(t, radius, t)
-        return 1, center_x/radius, center_y/radius
+        return 1, center_x/radius, center_y/radius, radius
 
 
 def smooth_several(t, sigma=2, truncate=5, derivatives=[0]):
