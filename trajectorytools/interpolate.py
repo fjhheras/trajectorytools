@@ -76,13 +76,15 @@ def find_enclosing_circle(t):
     return center_x, center_y, radius
 
 
-def normalise_trajectories(t, body_length=None):
+def normalise_trajectories(t, body_length=None, forced_radius=None):
     """Normalise trajectories in place so their values are between -1 and 1
 
     :param t: trajectory, to be modified in place. Last dimension is (x,y)
     :returns: scale and shift to recover unnormalised trajectory
     """
+    ### NOTE: Make function more general as now it depends on body_length and radius inputs
     center_x, center_y, radius = find_enclosing_circle(t)
+    radius = radius if forced_radius is None else forced_radius
     t[..., 0] -= center_x
     t[..., 1] -= center_y
     if body_length is not None:

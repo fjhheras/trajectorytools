@@ -34,25 +34,25 @@ class Trajectories():
         traj_dict = np.load(trajectories_path, encoding='latin1').item()
         # Bring here the properties that we need from the dictionary
         t = traj_dict['trajectories'].astype(dtype)
-        if body_length == -1: #Force radius
-            body_length = None
-        else:
-            body_length = traj_dict.get('body_length', body_length)
+        body_length = None if body_length == -1 else traj_dict.get('body_length', body_length) #-1 forces radius normalization
+        arena_radius = traj_dict.get('arena_radius', None)
         return cls.from_positions(t, interpolate_nans=interpolate_nans,
                                   smooth_sigma=smooth_sigma,
                                   only_past=only_past,
                                   body_length=body_length,
-                                  frame_rate=traj_dict['frames_per_second'])
+                                  frame_rate=traj_dict['frames_per_second'],
+                                  arena_radius=arena_radius)
 
     @classmethod
     def from_positions(cls, t, interpolate_nans=True, smooth_sigma=0,
-                       only_past=True, body_length=None, frame_rate=None):
+                       only_past=True, body_length=None, frame_rate=None,
+                       arena_radius=None):
         trajectories = Namespace()
         trajectories.raw = t.copy()
         if interpolate_nans:
             tt.interpolate_nans(t)
         radius, center_x, center_y = \
-            tt.normalise_trajectories(t, body_length)
+            tt.normalise_trajectories(t, body_length, arena_radius)
         if smooth_sigma > 0:
             t_smooth = tt.smooth(t, sigma=smooth_sigma,
                                  only_past=only_past)
