@@ -51,8 +51,9 @@ class Trajectories():
         trajectories.raw = t.copy()
         if interpolate_nans:
             tt.interpolate_nans(t)
-        radius, center_x, center_y = \
-            tt.normalise_trajectories(t, body_length, arena_radius)
+        radius, center_x, center_y, unit_length = \
+            tt.center_trajectories_and_normalise(t, unit_length=body_length,
+                                      forced_radius=arena_radius)
         if smooth_sigma > 0:
             t_smooth = tt.smooth(t, sigma=smooth_sigma,
                                  only_past=only_past)
