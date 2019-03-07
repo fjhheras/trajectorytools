@@ -2,7 +2,7 @@ import os
 import numpy as np
 import matplotlib as mpl
 
-import trajectorytools as tt 
+import trajectorytools as tt
 import trajectorytools.plot as ttplot
 import trajectorytools.animation as ttanimation
 import trajectorytools.socialcontext as ttsocial
@@ -11,7 +11,7 @@ from trajectorytools.constants import dir_of_data
 if __name__ == '__main__':
     test_trajectories_file = os.path.join(dir_of_data, 'test_trajectories.npy')
     t = np.load(test_trajectories_file)
-    tt.normalise_trajectories(t)
+    tt.center_trajectories_and_normalise(t)
     tt.interpolate_nans(t)
     [s_,v_] = tt.smooth_several(t, derivatives=[0,1])
     speed = tt.norm(v_)

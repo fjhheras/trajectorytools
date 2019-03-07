@@ -9,7 +9,7 @@ def animate_and_follow(individual = 0, num_neighbours = 15):
     test_trajectories_file = os.path.join(dir_of_data, 'test_trajectories.npy')
     t = np.load(test_trajectories_file)
     tt.interpolate_nans(t)
-    tt.normalise_trajectories(t)
+    tt.center_trajectories_and_normalise(t)
     s_ = tt.smooth(t)
     v_ = tt.smooth_velocity(t)
 
