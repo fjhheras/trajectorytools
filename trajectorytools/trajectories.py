@@ -34,7 +34,12 @@ class Trajectories():
         traj_dict = np.load(trajectories_path, encoding='latin1').item()
         # Bring here the properties that we need from the dictionary
         t = traj_dict['trajectories'].astype(dtype)
-        body_length = None if body_length == -1 else traj_dict.get('body_length', body_length) #-1 forces radius normalization
+
+        if body_length == -1: #-1 forces radius normalization
+            body_length = None
+        else:
+            body_length = traj_dict.get('body_length', body_length)
+
         arena_radius = traj_dict.get('arena_radius', None)
         return cls.from_positions(t, interpolate_nans=interpolate_nans,
                                   smooth_sigma=smooth_sigma,
@@ -80,7 +85,8 @@ class Trajectories():
                        "body_length": body_length,
                        "center_x": center_x,
                        "center_y": center_y,
-                       "radius": radius}
+                       "radius": radius,
+                       "unit_length": unit_length}
         return traj
 
 
