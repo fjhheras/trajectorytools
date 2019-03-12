@@ -7,10 +7,10 @@ def restrict_with_delay(data, indices, individual=None, delay=0):
     """Restricts data point to neighbours with a delay
 
     :param data: np.array with dimensions time x individuals x coordinates
-    :param indices: np.array with dimensions time x individuals x subset_of_individuals  
+    :param indices: np.array with dimensions time x individuals x subset_of_individuals
     :param individual: label of individual to calculate restriction with delay. If None, calculating for all individuals
-    :param delay: 
-    
+    :param delay:
+
     This function works as ttsocial.restrict, but
     it first applies a delay in data, and cuts down the
     indices accordingly
@@ -34,10 +34,10 @@ def sweep_delays(data, indices, max_delay, individual=None):
     num_individuals = data.shape[1]
     coordinates = data.shape[-1]
     if individual is None:
-        output = np.empty([max_delay, total_time_steps, num_individuals, 
+        output = np.empty([max_delay, total_time_steps, num_individuals,
                            num_restricted, coordinates], dtype=data.dtype)
     else:
-        output = np.empty([max_delay, total_time_steps, 
+        output = np.empty([max_delay, total_time_steps,
                            num_restricted, coordinates], dtype=data.dtype)
     for delay in range(max_delay):
         delayed_restricted = restrict_with_delay(data, indices, delay=delay, individual=individual)
@@ -76,7 +76,7 @@ def fleshout_with_delay_(data, indices, sweeped_delays, frame, inplace = None):
 def give_connection_matrix(indices_in_frame, inplace = None):
     num_individuals = indices_in_frame.shape[0]
     if inplace is None:
-        connection_matrix = np.zeros([num_individuals, num_individuals])  
+        connection_matrix = np.zeros([num_individuals, num_individuals])
     else:
         connection_matrix = inplace
     for i in range(num_individuals):
@@ -91,7 +91,7 @@ def fleshout_with_delay(data, indices, sweep_delayed_e, frames):
     return inplace/len(frames)
 
 
-def sliding_average_fleshout_with_delay(data, indices, sweep_delayed_e, start_frame=0, end_frame=None, num_frames_to_average = 50, force_one_thread = False):
+def sliding_average_fleshout_with_delay(data, indices, sweep_delayed_e, start_frame=0, end_frame=None, num_frames_to_average = 50):
     frames = range(start_frame, end_frame+num_frames_to_average)
     fleshout_list = [fleshout_with_delay_(data, indices, sweep_delayed_e, frame) for frame in frames]
     return [sum(fleshout_list[i:(i+num_frames_to_average)])/num_frames_to_average for i in range(end_frame-start_frame)]
@@ -111,7 +111,7 @@ def sliding_average_fleshout_with_delay2(data, indices, sweep_delayed_e, start_f
         for t in range(max_delay):
             sum_fleshout[t][np.where(sum_connections>0)] /= sum_connections[np.where(sum_connections>0)]
         output.append(sum_fleshout)
-    return output 
+    return output
 
 # For debugging
 
