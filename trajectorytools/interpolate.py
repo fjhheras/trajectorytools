@@ -85,13 +85,11 @@ def center_trajectories_and_obtain_radius(t, forced_radius=None):
 def center_trajectories_and_normalise(t, unit_length=None, forced_radius=None):
     center_x, center_y, radius = center_trajectories_and_obtain_radius(t,
                                                 forced_radius=forced_radius)
-    if unit_length is not None:
-        np.divide(t, unit_length, t)
-        return radius/unit_length, center_x/unit_length, center_y/unit_length, unit_length
-    else:
-        np.divide(t, radius, t)
-        return 1, center_x/radius, center_y/radius, radius
+    if unit_length is None:
+        unit_length = radius
+    np.divide(t, unit_length, t)
 
+    return radius/unit_length, center_x/unit_length, center_y/unit_length, unit_length
 
 def smooth_several(t, sigma=2, truncate=5, derivatives=[0]):
     return [smooth(t, sigma=sigma, truncate=truncate,

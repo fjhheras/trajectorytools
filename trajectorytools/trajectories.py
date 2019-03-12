@@ -29,36 +29,44 @@ class Trajectories():
 
     @classmethod
     def from_idtracker(cls, trajectories_path,
-                       interpolate_nans=True, normalise=True, body_length=None,
+                       interpolate_nans=True, normalise_by='body length',
                        smooth_sigma=0, only_past=True, dtype=np.float64):
         traj_dict = np.load(trajectories_path, encoding='latin1').item()
-        # Bring here the properties that we need from the dictionary
         t = traj_dict['trajectories'].astype(dtype)
 
-        if body_length == -1: #-1 forces radius normalization
-            body_length = None
-        else:
-            body_length = traj_dict.get('body_length', body_length)
-
+        # If the trajectories contain the arena radius information, use it
+        # Otherwise, return 0 for radius to be estimated from trajectories
         arena_radius = traj_dict.get('arena_radius', None)
+
+        if normalise_by == 'body length':
+            unit_length = traj_dict['body_length']
+        elif normalise_by == 'radius':
+            unit_length = None
+        elif normalise_by is None:
+            unit_length = 1
+        else:
+            unit_length = float(normalise_by)
+            assert unit_length > 0
+
         return cls.from_positions(t, interpolate_nans=interpolate_nans,
                                   smooth_sigma=smooth_sigma,
                                   only_past=only_past,
-                                  body_length=body_length,
+                                  unit_length=unit_length,
                                   frame_rate=traj_dict['frames_per_second'],
                                   arena_radius=arena_radius)
 
     @classmethod
     def from_positions(cls, t, interpolate_nans=True, smooth_sigma=0,
-                       only_past=True, body_length=None, frame_rate=None,
+                       only_past=True, unit_length=None, frame_rate=None,
                        arena_radius=None):
         trajectories = Namespace()
         trajectories.raw = t.copy()
         if interpolate_nans:
             tt.interpolate_nans(t)
+
         radius, center_x, center_y, unit_length = \
-            tt.center_trajectories_and_normalise(t, unit_length=body_length,
-                                      forced_radius=arena_radius)
+            tt.center_trajectories_and_normalise(t, unit_length=unit_length,
+                                                 forced_radius=arena_radius)
         if smooth_sigma > 0:
             t_smooth = tt.smooth(t, sigma=smooth_sigma,
                                  only_past=only_past)
@@ -82,11 +90,10 @@ class Trajectories():
             np.square(trajectories.speed)*trajectories.curvature
         traj = cls(trajectories)
         traj.params = {"frame_rate": frame_rate,
-                       "body_length": body_length,
-                       "center_x": center_x,
-                       "center_y": center_y,
-                       "radius": radius,
-                       "unit_length": unit_length}
+                       "center_x": center_x,            # Units: unit_length
+                       "center_y": center_y,            # Units: unit length
+                       "radius": radius,                # Units: unit length
+                       "unit_length": unit_length}      # Units: pixels
         return traj
 
 
