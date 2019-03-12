@@ -29,7 +29,7 @@ class Trajectories():
 
     @classmethod
     def from_idtracker(cls, trajectories_path,
-                       interpolate_nans=True, normalise_by='body length',
+                       interpolate_nans=True, normalise_by=1,
                        smooth_sigma=0, only_past=True, dtype=np.float64):
         traj_dict = np.load(trajectories_path, encoding='latin1').item()
         t = traj_dict['trajectories'].astype(dtype)
