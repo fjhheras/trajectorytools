@@ -11,10 +11,9 @@ Installation
 The whole thing is really starting, so I recommend installing
 locally with a symlink:
   
-   ```Shell
-   pip install -e .
-   ```
-
+.. code-block:: bash
+pip install -e .
+   
 In the folder "examples", you can find some example scripts. They
 use some example trajectories, that can be found in folder "data".
 Trajectories were obtained using idtracker.ai on videos recorded
