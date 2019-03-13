@@ -31,6 +31,20 @@ class Trajectories():
     def from_idtracker(cls, trajectories_path,
                        interpolate_nans=True, normalise_by=1,
                        smooth_sigma=0, only_past=True, dtype=np.float64):
+        """Create Trajectories from a idtracker.ai trajectories file
+
+        :param trajectories_path: idtracker.ai generated trajectories file
+        :param interpolate_nans: whether to interpolate NaNs
+        :param normalise_by: If a number is provided, all trajectories are
+        scaled using that number. If 'radius', the program tries to obtain
+        'arena_radius' from idtracker.ai trajectories. Failing that, it uses
+        the smallest circle containing all trajectories. If 'body length', it
+        looks for body length information in the idtrakcer.ai trajectory.
+        :param smooth_sigma: Sigma of smoothing (semi-)gaussian.
+        :param only_past: Only smooth using data from past frames.
+        :param dtype: Desired dtype of trajectories.
+        """
+
         traj_dict = np.load(trajectories_path, encoding='latin1').item()
         t = traj_dict['trajectories'].astype(dtype)
 
@@ -38,7 +52,7 @@ class Trajectories():
         # Otherwise, return 0 for radius to be estimated from trajectories
         arena_radius = traj_dict.get('arena_radius', None)
 
-        if normalise_by == 'body length':
+        if normalise_by == 'body length' or normalise_by == 'body_length':
             unit_length = traj_dict['body_length']
         elif normalise_by == 'radius':
             unit_length = None
