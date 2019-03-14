@@ -2,7 +2,6 @@ import os
 import numpy as np
 from matplotlib import pyplot as plt
 import trajectorytools as tt
-from trajectorytools.fish_bouts import get_bouts as get_bouts
 from trajectorytools.constants import dir_of_data
 
 
@@ -24,19 +23,17 @@ def plot_bouts(ax, starting_frame, focal):
 
 if __name__ == '__main__':
     plt.ion()
-    #test_trajectories_file = os.path.join(dir_of_data, 'test_trajectories.npy')
-    #positions = np.load(test_trajectories_file, encoding='latin1')
-    #tr = tt.Trajectories.from_positions(positions,
-    #                                    smooth_sigma=.5,
-    #                                    only_past=False,
-    #                                    interpolate_nans=True)
 
-    tr = tt.Trajectories.from_idtracker('/home/numan/trajectories-git/100/g1f',
-                                        smooth_sigma=.5)
+    test_trajectories_file = os.path.join(dir_of_data, 'test_trajectories.npy')
+    positions = np.load(test_trajectories_file, encoding='latin1')
+    tr = tt.FishTrajectories.from_positions(positions,
+                                            smooth_sigma=.5,
+                                            only_past=False,
+                                            interpolate_nans=True)
 
-    all_starting_bouts, all_bout_peaks = get_bouts(tr,
-                                                   prominence=(0.002, None),
-                                                   distance=3)
+    all_starting_bouts, all_bout_peaks = tr.get_bouts(
+                                                     prominence=(0.002, None),
+                                                     distance=3)
 
     fig, ax = plt.subplots(10, figsize=(20, 20), sharex=True, sharey=True)
     for i in range(10):

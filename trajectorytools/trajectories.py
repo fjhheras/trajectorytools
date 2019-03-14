@@ -1,4 +1,5 @@
 from argparse import Namespace
+from scipy import signal
 import numpy as np
 import trajectorytools as tt
 
@@ -128,3 +129,32 @@ class Trajectories():
     def identities_array(self):
         ones = np.ones(self.raw.shape[:-1], dtype=np.int)
         return np.einsum('ij,j->ij', ones, self.identity_labels)
+
+
+class FishTrajectories(Trajectories):
+    def get_bouts(self, **kwargs):
+        """Obtain bouts start and peak for all individuals
+
+        :param **kwargs: named arguments passed to scipy.signal.find_peaks
+        """
+        all_starting_bouts = []
+        all_bout_peaks = []
+        for focal in range(self.number_of_individuals):
+            # Find local minima and maxima
+            min_frames_ = signal.find_peaks(-self.speed[:, focal], **kwargs)[0]
+            max_frames_ = signal.find_peaks(self.speed[:, focal], **kwargs)[0]
+            # Filter out NaNs
+            min_frames = [f for f in min_frames_
+                          if not np.isnan(self.s[f, focal, 0])]
+            max_frames = [f for f in max_frames_
+                          if not np.isnan(self.s[f, focal, 0])]
+            # Obtain couples of consecutive minima and maxima
+            frames = min_frames + max_frames
+            frameismax = [False]*len(min_frames) + [True]*len(max_frames)
+            ordered_frames, ordered_ismax = zip(*sorted(zip(frames, frameismax)))
+            bouts = [ordered_frames[i:i+2] for i in range(len(ordered_frames)-1)
+                    if not ordered_ismax[i] and ordered_ismax[i+1]]
+            starting_bouts, bout_peaks = zip(*bouts)
+            all_starting_bouts.append(np.asarray(starting_bouts))
+            all_bout_peaks.append(np.asarray(bout_peaks))
+        return all_starting_bouts, all_bout_peaks
