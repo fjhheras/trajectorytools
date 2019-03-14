@@ -30,8 +30,8 @@ class Trajectories():
 
     @classmethod
     def from_idtracker(cls, trajectories_path,
-                       interpolate_nans=True, normalise_by=1,
-                       smooth_sigma=0, only_past=True, dtype=np.float64):
+                       interpolate_nans=True, normalise_by=1, center=False,
+                       smooth_sigma=0, only_past=False, dtype=np.float64):
         """Create Trajectories from a idtracker.ai trajectories file
 
         :param trajectories_path: idtracker.ai generated trajectories file
@@ -41,6 +41,8 @@ class Trajectories():
         'arena_radius' from idtracker.ai trajectories. Failing that, it uses
         the smallest circle containing all trajectories. If 'body length', it
         looks for body length information in the idtrakcer.ai trajectory.
+        :param center: Whether to center trajectories, using a center estimated
+        from the trajectories.
         :param smooth_sigma: Sigma of smoothing (semi-)gaussian.
         :param only_past: Only smooth using data from past frames.
         :param dtype: Desired dtype of trajectories.
@@ -68,26 +70,56 @@ class Trajectories():
                                   only_past=only_past,
                                   unit_length=unit_length,
                                   frame_rate=traj_dict['frames_per_second'],
-                                  arena_radius=arena_radius)
+                                  arena_radius=arena_radius,
+                                  center=center)
 
     @classmethod
     def from_positions(cls, t, interpolate_nans=True, smooth_sigma=0,
-                       only_past=True, unit_length=None, frame_rate=None,
-                       arena_radius=None):
+                       only_past=False, unit_length=1, frame_rate=None,
+                       arena_radius=None, center=False):
+        """Trajectory from positions
+
+        :param t: Positions nd.array.
+        :param interpolate_nans: whether to interpolate NaNs
+        :param smooth_sigma: Sigma of smoothing (semi-)gaussian
+        :param only_past: Smooth data using only past frames
+        :param unit_length: Normalisation constant. If None, radius is used.
+        :param frame_rate: Declared frame rate (currently not used)
+        :param arena_radius: Declared arena radius (overrides radius estimation)
+        :param center: Whether to offset trajectories (center to 0)
+        """
         trajectories = Namespace()
         trajectories.raw = t.copy()
+
+        # Interpolate trajectories
         if interpolate_nans:
             tt.interpolate_nans(t)
 
-        radius, center_x, center_y, unit_length = \
-            tt.center_trajectories_and_normalise(t, unit_length=unit_length,
-                                                 forced_radius=arena_radius)
+        # Center and scale trajectories
+        if center:
+            radius, center_x, center_y, unit_length = \
+                tt.center_trajectories_and_normalise(t,
+                                                     unit_length=unit_length,
+                                                     forced_radius=arena_radius)
+        else:
+            if unit_length is None: #Use radius to normalise
+                if arena_radius is None: #This means, calculate radius
+                    _, _, unit_length = tt.find_enclosing_circle(t)
+                else:
+                    unit_length = arena_radius
+                radius = 1.0
+            else: # Do not bother with radius
+                radius = None
+            center_x, center_y = 0.0, 0.0
+            np.divide(t, unit_length, t)
+
         if smooth_sigma > 0:
             t_smooth = tt.smooth(t, sigma=smooth_sigma,
                                  only_past=only_past)
         else:
             t_smooth = t
 
+        # Smooth trajectories
         if only_past:
             [trajectories.s, trajectories.v, trajectories.a] = \
                 tt.velocity_acceleration_backwards(t_smooth)

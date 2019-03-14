@@ -28,7 +28,6 @@ if __name__ == '__main__':
     positions = np.load(test_trajectories_file, encoding='latin1')
     tr = tt.FishTrajectories.from_positions(positions,
                                             smooth_sigma=.5,
-                                            only_past=False,
                                             interpolate_nans=True)
 
     all_starting_bouts, all_bout_peaks = tr.get_bouts(
