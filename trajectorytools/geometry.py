@@ -49,8 +49,8 @@ def curvature(v,a):
 def fixed_to_comoving(data, e_y):
     return matrix_dot(matrix_rotate_to_vector(e_y), data)
 
-#def comoving_to_fixed(data, e_y):
-#    return matrix_dot(matrix_rotate_to_vector(e_y).transpose(), data)
+def comoving_to_fixed(data, e_y):
+    return matrix_dot(matrix_rotate_to_vector(e_y).transpose(), data)
 
 def matrix_rotate_to_normalised_vector(e_y):
     e_x = _ey_to_ex(e_y)
