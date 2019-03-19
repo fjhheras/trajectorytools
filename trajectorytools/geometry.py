@@ -66,11 +66,18 @@ def center_in_trajectory(data, trajectory):
 def center_in_individual(data, individual):
     return center_in_trajectory(data, data[:,individual,:])
 
-def angle_between_vectors(x,y):
+def angle_between_vectors(x, y):
     '''Angle between vectors, between 0 and pi radians, no sign
     '''
-    u,v = normalise(x),normalise(y)
-    return np.arccos(np.clip(dot(u,v), -1.0, +1.0))
+    u, v = normalise(x), normalise(y)
+    return np.arccos(np.clip(dot(u, v), -1.0, +1.0))
+
+def signed_angle_between_vectors(x, y):
+    '''A different algorithms to calculate angle between vectors,
+    between -pi and pi radians
+    '''
+    angle = np.arctan2(y[1], y[0]) - np.arctan2(x[1], x[0])
+    return (angle + np.pi)%(2*np.pi) - np.pi
 
 def _ey_to_ex(e_):
     '''Takes a vector and rotates it -90 degrees
