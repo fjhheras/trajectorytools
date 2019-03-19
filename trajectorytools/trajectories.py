@@ -129,7 +129,7 @@ class Trajectories():
 
         trajectories.speed = tt.norm(trajectories.v)
         trajectories.acceleration = tt.norm(trajectories.a)
-        trajectories.distance_to_center = tt.norm(trajectories.s)
+        trajectories.distance_to_center = tt.norm(trajectories.s) # Distance to the center of coordinates
         trajectories.e = tt.normalise(trajectories.v)
         trajectories.tg_acceleration = tt.dot(trajectories.a, trajectories.e)
         trajectories.curvature = tt.curvature(trajectories.v, trajectories.a)
@@ -168,9 +168,14 @@ class FishTrajectories(Trajectories):
         """Obtain bouts start and peak for all individuals
 
         :param **kwargs: named arguments passed to scipy.signal.find_peaks
+
+        returns
+        :all_bouts: list of arrays, one array per individual. The dimensions
+        of every array are (number_of_bouts, 3). Col-1 is the starting frame
+        of the bout, col-2 is the peak of the bout, col-3 is the beginning of
+        the next bout
         """
-        all_starting_bouts = []
-        all_bout_peaks = []
+        all_bouts = []
         for focal in range(self.number_of_individuals):
             # Find local minima and maxima
             min_frames_ = signal.find_peaks(-self.speed[:, focal], **kwargs)[0]
@@ -185,8 +190,9 @@ class FishTrajectories(Trajectories):
             frameismax = [False]*len(min_frames) + [True]*len(max_frames)
             ordered_frames, ordered_ismax = zip(*sorted(zip(frames, frameismax)))
             bouts = [ordered_frames[i:i+2] for i in range(len(ordered_frames)-1)
-                    if not ordered_ismax[i] and ordered_ismax[i+1]]
+                     if not ordered_ismax[i] and ordered_ismax[i+1]]
             starting_bouts, bout_peaks = zip(*bouts)
-            all_starting_bouts.append(np.asarray(starting_bouts))
-            all_bout_peaks.append(np.asarray(bout_peaks))
-        return all_starting_bouts, all_bout_peaks
+            next_bout_start = list(starting_bouts[1:]) + [self.number_of_frames-1]
+            bouts = np.asarray(list(zip(starting_bouts, bout_peaks, next_bout_start)))
+            all_bouts.append(bouts)
+        return all_bouts

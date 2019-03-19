@@ -8,12 +8,12 @@ from trajectorytools.constants import dir_of_data
 def plot_bouts(ax, starting_frame, focal):
     time_range = (starting_frame, starting_frame + 290)
     frame_range = range(time_range[0], time_range[1], 1)
-    starting_bouts = all_starting_bouts[focal][
-        np.where((all_starting_bouts[focal] > frame_range[0]) &
-                 ((all_starting_bouts[focal] < frame_range[-1])))]
-    bout_peaks = all_bout_peaks[focal][
-        np.where((all_bout_peaks[focal] > frame_range[0]) &
-                 ((all_bout_peaks[focal] < frame_range[-1])))]
+    starting_bouts = np.squeeze(all_bouts[focal][
+        np.where((all_bouts[focal][:,0] > frame_range[0]) &
+                 ((all_bouts[focal][:,0] < frame_range[-1]))),0])
+    bout_peaks = np.squeeze(all_bouts[focal][
+        np.where((all_bouts[focal][:,1] > frame_range[0]) &
+                 ((all_bouts[focal][:,1] < frame_range[-1]))),1])
     ax.plot(np.asarray(frame_range), tr.speed[frame_range, focal], c='b')
     for starting_bout in starting_bouts:
         ax.axvline(x=starting_bout, c='g')
@@ -30,9 +30,7 @@ if __name__ == '__main__':
                                             smooth_sigma=.5,
                                             interpolate_nans=True)
 
-    all_starting_bouts, all_bout_peaks = tr.get_bouts(
-                                                     prominence=(0.002, None),
-                                                     distance=3)
+    all_bouts = tr.get_bouts(prominence=(0.002, None), distance=3)
 
     fig, ax = plt.subplots(10, figsize=(20, 20), sharex=True, sharey=True)
     for i in range(10):
