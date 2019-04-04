@@ -55,8 +55,8 @@ def _in_alpha_border(positions, alpha=5):
     return in_border
 
 
-def in_alpha_border(positions):
-    alpha_border_list = [_in_alpha_border(positions_in_frame)
+def in_alpha_border(positions, alpha=5):
+    alpha_border_list = [_in_alpha_border(positions_in_frame, alpha=alpha)
                          for positions_in_frame in positions]
     return np.stack(alpha_border_list, axis=0)
 
