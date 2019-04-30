@@ -1,5 +1,6 @@
 import trajectorytools as tt
 
+
 def bout_statistics():
 
     def latency(tr, bout, focal):
@@ -42,19 +43,17 @@ def bout_statistics():
     return [value for key, value in locals().items()
             if callable(value) and not key.startswith('__')]
 
+
 def compute_bouts_parameters(tr, bouts, focal):
-    #variables = [bout_latency, bout_acceleration_time, bout_gliding_time,
-    #            bout_displacement, bout_turning_angle, bout_turning_angle_old]
     variables = bout_statistics()
     bouts_dict = {var.__name__: [var(tr, bout, focal) for bout in bouts]
-                for var in variables}
+                  for var in variables}
     bouts_dict['bouts'] = bouts
     return bouts_dict
 
 
-def get_bouts_parameters(tr, **kwargs):
-    #all_bouts = tr.get_bouts(prominence=(0.002, None), distance=3)
-    all_bouts = tr.get_bouts(**kwargs)
+def get_bouts_parameters(tr, find_max_dict=None, find_min_dict=None):
+    all_bouts = tr.get_bouts(find_max_dict, find_min_dict)
     indiv_bouts = [compute_bouts_parameters(tr, all_bouts[focal], focal)
                    for focal in range(tr.number_of_individuals)]
     return indiv_bouts

@@ -164,7 +164,7 @@ class Trajectories():
 
 
 class FishTrajectories(Trajectories):
-    def get_bouts(self, **kwargs):
+    def get_bouts(self, find_max_dict=None, find_min_dict=None):
         """Obtain bouts start and peak for all individuals
 
         :param **kwargs: named arguments passed to scipy.signal.find_peaks
@@ -176,10 +176,12 @@ class FishTrajectories(Trajectories):
         the next bout
         """
         all_bouts = []
+        find_max_dict = {} if find_max_dict is None else find_max_dict
+        find_min_dict = {} if find_min_dict is None else find_min_dict
         for focal in range(self.number_of_individuals):
             # Find local minima and maxima
-            min_frames_ = signal.find_peaks(-self.speed[:, focal], **kwargs)[0]
-            max_frames_ = signal.find_peaks(self.speed[:, focal], **kwargs)[0]
+            min_frames_ = signal.find_peaks(-self.speed[:, focal], **find_min_dict)[0]
+            max_frames_ = signal.find_peaks(self.speed[:, focal], **find_max_dict)[0]
             # Filter out NaNs
             min_frames = [f for f in min_frames_
                           if not np.isnan(self.s[f, focal, 0])]

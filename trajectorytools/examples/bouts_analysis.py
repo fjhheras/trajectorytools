@@ -30,7 +30,11 @@ if __name__ == '__main__':
                                             smooth_sigma=.5,
                                             interpolate_nans=True)
 
-    all_bouts = tr.get_bouts(prominence=(0.002, None), distance=3)
+    find_max_dict = {'prominence': (0.2*tr.speed.std(), None),
+                     'distance': 3}
+    find_min_dict = {'prominence': (0.01*tr.speed.std(), None),
+                     'distance': 3}
+    all_bouts = tr.get_bouts(find_max_dict, find_min_dict)
 
     fig, ax = plt.subplots(10, figsize=(20, 20), sharex=True, sharey=True)
     for i in range(10):
