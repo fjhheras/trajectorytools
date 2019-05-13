@@ -1,3 +1,4 @@
+import sys
 import traceback
 import logging
 import numpy as np
@@ -59,8 +60,13 @@ def find_enclosing_circle(t):
     """
     try:
         import miniball
-        assert not np.isnan(t).any()
-        flat_t = t.reshape((-1, 2))
+        if not np.isnan(t).any():
+            flat_t = t.reshape((-1, 2))
+        else:
+            flat_t_with_nans = t.reshape((-1, 2))
+            no_nans = np.logical_not(np.any(np.isnan(flat_t_with_nans), axis=1))
+            flat_t = flat_t_with_nans[np.where(no_nans)]
+            logging.warning('Some nans found and removed before aplying miniball')
         P = [(x[0], x[1]) for x in flat_t]
         mb = miniball.Miniball(P)
         center_x, center_y = mb.center()
@@ -70,8 +76,10 @@ def find_enclosing_circle(t):
         logging.warning("Please, install https://github.com/weddige/miniball")
         center_x, center_y, radius = find_enclosing_circle_simple(t)
     except Exception:
-        logging.error(traceback.format_exc())
-        logging.error("Miniball was not used for centre detection")
+        #logging.error(traceback.format_exc())
+        #print(sys.exc_info()[0])
+        traceback.print_stack()
+        logging.error("Miniball was not used for centre detection. Reason unknown")
         center_x, center_y, radius = find_enclosing_circle_simple(t)
     return center_x, center_y, radius
 
