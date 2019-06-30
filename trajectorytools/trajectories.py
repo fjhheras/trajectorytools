@@ -85,7 +85,7 @@ class Trajectories(Trajectory):
 
     @classmethod
     def from_idtracker(cls, trajectories_path,
-                       interpolate_nans=True, normalise_by=1, center=False,
+                       interpolate_nans=True, normalise_by=None, center=False,
                        smooth_sigma=0, only_past=False, dtype=np.float64):
         """Create Trajectories from a idtracker.ai trajectories file
 
@@ -108,43 +108,47 @@ class Trajectories(Trajectory):
         t = traj_dict['trajectories'].astype(dtype)
 
         # If the trajectories contain the arena radius information, use it
-        # Otherwise, return 0 for radius to be estimated from trajectories
+        # Otherwise, return None for radius to be estimated from trajectories
         arena_radius = traj_dict.get('arena_radius', None)
+
+        traj =  cls.from_positions(t, interpolate_nans=interpolate_nans,
+                                   smooth_sigma=smooth_sigma,
+                                   only_past=only_past,
+                                   arena_radius=arena_radius,
+                                   center=center)
+
+        traj.params['frame_rate'] = traj_dict.get('frames_per_second', None)
+        traj.params['body_length_px'] = traj_dict.get('body_length', None)
 
         if normalise_by == 'body length' or normalise_by == 'body_length':
             length_unit = traj_dict['body_length']
+            length_unit_name = 'BL'
         elif normalise_by == 'radius':
-            length_unit = None
+            length_unit = traj.params['radius_px']
+            length_unit_name = 'R'
         elif normalise_by is None:
             length_unit = 1
+            length_unit_name = 'px'
         else:
             length_unit = float(normalise_by)
             assert length_unit > 0
+            length_unit_name = '?'
+        if length_unit != 1:
+            traj.new_length_unit(length_unit, length_unit_name)
 
-        return cls.from_positions(t, interpolate_nans=interpolate_nans,
-                                  smooth_sigma=smooth_sigma,
-                                  only_past=only_past,
-                                  length_unit=length_unit,
-                                  frame_rate=traj_dict['frames_per_second'],
-                                  arena_radius=arena_radius,
-                                  center=center)
+        return traj
 
     @classmethod
     def from_positions(cls, t, interpolate_nans=True, smooth_sigma=0,
-                       only_past=False, length_unit=1, length_unit_name='px',
-                       frame_rate=None,
-                       arena_radius=None, center=False):
+                       only_past=False, arena_radius=None, center=False):
         """Trajectory from positions
 
         :param t: Positions nd.array.
         :param interpolate_nans: whether to interpolate NaNs
         :param smooth_sigma: Sigma of smoothing (semi-)gaussian
         :param only_past: Smooth data using only past frames
-        :param length_unit: Normalisation constant. If None, radius is used.
-        :param length_unit_name: Name of normalisation constant
-        :param frame_rate: Declared frame rate (currently not used)
         :param arena_radius: Declared arena radius (overrides estimation)
-        :param center: Whether to offset trajectories (center to 0)
+        :param center: If True, we offset trajectories (center to 0)
         """
         trajectories = {'raw': t.copy()}
 
@@ -154,23 +158,16 @@ class Trajectories(Trajectory):
 
         # Center and scale trajectories
         if center:
-            radius, center_x, center_y, length_unit = \
-              tt.center_trajectories_and_normalise(t,
-                                                   length_unit=length_unit,
-                                                   forced_radius=arena_radius)
-            length_unit_name = '?'  # Not completely sure about this
+            center_x, center_y, radius = \
+              tt.center_trajectories_and_obtain_radius(t,
+                                                       forced_radius=arena_radius)
         else:
-            if length_unit is None:  # Use radius to normalise
-                if arena_radius is None:  # This means, calculate radius
-                    _, _, length_unit = tt.find_enclosing_circle(t)
-                else:
-                    length_unit = arena_radius
-                radius = 1.0
-                length_unit_name = 'arena radius'
-            else:  # Do not bother with radius
-                radius = np.nan
             center_x, center_y = 0.0, 0.0
-            np.divide(t, length_unit, t)
+            _, _, estimated_radius = tt.find_enclosing_circle(t)
+            if arena_radius is None:
+                radius = estimated_radius
+            else:
+                radius = arena_radius
 
         if smooth_sigma > 0:
             t_smooth = tt.smooth(t, sigma=smooth_sigma,
@@ -186,13 +183,12 @@ class Trajectories(Trajectory):
             [trajectories['_s'], trajectories['_v'], trajectories['_a']] = \
                 tt.velocity_acceleration(t_smooth)
 
-        params = {"frame_rate": frame_rate,        # This is always fps
-                  "center_x": center_x,            # Units: length_unit
-                  "center_y": center_y,            # Units: unit length
+        params = {"center_x": center_x,            # Units: pixels
+                  "center_y": center_y,            # Units: pixels
                   "radius": radius,                # Units: unit length
-                  "radius_px": radius*length_unit,  # Units: pixels
-                  "length_unit": length_unit,      # Units: pixels
-                  "length_unit_name": length_unit_name,
+                  "radius_px": radius,             # Units: pixels
+                  "length_unit": 1,                # Units: pixels
+                  "length_unit_name": 'px',
                   "time_unit": 1,  # In frames
                   "time_unit_name": 'frames'}
 
@@ -237,7 +233,7 @@ class FishTrajectories(Trajectories):
         # TODO: Update docstring
         if find_max_dict is None: find_max_dict = {}
         if find_min_dict is None: find_min_dict = {}
-        
+
         all_bouts = []
         for focal in range(self.number_of_individuals):
             # Find local minima and maxima

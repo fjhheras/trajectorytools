@@ -14,9 +14,9 @@ class TrajectoriesTestCase(unittest.TestCase):
         self.t = Trajectories.from_idtracker(trajectories_path)
 
     def test_center_of_mass(self):
-        nptest.assert_equal(self.t.s.mean(axis=1), self.t.center_of_mass.s)
-        nptest.assert_equal(self.t.v.mean(axis=1), self.t.center_of_mass.v)
-        nptest.assert_equal(self.t.a.mean(axis=1), self.t.center_of_mass.a)
+        nptest.assert_allclose(self.t.s.mean(axis=1), self.t.center_of_mass.s)
+        nptest.assert_allclose(self.t.v.mean(axis=1), self.t.center_of_mass.v)
+        nptest.assert_allclose(self.t.a.mean(axis=1), self.t.center_of_mass.a)
 
     def test_check_unit_change(self, new_length_unit=10, new_time_unit=3):
         length_unit = self.t.params['length_unit']
@@ -51,6 +51,28 @@ class RawTrajectoriesTestCase(TrajectoriesTestCase):
         t = np.load(raw_trajectories_path, allow_pickle=True)
         self.t = Trajectories.from_positions(t)
 
+class CenterTrajectoriesTestCase(TrajectoriesTestCase):
+    def setUp(self):
+        self.t = Trajectories.from_idtracker(trajectories_path, center=True)
+
+class ScaleRadiusTrajectoriesTestCase(TrajectoriesTestCase):
+    def setUp(self):
+        self.t = Trajectories.from_idtracker(trajectories_path,
+                                             normalise_by='radius',
+                                             center=True)
+        self.t_normal = Trajectories.from_idtracker(trajectories_path)
+
+    def test_scale(self):
+        corrected_s = self.t_normal.s
+        corrected_s[..., 0] -= self.t_normal.params['center_x']
+        corrected_s[..., 1] -= self.t_normal.params['center_y']
+        corrected_s /= self.t.params['radius_px']
+        corrected_v = self.t_normal.v / self.t.params['radius_px']
+        corrected_a = self.t_normal.a / self.t.params['radius_px']
+        #nptest.assert_allclose(self.t.s, corrected_s)
+        nptest.assert_allclose(self.t.v, corrected_v)
+        nptest.assert_allclose(self.t.a, corrected_a, atol=1e-15)
+
 class TrajectoriesRadiusTestCase(TrajectoriesTestCase):
     def setUp(self):
         self.t_normal = Trajectories.from_idtracker(trajectories_path,
@@ -64,7 +86,7 @@ class TrajectoriesRadiusTestCase(TrajectoriesTestCase):
                                self.t_normal.v / self.t.params['radius_px'])
         nptest.assert_allclose(self.t.a,
                                self.t_normal.a / self.t.params['radius_px'],
-                               atol=1e-12)
+                               atol=1e-15)
 
 if __name__ == '__main__':
     unittest.main()
