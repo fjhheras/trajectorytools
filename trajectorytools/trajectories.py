@@ -111,15 +111,16 @@ class Trajectories(Trajectory):
         # Otherwise, return None for radius to be estimated from trajectories
         arena_radius = traj_dict.get('arena_radius', None)
 
+        smooth_params = {'sigma': smooth_sigma, 'only_past': only_past}
         traj =  cls.from_positions(t, interpolate_nans=interpolate_nans,
-                                   smooth_sigma=smooth_sigma,
-                                   only_past=only_past,
+                                   smooth_params=smooth_params,
                                    arena_radius=arena_radius,
                                    center=center)
 
         traj.params['frame_rate'] = traj_dict.get('frames_per_second', None)
         traj.params['body_length_px'] = traj_dict.get('body_length', None)
 
+        #TODO: normalise_by out of the API? -> method
         if normalise_by == 'body length' or normalise_by == 'body_length':
             length_unit = traj_dict['body_length']
             length_unit_name = 'BL'
@@ -139,50 +140,51 @@ class Trajectories(Trajectory):
         return traj
 
     @classmethod
-    def from_positions(cls, t, interpolate_nans=True, smooth_sigma=0,
-                       only_past=False, arena_radius=None, center=False):
+    def from_positions(cls, t, interpolate_nans=True, smooth_params=None,
+                       arena_radius=None, center=False):
         """Trajectory from positions
 
         :param t: Positions nd.array.
         :param interpolate_nans: whether to interpolate NaNs
-        :param smooth_sigma: Sigma of smoothing (semi-)gaussian
-        :param only_past: Smooth data using only past frames
+        :param smooth_params: Arguments for smoothing (see tt.smooth)
         :param arena_radius: Declared arena radius (overrides estimation)
         :param center: If True, we offset trajectories (center to 0)
         """
-        trajectories = {'raw': t.copy()}
+        if smooth_params is None: smooth_params = {'sigma': -1,
+                                                   'only_past': False}
+        trajectories = {'raw': t.copy()} #TODO: Worth keeping?
 
         # Interpolate trajectories
         if interpolate_nans:
             tt.interpolate_nans(t)
 
         # Center and scale trajectories
-        if center:
-            center_x, center_y, radius = \
-              tt.center_trajectories_and_obtain_radius(t,
-                                                       forced_radius=arena_radius)
+        center_x, center_y, estimated_radius = tt.find_enclosing_circle(t)
+        if arena_radius is None:
+            radius = estimated_radius
+        else:
+            radius = arena_radius
+
+        if center: #TODO: Role of center will change this
+            t[..., 0] -= center_x
+            t[..., 1] -= center_y
         else:
             center_x, center_y = 0.0, 0.0
-            _, _, estimated_radius = tt.find_enclosing_circle(t)
-            if arena_radius is None:
-                radius = estimated_radius
-            else:
-                radius = arena_radius
 
-        if smooth_sigma > 0:
-            t_smooth = tt.smooth(t, sigma=smooth_sigma,
-                                 only_past=only_past)
+        if smooth_params['sigma'] > 0:
+            t_smooth = tt.smooth(t, **smooth_params)
         else:
             t_smooth = t
 
         # Smooth trajectories
-        if only_past:
+        if smooth_params['only_past']:
             [trajectories['_s'], trajectories['_v'], trajectories['_a']] = \
                 tt.velocity_acceleration_backwards(t_smooth)
         else:
             [trajectories['_s'], trajectories['_v'], trajectories['_a']] = \
                 tt.velocity_acceleration(t_smooth)
 
+        #TODO: Discuss role of center_x / center_y. Maybe add delta_x, delta_y?
         params = {"center_x": center_x,            # Units: pixels
                   "center_y": center_y,            # Units: pixels
                   "radius": radius,                # Units: unit length

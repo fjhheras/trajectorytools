@@ -55,6 +55,11 @@ class CenterTrajectoriesTestCase(TrajectoriesTestCase):
     def setUp(self):
         self.t = Trajectories.from_idtracker(trajectories_path, center=True)
 
+class SmoothTrajectoriesTestCase(TrajectoriesTestCase):
+    def setUp(self):
+        self.t = Trajectories.from_idtracker(trajectories_path, smooth_sigma=1)
+
+
 class ScaleRadiusTrajectoriesTestCase(TrajectoriesTestCase):
     def setUp(self):
         self.t = Trajectories.from_idtracker(trajectories_path,
