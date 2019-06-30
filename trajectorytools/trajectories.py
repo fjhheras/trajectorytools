@@ -1,4 +1,3 @@
-from argparse import Namespace
 from copy import deepcopy
 from scipy import signal
 import numpy as np
@@ -10,14 +9,16 @@ def calculate_center_of_mass(trajectories, params):
                       for k in Trajectory.keys_to_copy}
     return Trajectory(center_of_mass, params)
 
+
 class Trajectory:
     keys_to_copy = ['_s', '_v', '_a']
+
     def __init__(self, trajectories, params):
         for key in self.keys_to_copy:
             setattr(self, key, trajectories[key])
         self.params = deepcopy(params)
 
-    def new_length_unit(self, length_unit, length_unit_name = '?'):
+    def new_length_unit(self, length_unit, length_unit_name='?'):
         factor = self.params['length_unit'] / length_unit
         self.params['center_x'] *= factor
         self.params['center_y'] *= factor
@@ -28,7 +29,7 @@ class Trajectory:
         self.params['length_unit'] = length_unit
         self.params['length_unit_name'] = length_unit_name
 
-    def new_time_unit(self, time_unit, time_unit_name = '?'):
+    def new_time_unit(self, time_unit, time_unit_name='?'):
         factor = self.params['time_unit'] / time_unit
         self._v /= factor
         self._a /= factor**2
@@ -142,7 +143,7 @@ class Trajectories(Trajectory):
         :param length_unit: Normalisation constant. If None, radius is used.
         :param length_unit_name: Name of normalisation constant
         :param frame_rate: Declared frame rate (currently not used)
-        :param arena_radius: Declared arena radius (overrides radius estimation)
+        :param arena_radius: Declared arena radius (overrides estimation)
         :param center: Whether to offset trajectories (center to 0)
         """
         trajectories = {'raw': t.copy()}
@@ -154,19 +155,19 @@ class Trajectories(Trajectory):
         # Center and scale trajectories
         if center:
             radius, center_x, center_y, length_unit = \
-                tt.center_trajectories_and_normalise(t,
-                                                     length_unit=length_unit,
-                                                     forced_radius=arena_radius)
-            length_unit_name = '?' #Not completely sure about this
+              tt.center_trajectories_and_normalise(t,
+                                                   length_unit=length_unit,
+                                                   forced_radius=arena_radius)
+            length_unit_name = '?'  # Not completely sure about this
         else:
-            if length_unit is None: #Use radius to normalise
-                if arena_radius is None: #This means, calculate radius
+            if length_unit is None:  # Use radius to normalise
+                if arena_radius is None:  # This means, calculate radius
                     _, _, length_unit = tt.find_enclosing_circle(t)
                 else:
                     length_unit = arena_radius
                 radius = 1.0
                 length_unit_name = 'arena radius'
-            else: # Do not bother with radius
+            else:  # Do not bother with radius
                 radius = np.nan
             center_x, center_y = 0.0, 0.0
             np.divide(t, length_unit, t)
@@ -189,10 +190,10 @@ class Trajectories(Trajectory):
                   "center_x": center_x,            # Units: length_unit
                   "center_y": center_y,            # Units: unit length
                   "radius": radius,                # Units: unit length
-                  "radius_px": radius*length_unit, # Units: pixels
+                  "radius_px": radius*length_unit,  # Units: pixels
                   "length_unit": length_unit,      # Units: pixels
                   "length_unit_name": length_unit_name,
-                  "time_unit": 1,                  #In frames
+                  "time_unit": 1,  # In frames
                   "time_unit_name": 'frames'}
 
         traj = cls(trajectories, params)
@@ -233,9 +234,11 @@ class FishTrajectories(Trajectories):
         of the bout, col-2 is the peak of the bout, col-3 is the beginning of
         the next bout
         """
+        # TODO: Update docstring
+        if find_max_dict is None: find_max_dict = {}
+        if find_min_dict is None: find_min_dict = {}
+        
         all_bouts = []
-        find_max_dict = {} if find_max_dict is None else find_max_dict
-        find_min_dict = {} if find_min_dict is None else find_min_dict
         for focal in range(self.number_of_individuals):
             # Find local minima and maxima
             min_frames_ = signal.find_peaks(-self.speed[:, focal], **find_min_dict)[0]
