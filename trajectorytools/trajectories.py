@@ -1,23 +1,77 @@
 from argparse import Namespace
+from copy import copy
 from scipy import signal
 import numpy as np
 import trajectorytools as tt
 
 
-def calculate_center_of_mass(trajectories):
+def calculate_center_of_mass(trajectories, params):
     center_of_mass = Namespace()
     center_of_mass_dict = vars(center_of_mass)
     trajectories_dict = vars(trajectories)
     center_of_mass_dict.update(
-        {k: np.nanmean(v, axis=1) for k, v in trajectories_dict.items()})
-    return center_of_mass
+        {k: np.nanmean(trajectories_dict[k], axis=1) for k in ['s', 'v', 'a']})
+    return Trajectory(center_of_mass, params)
+
+class Trajectory:
+    def __init__(self, trajectories, params):
+        #self._trajectories = trajectories
+        self.__dict__.update(vars(trajectories))
+        self.params = params
+
+    def new_unit_length(self, unit_length, unit_length_name = '?'):
+        print('unit_length', unit_length)
+        factor = unit_length/self.params['unit_length']
+        print("factor is ", factor)
+        self.params['center_x'] *= factor
+        self.params['center_y'] *= factor
+        self.params['radius'] *= factor
+        self.s *= factor
+        self.v *= factor
+        self.a *= factor
+        self.params['unit_length'] = unit_length
+        self.params['unit_length_name'] = unit_length_name
+
+    def new_time_length(self, unit_time, unit_time_name = '?'):
+        factor = unit_time/self.unit_time
+        self.v /= factor
+        self.a /= factor**2
+        self.params['unit_time'] = unit_time
+        self.params['unit_time_name'] = unit_time_name
+
+    @property
+    def number_of_frames(self):
+        return self.s.shape[0]
+
+    @property
+    def speed(self): return tt.norm(self.v)
+
+    @property
+    def acceleration(self): return tt.norm(self.a)
+
+    @property
+    def distance_to_center(self): return tt.norm(self.s) # Distance to the center of coordinates
+
+    @property
+    def e(self): return tt.normalise(self.v)
+
+    @property
+    def tg_acceleration(self): return tt.dot(self.a, self.e)
+
+    @property
+    def curvature(self): return tt.curvature(self.v, self.a)
+
+    @property
+    def normal_acceleration(self): return np.square(self.speed)*self.curvature
 
 
-class Trajectories():
-    def __init__(self, trajectories):
-        self._trajectories = trajectories
-        self.center_of_mass = calculate_center_of_mass(trajectories)
-        self.__dict__.update(vars(self.trajectories))
+
+class Trajectories(Trajectory):
+    def __init__(self, trajectories, params):
+        #self._trajectories = trajectories
+        self.__dict__.update(vars(trajectories))
+        self.params = params
+        self.center_of_mass = calculate_center_of_mass(trajectories, copy(params))
 
     def __getitem__(self, val):
         view_trajectories = Namespace()
@@ -113,7 +167,7 @@ class Trajectories():
                 radius = 1.0
                 unit_length_name = 'arena radius'
             else: # Do not bother with radius
-                radius = None
+                radius = np.nan
             center_x, center_y = 0.0, 0.0
             np.divide(t, unit_length, t)
 
@@ -131,39 +185,26 @@ class Trajectories():
             [trajectories.s, trajectories.v, trajectories.a] = \
                 tt.velocity_acceleration(t_smooth)
 
-        traj = cls(trajectories)
-        traj.params = {"frame_rate": frame_rate,        # This is always fps
-                       "center_x": center_x,            # Units: unit_length
-                       "center_y": center_y,            # Units: unit length
-                       "radius": radius,                # Units: unit length
-                       "radius_px": radius*unit_length, # Units: pixels
-                       "unit_length": unit_length,      # Units: pixels
-                       "unit_length_name": unit_length_name,
-                       "unit_time": 1,                  #In frames
-                       "unit_time_name": 'frames'}
+        params = {"frame_rate": frame_rate,        # This is always fps
+                  "center_x": center_x,            # Units: unit_length
+                  "center_y": center_y,            # Units: unit length
+                  "radius": radius,                # Units: unit length
+                  "radius_px": radius*unit_length, # Units: pixels
+                  "unit_length": unit_length,      # Units: pixels
+                  "unit_length_name": unit_length_name,
+                  "unit_time": 1,                  #In frames
+                  "unit_time_name": 'frames'}
+
+        traj = cls(trajectories, params)
         return traj
 
-    def new_unit_length(self, unit_length, unit_length_name = '?'):
-        factor = unit_length/self.unit_length
-        self.center_x *= factor
-        self.center_y *= factor
-        self.radius *= factor
-        self.s *= factor
-        self.v *= factor
-        self.a *= factor
-        self.unit_length = unit_length
-        self.unit_length_name = unit_length_name
+    def new_unit_length(self, *args, **kwargs):
+        super().new_unit_length(*args, **kwargs)
+        self.center_of_mass.new_unit_length(*args, **kwargs)
 
-    def new_time_length(self, unit_time, unit_time_name = '?'):
-        factor = unit_time/self.unit_time
-        self.v /= factor
-        self.a /= factor**2
-        self.unit_time = unit_time
-        self.unit_time = unit_time_name
-
-    @property
-    def number_of_frames(self):
-        return self.s.shape[0]
+    def new_unit_time(self, *args, **kwargs):
+        super().new_unit_time(*args, **kwargs)
+        self.center_of_mass.new_unit_time(*args, **kwargs)
 
     @property
     def number_of_individuals(self):
@@ -178,27 +219,6 @@ class Trajectories():
     def identities_array(self):
         ones = np.ones(self.raw.shape[:-1], dtype=np.int)
         return np.einsum('ij,j->ij', ones, self.identity_labels)
-
-    @property
-    def speed(self): return tt.norm(self.v)
-
-    @property
-    def acceleration(self): return tt.norm(self.a)
-
-    @property
-    def distance_to_center(self): return tt.norm(self.s) # Distance to the center of coordinates
-
-    @property
-    def e(self): return tt.normalise(self.v)
-
-    @property
-    def tg_acceleration(self): return tt.dot(self.a, self.e)
-
-    @property
-    def curvature(self): return tt.curvature(self.v, self.a)
-
-    @property
-    def normal_acceleration(self): return np.square(self.speed)*self.curvature
 
 
 class FishTrajectories(Trajectories):
