@@ -13,7 +13,8 @@ def calculate_center_of_mass(trajectories, params):
 class Trajectory:
     keys_to_copy = ['_s', '_v', '_a']
     def __init__(self, trajectories, params):
-        self.__dict__.update(trajectories)
+        for key in self.keys_to_copy:
+            setattr(self, key, trajectories[key])
         self.params = deepcopy(params)
 
     def new_length_unit(self, length_unit, length_unit_name = '?'):
@@ -74,7 +75,7 @@ class Trajectories(Trajectory):
         self.center_of_mass = calculate_center_of_mass(trajectories, params)
 
     def __getitem__(self, val):
-        view_trajectories = {k: self.__dict__[k][val]
+        view_trajectories = {k: getattr(self, k)[val]
                              for k in self.keys_to_copy}
         return self.__class__(view_trajectories, self.params)
 
@@ -101,7 +102,8 @@ class Trajectories(Trajectory):
         :param dtype: Desired dtype of trajectories.
         """
 
-        traj_dict = np.load(trajectories_path, encoding='latin1').item()
+        traj_dict = np.load(trajectories_path, encoding='latin1',
+                            allow_pickle=True).item()
         t = traj_dict['trajectories'].astype(dtype)
 
         # If the trajectories contain the arena radius information, use it
