@@ -22,7 +22,7 @@ def plot_bouts(ax, starting_frame, focal):
 
 
 if __name__ == '__main__':
-    plt.ion()
+    #plt.ion()
 
     test_trajectories_file = os.path.join(dir_of_data, 'test_trajectories.npy')
     positions = np.load(test_trajectories_file, encoding='latin1')

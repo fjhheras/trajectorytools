@@ -84,11 +84,6 @@ def give_indices(positions, num_neighbours):
     return next_neighbours
 
 
-def give_adjacency_matrix(*args, **kwargs):
-    print("give_adjacency_matrix deprecated. Use adjacency_matrix")
-    raise NotImplementedError
-
-
 def adjacency_matrix(positions, num_neighbours=None, mode='connectivity'):
     total_time_steps = positions.shape[0]
     individuals = positions.shape[1]
