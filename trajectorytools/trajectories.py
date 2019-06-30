@@ -1,83 +1,82 @@
 from argparse import Namespace
-from copy import copy
+from copy import deepcopy
 from scipy import signal
 import numpy as np
 import trajectorytools as tt
 
 
 def calculate_center_of_mass(trajectories, params):
-    center_of_mass = Namespace()
-    center_of_mass_dict = vars(center_of_mass)
-    trajectories_dict = vars(trajectories)
-    center_of_mass_dict.update(
-        {k: np.nanmean(trajectories_dict[k], axis=1) for k in ['s', 'v', 'a']})
+    center_of_mass = {k: np.nanmean(trajectories[k], axis=1)
+                      for k in Trajectory.keys_to_copy}
     return Trajectory(center_of_mass, params)
 
 class Trajectory:
+    keys_to_copy = ['_s', '_v', '_a']
     def __init__(self, trajectories, params):
-        #self._trajectories = trajectories
-        self.__dict__.update(vars(trajectories))
-        self.params = params
+        self.__dict__.update(trajectories)
+        self.params = deepcopy(params)
 
-    def new_unit_length(self, unit_length, unit_length_name = '?'):
-        print('unit_length', unit_length)
-        factor = unit_length/self.params['unit_length']
-        print("factor is ", factor)
+    def new_length_unit(self, length_unit, length_unit_name = '?'):
+        factor = self.params['length_unit'] / length_unit
         self.params['center_x'] *= factor
         self.params['center_y'] *= factor
         self.params['radius'] *= factor
-        self.s *= factor
-        self.v *= factor
-        self.a *= factor
-        self.params['unit_length'] = unit_length
-        self.params['unit_length_name'] = unit_length_name
+        self._s *= factor
+        self._v *= factor
+        self._a *= factor
+        self.params['length_unit'] = length_unit
+        self.params['length_unit_name'] = length_unit_name
 
-    def new_time_length(self, unit_time, unit_time_name = '?'):
-        factor = unit_time/self.unit_time
-        self.v /= factor
-        self.a /= factor**2
-        self.params['unit_time'] = unit_time
-        self.params['unit_time_name'] = unit_time_name
-
-    @property
-    def number_of_frames(self):
-        return self.s.shape[0]
+    def new_time_unit(self, time_unit, time_unit_name = '?'):
+        factor = self.params['time_unit'] / time_unit
+        self._v /= factor
+        self._a /= factor**2
+        self.params['time_unit'] = time_unit
+        self.params['time_unit_name'] = time_unit_name
 
     @property
-    def speed(self): return tt.norm(self.v)
+    def number_of_frames(self): return self._s.shape[0]
 
     @property
-    def acceleration(self): return tt.norm(self.a)
+    def s(self): return self._s.copy()
 
     @property
-    def distance_to_center(self): return tt.norm(self.s) # Distance to the center of coordinates
+    def v(self): return self._v.copy()
 
     @property
-    def e(self): return tt.normalise(self.v)
+    def a(self): return self._a.copy()
 
     @property
-    def tg_acceleration(self): return tt.dot(self.a, self.e)
+    def speed(self): return tt.norm(self._v)
 
     @property
-    def curvature(self): return tt.curvature(self.v, self.a)
+    def acceleration(self): return tt.norm(self._a)
+
+    @property
+    def distance_to_center(self): return tt.norm(self._s)
+
+    @property
+    def e(self): return tt.normalise(self._v)
+
+    @property
+    def tg_acceleration(self): return tt.dot(self._a, self.e)
+
+    @property
+    def curvature(self): return tt.curvature(self._v, self._a)
 
     @property
     def normal_acceleration(self): return np.square(self.speed)*self.curvature
 
 
-
 class Trajectories(Trajectory):
     def __init__(self, trajectories, params):
-        #self._trajectories = trajectories
-        self.__dict__.update(vars(trajectories))
-        self.params = params
-        self.center_of_mass = calculate_center_of_mass(trajectories, copy(params))
+        super().__init__(trajectories, params)
+        self.center_of_mass = calculate_center_of_mass(trajectories, params)
 
     def __getitem__(self, val):
-        view_trajectories = Namespace()
-        vars(view_trajectories).update(
-            {k: v[val] for k, v in vars(self.trajectories).items()})
-        return Trajectories(view_trajectories)
+        view_trajectories = {k: self.__dict__[k][val]
+                             for k in self.keys_to_copy}
+        return self.__class__(view_trajectories, self.params)
 
     def view(self, start=None, end=None):
         return self[slice(start, end)]
@@ -110,26 +109,26 @@ class Trajectories(Trajectory):
         arena_radius = traj_dict.get('arena_radius', None)
 
         if normalise_by == 'body length' or normalise_by == 'body_length':
-            unit_length = traj_dict['body_length']
+            length_unit = traj_dict['body_length']
         elif normalise_by == 'radius':
-            unit_length = None
+            length_unit = None
         elif normalise_by is None:
-            unit_length = 1
+            length_unit = 1
         else:
-            unit_length = float(normalise_by)
-            assert unit_length > 0
+            length_unit = float(normalise_by)
+            assert length_unit > 0
 
         return cls.from_positions(t, interpolate_nans=interpolate_nans,
                                   smooth_sigma=smooth_sigma,
                                   only_past=only_past,
-                                  unit_length=unit_length,
+                                  length_unit=length_unit,
                                   frame_rate=traj_dict['frames_per_second'],
                                   arena_radius=arena_radius,
                                   center=center)
 
     @classmethod
     def from_positions(cls, t, interpolate_nans=True, smooth_sigma=0,
-                       only_past=False, unit_length=1, unit_length_name='px',
+                       only_past=False, length_unit=1, length_unit_name='px',
                        frame_rate=None,
                        arena_radius=None, center=False):
         """Trajectory from positions
@@ -138,14 +137,13 @@ class Trajectories(Trajectory):
         :param interpolate_nans: whether to interpolate NaNs
         :param smooth_sigma: Sigma of smoothing (semi-)gaussian
         :param only_past: Smooth data using only past frames
-        :param unit_length: Normalisation constant. If None, radius is used.
-        :param unit_length_name: Name of normalisation constant
+        :param length_unit: Normalisation constant. If None, radius is used.
+        :param length_unit_name: Name of normalisation constant
         :param frame_rate: Declared frame rate (currently not used)
         :param arena_radius: Declared arena radius (overrides radius estimation)
         :param center: Whether to offset trajectories (center to 0)
         """
-        trajectories = Namespace()
-        trajectories.raw = t.copy()
+        trajectories = {'raw': t.copy()}
 
         # Interpolate trajectories
         if interpolate_nans:
@@ -153,23 +151,23 @@ class Trajectories(Trajectory):
 
         # Center and scale trajectories
         if center:
-            radius, center_x, center_y, unit_length = \
+            radius, center_x, center_y, length_unit = \
                 tt.center_trajectories_and_normalise(t,
-                                                     unit_length=unit_length,
+                                                     length_unit=length_unit,
                                                      forced_radius=arena_radius)
-            unit_length_name = '?' #Not completely sure about this
+            length_unit_name = '?' #Not completely sure about this
         else:
-            if unit_length is None: #Use radius to normalise
+            if length_unit is None: #Use radius to normalise
                 if arena_radius is None: #This means, calculate radius
-                    _, _, unit_length = tt.find_enclosing_circle(t)
+                    _, _, length_unit = tt.find_enclosing_circle(t)
                 else:
-                    unit_length = arena_radius
+                    length_unit = arena_radius
                 radius = 1.0
-                unit_length_name = 'arena radius'
+                length_unit_name = 'arena radius'
             else: # Do not bother with radius
                 radius = np.nan
             center_x, center_y = 0.0, 0.0
-            np.divide(t, unit_length, t)
+            np.divide(t, length_unit, t)
 
         if smooth_sigma > 0:
             t_smooth = tt.smooth(t, sigma=smooth_sigma,
@@ -179,36 +177,36 @@ class Trajectories(Trajectory):
 
         # Smooth trajectories
         if only_past:
-            [trajectories.s, trajectories.v, trajectories.a] = \
+            [trajectories['_s'], trajectories['_v'], trajectories['_a']] = \
                 tt.velocity_acceleration_backwards(t_smooth)
         else:
-            [trajectories.s, trajectories.v, trajectories.a] = \
+            [trajectories['_s'], trajectories['_v'], trajectories['_a']] = \
                 tt.velocity_acceleration(t_smooth)
 
         params = {"frame_rate": frame_rate,        # This is always fps
-                  "center_x": center_x,            # Units: unit_length
+                  "center_x": center_x,            # Units: length_unit
                   "center_y": center_y,            # Units: unit length
                   "radius": radius,                # Units: unit length
-                  "radius_px": radius*unit_length, # Units: pixels
-                  "unit_length": unit_length,      # Units: pixels
-                  "unit_length_name": unit_length_name,
-                  "unit_time": 1,                  #In frames
-                  "unit_time_name": 'frames'}
+                  "radius_px": radius*length_unit, # Units: pixels
+                  "length_unit": length_unit,      # Units: pixels
+                  "length_unit_name": length_unit_name,
+                  "time_unit": 1,                  #In frames
+                  "time_unit_name": 'frames'}
 
         traj = cls(trajectories, params)
         return traj
 
-    def new_unit_length(self, *args, **kwargs):
-        super().new_unit_length(*args, **kwargs)
-        self.center_of_mass.new_unit_length(*args, **kwargs)
+    def new_length_unit(self, *args, **kwargs):
+        super().new_length_unit(*args, **kwargs)
+        self.center_of_mass.new_length_unit(*args, **kwargs)
 
-    def new_unit_time(self, *args, **kwargs):
-        super().new_unit_time(*args, **kwargs)
-        self.center_of_mass.new_unit_time(*args, **kwargs)
+    def new_time_unit(self, *args, **kwargs):
+        super().new_time_unit(*args, **kwargs)
+        self.center_of_mass.new_time_unit(*args, **kwargs)
 
     @property
     def number_of_individuals(self):
-        return self.s.shape[1]
+        return self._s.shape[1]
 
     @property
     def identity_labels(self):
@@ -242,9 +240,9 @@ class FishTrajectories(Trajectories):
             max_frames_ = signal.find_peaks(self.speed[:, focal], **find_max_dict)[0]
             # Filter out NaNs
             min_frames = [f for f in min_frames_
-                          if not np.isnan(self.s[f, focal, 0])]
+                          if not np.isnan(self._s[f, focal, 0])]
             max_frames = [f for f in max_frames_
-                          if not np.isnan(self.s[f, focal, 0])]
+                          if not np.isnan(self._s[f, focal, 0])]
             # Obtain couples of consecutive minima and maxima
             frames = min_frames + max_frames
             frameismax = [False]*len(min_frames) + [True]*len(max_frames)

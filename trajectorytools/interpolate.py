@@ -129,7 +129,7 @@ def smooth_acceleration(t, **kwargs):
 
 
 def velocity_acceleration_backwards(t, k_v_history=0.0):
-    v = (1-k_v_history)*(t[2:] - t[1:-1]) + k_v_history*(t[1:-1] - t[:-2])
+    v = (1-k_v_history)*(t[2:] - t[1:-1]) + k_v_history*(t[2:] - t[:-2])/2
     a = t[2:] - 2*t[1:-1] + t[:-2]
     return t[2:], v, a
 
