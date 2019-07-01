@@ -57,20 +57,20 @@ class CenterTrajectoriesTestCase(TrajectoriesTestCase):
 
 class SmoothTrajectoriesTestCase(TrajectoriesTestCase):
     def setUp(self):
-        self.t = Trajectories.from_idtracker(trajectories_path, smooth_sigma=1)
+        self.t = Trajectories.from_idtracker(trajectories_path,
+                                             smooth_params={'sigma':1})
 
 
 class ScaleRadiusTrajectoriesTestCase(TrajectoriesTestCase):
     def setUp(self):
-        self.t = Trajectories.from_idtracker(trajectories_path,
-                                             normalise_by='radius',
-                                             center=True)
+        self.t = Trajectories.from_idtracker(trajectories_path, center=True
+                                             ).normalise_by('radius')
         self.t_normal = Trajectories.from_idtracker(trajectories_path)
 
     def test_scale(self):
         corrected_s = self.t_normal.s
-        corrected_s[..., 0] -= self.t_normal.params['center_x']
-        corrected_s[..., 1] -= self.t_normal.params['center_y']
+        corrected_s[..., 0] -= self.t_normal.params['center'][0]
+        corrected_s[..., 1] -= self.t_normal.params['center'][1]
         corrected_s /= self.t.params['radius_px']
         corrected_v = self.t_normal.v / self.t.params['radius_px']
         corrected_a = self.t_normal.a / self.t.params['radius_px']
@@ -81,10 +81,10 @@ class ScaleRadiusTrajectoriesTestCase(TrajectoriesTestCase):
 class TrajectoriesRadiusTestCase(TrajectoriesTestCase):
     def setUp(self):
         self.t_normal = Trajectories.from_idtracker(trajectories_path,
-                                                    smooth_sigma=1)
+                                                    smooth_params={'sigma': 1})
         self.t = Trajectories.from_idtracker(trajectories_path,
-                                             smooth_sigma=1,
-                                             normalise_by='radius')
+                                             smooth_params={'sigma': 1}
+                                             ).normalise_by('radius')
     def test_scaling(self):
         self.assertEqual(self.t.params['radius'], 1.0)
         nptest.assert_allclose(self.t.v,

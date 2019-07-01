@@ -20,8 +20,7 @@ class Trajectory:
 
     def new_length_unit(self, length_unit, length_unit_name='?'):
         factor = self.params['length_unit'] / length_unit
-        self.params['center_x'] *= factor
-        self.params['center_y'] *= factor
+        self.params['center'] *= factor
         self.params['radius'] *= factor
         self._s *= factor
         self._v *= factor
@@ -55,7 +54,8 @@ class Trajectory:
     def acceleration(self): return tt.norm(self._a)
 
     @property
-    def distance_to_center(self): return tt.norm(self._s)
+    def distance_to_center(self):
+        return tt.norm(self._s - self.params['center'])
 
     @property
     def e(self): return tt.normalise(self._v)
@@ -85,24 +85,17 @@ class Trajectories(Trajectory):
 
     @classmethod
     def from_idtracker(cls, trajectories_path,
-                       interpolate_nans=True, normalise_by=None, center=False,
-                       smooth_sigma=0, only_past=False, dtype=np.float64):
+                       interpolate_nans=True, center=False,
+                       smooth_params=None, dtype=np.float64):
         """Create Trajectories from a idtracker.ai trajectories file
 
         :param trajectories_path: idtracker.ai generated trajectories file
         :param interpolate_nans: whether to interpolate NaNs
-        :param normalise_by: If a number is provided, all trajectories are
-        scaled using that number. If 'radius', the program tries to obtain
-        'arena_radius' from idtracker.ai trajectories. Failing that, it uses
-        the smallest circle containing all trajectories. If 'body length', it
-        looks for body length information in the idtrakcer.ai trajectory.
         :param center: Whether to center trajectories, using a center estimated
         from the trajectories.
-        :param smooth_sigma: Sigma of smoothing (semi-)gaussian.
-        :param only_past: Only smooth using data from past frames.
+        :param smooth_params: Parameters of smoothing
         :param dtype: Desired dtype of trajectories.
         """
-
         traj_dict = np.load(trajectories_path, encoding='latin1',
                             allow_pickle=True).item()
         t = traj_dict['trajectories'].astype(dtype)
@@ -111,32 +104,13 @@ class Trajectories(Trajectory):
         # Otherwise, return None for radius to be estimated from trajectories
         arena_radius = traj_dict.get('arena_radius', None)
 
-        smooth_params = {'sigma': smooth_sigma, 'only_past': only_past}
-        traj =  cls.from_positions(t, interpolate_nans=interpolate_nans,
-                                   smooth_params=smooth_params,
-                                   arena_radius=arena_radius,
-                                   center=center)
+        traj = cls.from_positions(t, interpolate_nans=interpolate_nans,
+                                  smooth_params=smooth_params,
+                                  arena_radius=arena_radius,
+                                  center=center)
 
         traj.params['frame_rate'] = traj_dict.get('frames_per_second', None)
         traj.params['body_length_px'] = traj_dict.get('body_length', None)
-
-        #TODO: normalise_by out of the API? -> method
-        if normalise_by == 'body length' or normalise_by == 'body_length':
-            length_unit = traj_dict['body_length']
-            length_unit_name = 'BL'
-        elif normalise_by == 'radius':
-            length_unit = traj.params['radius_px']
-            length_unit_name = 'R'
-        elif normalise_by is None:
-            length_unit = 1
-            length_unit_name = 'px'
-        else:
-            length_unit = float(normalise_by)
-            assert length_unit > 0
-            length_unit_name = '?'
-        if length_unit != 1:
-            traj.new_length_unit(length_unit, length_unit_name)
-
         return traj
 
     @classmethod
@@ -152,32 +126,33 @@ class Trajectories(Trajectory):
         """
         if smooth_params is None: smooth_params = {'sigma': -1,
                                                    'only_past': False}
-        trajectories = {'raw': t.copy()} #TODO: Worth keeping?
-
         # Interpolate trajectories
         if interpolate_nans:
             tt.interpolate_nans(t)
 
         # Center and scale trajectories
         center_x, center_y, estimated_radius = tt.find_enclosing_circle(t)
+        center_a = np.array([center_x, center_y])
         if arena_radius is None:
             radius = estimated_radius
         else:
             radius = arena_radius
 
         if center: #TODO: Role of center will change this
-            t[..., 0] -= center_x
-            t[..., 1] -= center_y
+            t -= center_a
+            displacement = -center_a
+            center_a = np.array([0.0, 0.0])
         else:
-            center_x, center_y = 0.0, 0.0
+            displacement = np.array([0.0, 0.0])
 
         if smooth_params['sigma'] > 0:
             t_smooth = tt.smooth(t, **smooth_params)
         else:
             t_smooth = t
 
+        trajectories = {}
         # Smooth trajectories
-        if smooth_params['only_past']:
+        if smooth_params.get('only_past', False):
             [trajectories['_s'], trajectories['_v'], trajectories['_a']] = \
                 tt.velocity_acceleration_backwards(t_smooth)
         else:
@@ -185,8 +160,8 @@ class Trajectories(Trajectory):
                 tt.velocity_acceleration(t_smooth)
 
         #TODO: Discuss role of center_x / center_y. Maybe add delta_x, delta_y?
-        params = {"center_x": center_x,            # Units: pixels
-                  "center_y": center_y,            # Units: pixels
+        params = {"center": center_a,              # Units: pixels
+                  "displacement": displacement,    # Units: pixels
                   "radius": radius,                # Units: unit length
                   "radius_px": radius,             # Units: pixels
                   "length_unit": 1,                # Units: pixels
@@ -196,6 +171,21 @@ class Trajectories(Trajectory):
 
         traj = cls(trajectories, params)
         return traj
+
+    def normalise_by(self, normaliser):
+        if not isinstance(normaliser, str):
+            raise Exception('normalise_by needs a string. To normalise by'
+                            'a number, please use new_length_unit')
+        if normaliser == 'body length' or normaliser == 'body_length':
+            length_unit = self.params['body_length_px']
+            length_unit_name = 'BL'
+        elif normaliser == 'radius':
+            length_unit = self.params['radius_px']
+            length_unit_name = 'R'
+        else:
+            raise Exception('Unknown key')
+        self.new_length_unit(length_unit, length_unit_name)
+        return self
 
     def new_length_unit(self, *args, **kwargs):
         super().new_length_unit(*args, **kwargs)
