@@ -131,8 +131,7 @@ class Trajectories(Trajectory):
         if smooth_params is None: smooth_params = {'sigma': -1,
                                                    'only_past': False}
         # Interpolate trajectories
-        if interpolate_nans:
-            tt.interpolate_nans(t)
+        if interpolate_nans: tt.interpolate_nans(t)
 
         # Center and scale trajectories
         center_x, center_y, estimated_radius = tt.find_enclosing_circle(t)
@@ -173,8 +172,7 @@ class Trajectories(Trajectory):
                   "time_unit": 1,  # In frames
                   "time_unit_name": 'frames'}
 
-        traj = cls(trajectories, params)
-        return traj
+        return cls(trajectories, params)
 
     def normalise_by(self, normaliser):
         if not isinstance(normaliser, str):
@@ -218,7 +216,8 @@ class FishTrajectories(Trajectories):
     def get_bouts(self, find_max_dict=None, find_min_dict=None):
         """Obtain bouts start and peak for all individuals
 
-        :param **kwargs: named arguments passed to scipy.signal.find_peaks
+        :param find_max_dict: named arguments passed to scipy.signal.find_peaks
+        :param find_min_dict: named arguments passed to scipy.signal.find_peaks
 
         returns
         :all_bouts: list of arrays, one array per individual. The dimensions
@@ -226,26 +225,32 @@ class FishTrajectories(Trajectories):
         of the bout, col-2 is the peak of the bout, col-3 is the beginning of
         the next bout
         """
-        # TODO: Update docstring
+
         if find_max_dict is None: find_max_dict = {}
         if find_min_dict is None: find_min_dict = {}
 
         all_bouts = []
         for focal in range(self.number_of_individuals):
             # Find local minima and maxima
-            min_frames_ = signal.find_peaks(-self.speed[:, focal], **find_min_dict)[0]
-            max_frames_ = signal.find_peaks(self.speed[:, focal], **find_max_dict)[0]
+            min_frames_ = signal.find_peaks(-self.speed[:, focal],
+                                            **find_min_dict)[0]
+            max_frames_ = signal.find_peaks(self.speed[:, focal],
+                                            **find_max_dict)[0]
+
             # Filter out NaNs
             min_frames = [f for f in min_frames_
                           if not np.isnan(self._s[f, focal, 0])]
             max_frames = [f for f in max_frames_
                           if not np.isnan(self._s[f, focal, 0])]
+
             # Obtain couples of consecutive minima and maxima
             frames = min_frames + max_frames
             frameismax = [False]*len(min_frames) + [True]*len(max_frames)
             ordered_frames, ordered_ismax = zip(*sorted(zip(frames, frameismax)))
             bouts = [ordered_frames[i:i+2] for i in range(len(ordered_frames)-1)
                      if not ordered_ismax[i] and ordered_ismax[i+1]]
+
+            # Ordering, and adding next_bout
             starting_bouts, bout_peaks = zip(*bouts)
             next_bout_start = list(starting_bouts[1:]) + [self.number_of_frames-1]
             bouts = np.asarray(list(zip(starting_bouts, bout_peaks, next_bout_start)))
