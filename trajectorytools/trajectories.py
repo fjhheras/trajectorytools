@@ -84,6 +84,10 @@ class Trajectories(Trajectory):
         return self[slice(start, end)]
 
     @classmethod
+    def from_idtrackerai(cls, trajectories_path, **kwargs):
+        return cls.from_idtracker(trajectories_path, **kwargs)
+
+    @classmethod
     def from_idtracker(cls, trajectories_path,
                        interpolate_nans=True, center=False,
                        smooth_params=None, dtype=np.float64):
