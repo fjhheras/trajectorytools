@@ -7,7 +7,7 @@ import trajectorytools.plot as ttplot
 
 if __name__ == '__main__':
     test_trajectories_file = os.path.join(dir_of_data, 'test_trajectories.npy')
-    t = np.load(test_trajectories_file)
+    t = np.load(test_trajectories_file, allow_pickle=True)
     tt.interpolate_nans(t)
     [s_, v_, a_] = tt.smooth_several(t, derivatives = [0,1,2])
 
