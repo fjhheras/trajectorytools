@@ -4,20 +4,30 @@ import matplotlib.pyplot as plt
 from matplotlib.patches import Ellipse, Circle
 from matplotlib.lines import Line2D
 
-# TODO: Ideally, we need to separate functions calculating and plotting histograms
+# Scene
 
 class Fish:
-    def __init__(self, xy, v, restricted = False, color = 'b', size = 0.04, vel_factor = 10):
+    default_ellipse_params = {'width': 1, 'height':1/2,
+                              'fc': 'b', 'ec': 'k',
+                              'linewidth': 0.03}
+    def __init__(self, xy, v, restricted=False, ellipse_params=None,
+                 color = 'k', marker_size = 0.04, vel_factor = 10,
+                 velocity_marker = True):
         self._xy = xy
         self._v = v
         self.vel_factor = vel_factor
         self.restricted = restricted
-        self.body = Ellipse(xy=xy,
-                width=size, height=size/2,
-                angle=np.degrees(np.arctan2(v[1],v[0])), fc = color)
-        self.velocity_marker = Circle(xy = self.xy_vel, radius = size/10, fc = 'k')
-        self.velocity_line = Line2D([xy[0], self.xy_vel[0]], [xy[1], self.xy_vel[1]], color = color, linewidth = 0.3)
-        self.artists = [self.body, self.velocity_marker, self.velocity_line]
+
+        if ellipse_params is None: ellipse_params = {}
+        ellipse_params = {**self.default_ellipse_params, **ellipse_params}
+        ellipse_params['angle'] = np.degrees(np.arctan2(v[1],v[0]))
+        self.body = Ellipse(xy=xy, **ellipse_params)
+        self.velocity_line = Line2D([xy[0], self.xy_vel[0]], [xy[1], self.xy_vel[1]],
+                                    color = color, linewidth = 0.4)
+        self.artists = [self.body, self.velocity_line]
+        if velocity_marker:
+            self.velocity_marker = Circle(xy = self.xy_vel, radius = marker_size/10, fc = 'k')
+            self.artists += [self.velocity_marker]
     @property
     def xy_vel(self):
         return self.position + self.velocity*self.vel_factor
@@ -55,6 +65,70 @@ class Fish:
             artist.set_clip_box(ax.bbox)
         self.velocity_line.axes = ax
         self.axes = ax #self.body.axes
+
+class Scene:
+    def __init__(self, fish, ax, target=None, focal_acceleration=False, vel_factor=0.3):
+        for f in fish:
+            fish_artist = Fish(f['position'], f['velocity'],
+                               ellipse_params = f['ellipse'],
+                               vel_factor=vel_factor)
+            fish_artist.add_to_axis(ax)
+        if target is not None:
+            ax.add_artist(plt.Circle((target[0], target[1]), 0.05, color='k'))
+        if focal_acceleration is not None:
+            ax.plot([0,focal_acceleration[0]],[0,focal_acceleration[1]],
+                    'k', linewidth=0.03)
+
+    @classmethod
+    def from_frame(cls, frame, ax, color=None, edgecolor=None,
+                   body_length=1, target=None, focal_acceleration=True):
+        assert(len(frame.shape) == 2)
+        fish = []
+        for i in range(frame.shape[0]):
+            new_fish = {'position': np.array([frame[i, 0], frame[i, 1]]),
+                         'velocity': np.array([frame[i, 2], frame[i, 3]])}
+            if color is not None and color[i] is not None:
+                new_fish['ellipse'] = {'fc': color[i],
+                                       'width': body_length,
+                                       'height': 0.5*body_length}
+
+            fish.append(new_fish)
+        if focal_acceleration:
+            focal_acceleration = frame[0, 4:] #*DELTA_A*0.3
+        else:
+            focal_acceleration=None
+
+        return cls(fish, ax, target=target,
+                   focal_acceleration=focal_acceleration)
+
+
+
+
+#@classmethod
+    #def from_frame(cls, frame, ax, color=None, edgecolor=None, target=None, focal_acceleration=True):
+    #    assert(len(frame.shape) == 2)
+    #    fish = []
+    #    for i in range(frame.shape[0]):
+    #        new_fish = {'position': [frame[i, 0]*DELTA_X,
+    #                                  frame[i, 1]*DELTA_X],
+    #                     'velocity': [frame[i, 2]*DELTA_V,
+    #                                  frame[i, 3]*DELTA_V]}
+    #        if color is not None and color[i] is not None:
+    #            new_fish.update({'color': color[i]})
+    #        #if edgecolor is not None and edgecolor[i] is not None:
+    #        #    new_fish.update({'edgecolor': edgecolor[i]})
+    #        fish.append(new_fish)
+    #    if target is not None:
+    #        target *= DELTA_X
+    #    if focal_acceleration:
+    #        focal_acceleration = frame[0, 4:]*DELTA_A*0.3
+    #    else:
+    #        focal_acceleration=None
+
+    #    return cls(fish, ax, target=target, focal_acceleration=focal_acceleration)
+
+
+### Histogram / diagram stuff below
 
 def get_spaced_colors(n, cmap = 'jet'):
     RGB_tuples = matplotlib.cm.get_cmap(cmap)

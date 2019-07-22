@@ -141,7 +141,7 @@ class Trajectories(Trajectory):
         else:
             radius = arena_radius
 
-        if center: #TODO: Role of center will change this
+        if center:
             t -= center_a
             displacement = -center_a
             center_a = np.array([0.0, 0.0])
@@ -162,7 +162,6 @@ class Trajectories(Trajectory):
             [trajectories['_s'], trajectories['_v'], trajectories['_a']] = \
                 tt.velocity_acceleration(t_smooth)
 
-        #TODO: Discuss role of center_x / center_y. Maybe add delta_x, delta_y?
         params = {"center": center_a,              # Units: pixels
                   "displacement": displacement,    # Units: pixels
                   "radius": radius,                # Units: unit length
