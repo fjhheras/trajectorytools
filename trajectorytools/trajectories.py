@@ -7,33 +7,31 @@ import trajectorytools as tt
 def calculate_center_of_mass(trajectories, params):
     center_of_mass = {k: np.nanmean(trajectories[k], axis=1)
                       for k in Trajectory.keys_to_copy}
-    return Trajectory(center_of_mass, params)
+    return CenterMassTrajectory(center_of_mass, params)
 
+#def resampleo(x, up, down, params = {}):
+#    fraction = up/down
+#    return signal.resample(x, int(np.around(fraction*x.shape[0])),
+#                           axis=0, **params)
+#
+#def resample(x, up, down, params = {}, pad=1):
+#    pad_tuple = ((int(down*pad), int(down*pad)),) + ((0, 0),)*(len(x.shape) - 1)
+#    x = np.pad(x, pad_tuple, 'edge')
+#    fraction = up/down
+#    x_resampled = signal.resample(x, int(np.around(fraction*x.shape[0])),
+#                                  axis=0, **params)
+#    return x_resampled[int(up*pad):-int(up*pad)]
 
 class Trajectory:
     keys_to_copy = ['_s', '_v', '_a']
-
+    own_params = True
     def __init__(self, trajectories, params):
         for key in self.keys_to_copy:
             setattr(self, key, trajectories[key])
-        self.params = deepcopy(params)
-
-    def new_length_unit(self, length_unit, length_unit_name='?'):
-        factor = self.params['length_unit'] / length_unit
-        self.params['center'] *= factor
-        self.params['radius'] *= factor
-        self._s *= factor
-        self._v *= factor
-        self._a *= factor
-        self.params['length_unit'] = length_unit
-        self.params['length_unit_name'] = length_unit_name
-
-    def new_time_unit(self, time_unit, time_unit_name='?'):
-        factor = self.params['time_unit'] / time_unit
-        self._v /= factor
-        self._a /= factor**2
-        self.params['time_unit'] = time_unit
-        self.params['time_unit_name'] = time_unit_name
+        if self.own_params:
+            self.params = deepcopy(params)
+        else:
+            self.params = params
 
     @property
     def number_of_frames(self): return self._s.shape[0]
@@ -70,10 +68,45 @@ class Trajectory:
     def normal_acceleration(self): return np.square(self.speed)*self.curvature
 
 
+    def new_length_unit(self, length_unit, length_unit_name='?'):
+        factor = self.params['length_unit'] / length_unit
+        self._s *= factor
+        self._v *= factor
+        self._a *= factor
+        if self.own_params:
+            self.params['center'] *= factor
+            self.params['radius'] *= factor
+            self.params['length_unit'] = length_unit
+            self.params['length_unit_name'] = length_unit_name
+
+    def new_time_unit(self, time_unit, time_unit_name='?'):
+        factor = self.params['time_unit'] / time_unit
+        self._v /= factor
+        self._a /= factor**2
+        if self.own_params:
+            self.params['time_unit'] = time_unit
+            self.params['time_unit_name'] = time_unit_name
+
+    def resample(self, new_frame_rate, **kwargs):
+        if 'frame_rate' not in self.params:
+            raise Exception("Frame rate not in trajectories")
+        old_frame_rate = self.params['frame_rate']
+        fraction = new_frame_rate/old_frame_rate
+        self._s = tt.resample(self._s, new_frame_rate, old_frame_rate, kwargs)
+        self._v = tt.resample(self._v, new_frame_rate, old_frame_rate, kwargs)
+        self._a = tt.resample(self._a, new_frame_rate, old_frame_rate, kwargs)
+        if self.own_params:
+            self.params['frame_rate'] = new_frame_rate
+            self.params['time_unit'] *= fraction
+
+
+class CenterMassTrajectory(Trajectory):
+    own_params = False #Parameters are shared with parent
+
 class Trajectories(Trajectory):
     def __init__(self, trajectories, params):
         super().__init__(trajectories, params)
-        self.center_of_mass = calculate_center_of_mass(trajectories, params)
+        self.center_of_mass = calculate_center_of_mass(trajectories, self.params)
 
     def __getitem__(self, val):
         view_trajectories = {k: getattr(self, k)[val]
@@ -189,12 +222,17 @@ class Trajectories(Trajectory):
         return self
 
     def new_length_unit(self, *args, **kwargs):
-        super().new_length_unit(*args, **kwargs)
+        # Order is important (changes in params): first center of mass, then own
         self.center_of_mass.new_length_unit(*args, **kwargs)
+        super().new_length_unit(*args, **kwargs)
 
     def new_time_unit(self, *args, **kwargs):
-        super().new_time_unit(*args, **kwargs)
         self.center_of_mass.new_time_unit(*args, **kwargs)
+        super().new_time_unit(*args, **kwargs)
+
+    def resample(self, *args, **kwargs):
+        self.center_of_mass.resample(*args, **kwargs)
+        super().resample(*args, **kwargs)
 
     @property
     def number_of_individuals(self):

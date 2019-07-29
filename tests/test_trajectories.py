@@ -14,6 +14,7 @@ class TrajectoriesTestCase(unittest.TestCase):
         self.t = Trajectories.from_idtracker(trajectories_path)
 
     def test_center_of_mass(self):
+        assert(self.t.params is self.t.center_of_mass.params) #Same object
         nptest.assert_allclose(self.t.s.mean(axis=1), self.t.center_of_mass.s)
         nptest.assert_allclose(self.t.v.mean(axis=1), self.t.center_of_mass.v)
         nptest.assert_allclose(self.t.a.mean(axis=1), self.t.center_of_mass.a)
@@ -60,6 +61,45 @@ class SmoothTrajectoriesTestCase(TrajectoriesTestCase):
         self.t = Trajectories.from_idtracker(trajectories_path,
                                              smooth_params={'sigma':1})
 
+def assert_global_allclose(a, b, rel_error):
+    # For things that are around 0
+    abs_error = rel_error*min(a.std(), b.std())
+    nptest.assert_allclose(a, b, rtol=0, atol=abs_error)
+
+class DoubleTrajectoriesTestCase(TrajectoriesTestCase):
+    def setUp(self):
+        self.t = Trajectories.from_idtracker(trajectories_path,
+                                             smooth_params={'sigma':2})
+        self.t2 = Trajectories.from_idtracker(trajectories_path,
+                                              smooth_params={'sigma':2})
+        self.rel_error = [1e-14]*3
+    def test_close_to_original(self):
+        assert_global_allclose(self.t.s, self.t2.s, self.rel_error[0])
+        assert_global_allclose(self.t.v, self.t2.v, self.rel_error[1])
+        assert_global_allclose(self.t.a, self.t2.a, self.rel_error[2])
+
+class TrivialResample(DoubleTrajectoriesTestCase):
+    def setUp(self):
+        super().setUp()
+        self.t.resample(self.t.params["frame_rate"])
+
+class UpDownResample(DoubleTrajectoriesTestCase):
+    def setUp(self):
+        super().setUp()
+        factor = 2.0
+        frame_rate = self.t.params["frame_rate"]
+        self.t.resample(frame_rate*factor)
+        self.t.resample(frame_rate)
+        self.rel_error = [2e-3, 5e-2, 0.3]
+
+class DownUpResample(DoubleTrajectoriesTestCase):
+    def setUp(self):
+        super().setUp()
+        factor = 0.5
+        frame_rate = self.t.params["frame_rate"]
+        self.t.resample(frame_rate*factor)
+        self.t.resample(frame_rate)
+        self.rel_error = [5e-2, 0.5, 1.0] #Poor in acceleration (changes fast)
 
 class ScaleRadiusTrajectoriesTestCase(TrajectoriesTestCase):
     def setUp(self):
@@ -92,6 +132,7 @@ class TrajectoriesRadiusTestCase(TrajectoriesTestCase):
         nptest.assert_allclose(self.t.a,
                                self.t_normal.a / self.t.params['radius_px'],
                                atol=1e-15)
+
 
 if __name__ == '__main__':
     unittest.main()

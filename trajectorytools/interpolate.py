@@ -3,7 +3,7 @@ import traceback
 import logging
 import numpy as np
 from scipy.ndimage.filters import gaussian_filter1d, convolve1d
-
+from scipy import signal
 
 def interpolate_nans(t):
     """Interpolates nans linearly in a trajectory
@@ -21,6 +21,33 @@ def interpolate_nans(t):
     # Ugly slow hack, as reshape seems not to return a view always
     back_t = reshaped_t.reshape(shape_t)
     t[...] = back_t
+
+def resample(x, up, down, params = {}):
+    # Temporary
+    # I submitted this to SciPy as part of the PR#10543
+    axis = 0
+    n_in = x.shape[axis]
+
+    # Substracting background
+    background_line = [x.take(0, axis),
+                       (x.take(-1, axis) - x.take(0, axis))*n_in/(n_in-1)]
+    rel_len = np.linspace(0.0, 1.0, n_in, endpoint=False)
+    background_in = np.stack(
+            [background_line[0] + background_line[1]*l for l in rel_len],
+            axis=axis)
+    x = x - background_in.astype(x.dtype)
+
+    resampled_x = signal.resample_poly(x, up, down, axis=0, **params)
+
+    # Adding background back
+    n_out = resampled_x.shape[axis]
+    rel_len = np.linspace(0.0, 1.0, n_out, endpoint=False)
+    background_out = np.stack(
+        [background_line[0] + background_line[1]*l for l in rel_len],
+        axis=axis)
+    resampled_x += background_out.astype(x.dtype)
+    return resampled_x
+
 
 
 def _nan_helper(y):
@@ -100,6 +127,7 @@ def center_trajectories_and_normalise(t, unit_length=None, forced_radius=None):
     return radius/unit_length, center_x/unit_length, center_y/unit_length, unit_length
 
 def smooth_several(t, sigma=2, truncate=5, derivatives=[0]):
+    # No longer recommended to use, particularly for small sigma
     return [smooth(t, sigma=sigma, truncate=truncate,
                    derivative=derivative) for derivative in derivatives]
 
