@@ -9,19 +9,6 @@ def calculate_center_of_mass(trajectories, params):
                       for k in Trajectory.keys_to_copy}
     return CenterMassTrajectory(center_of_mass, params)
 
-#def resampleo(x, up, down, params = {}):
-#    fraction = up/down
-#    return signal.resample(x, int(np.around(fraction*x.shape[0])),
-#                           axis=0, **params)
-#
-#def resample(x, up, down, params = {}, pad=1):
-#    pad_tuple = ((int(down*pad), int(down*pad)),) + ((0, 0),)*(len(x.shape) - 1)
-#    x = np.pad(x, pad_tuple, 'edge')
-#    fraction = up/down
-#    x_resampled = signal.resample(x, int(np.around(fraction*x.shape[0])),
-#                                  axis=0, **params)
-#    return x_resampled[int(up*pad):-int(up*pad)]
-
 class Trajectory:
     keys_to_copy = ['_s', '_v', '_a']
     own_params = True
@@ -161,14 +148,15 @@ class Trajectories(Trajectory):
         :param arena_radius: Declared arena radius (overrides estimation)
         :param center: If True, we offset trajectories (center to 0)
         """
-        if smooth_params is None: smooth_params = {'sigma': -1,
-                                                   'only_past': False}
+        if smooth_params is None:
+            smooth_params = {'sigma': -1, 'only_past': False}
         # Interpolate trajectories
         if interpolate_nans: tt.interpolate_nans(t)
 
         # Center and scale trajectories
         center_x, center_y, estimated_radius = tt.find_enclosing_circle(t)
         center_a = np.array([center_x, center_y])
+
         if arena_radius is None:
             radius = estimated_radius
         else:
@@ -205,6 +193,12 @@ class Trajectories(Trajectory):
                   "time_unit_name": 'frames'}
 
         return cls(trajectories, params)
+
+    def point_from_px(self, point):
+        return (point + self.params['displacement'])/self.params['length_unit']
+
+    def point_to_px(self, point):
+        return point*self.params['length_unit'] - self.params['displacement']
 
     def normalise_by(self, normaliser):
         if not isinstance(normaliser, str):

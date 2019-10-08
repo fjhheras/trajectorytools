@@ -118,6 +118,19 @@ class ScaleRadiusTrajectoriesTestCase(TrajectoriesTestCase):
         nptest.assert_allclose(self.t.v, corrected_v)
         nptest.assert_allclose(self.t.a, corrected_a, atol=1e-15)
 
+    def test_transform_center(self):
+        center_px = self.t_normal.params['center']
+        center_transformed = self.t.point_from_px(center_px)
+        nptest.assert_allclose(center_transformed,
+                               np.zeros_like(center_transformed))
+    def test_transform_back_center(self):
+        center_transformed = np.zeros(2)
+        center_px = self.t.point_to_px(center_transformed)
+        nptest.assert_allclose(center_px,
+                               self.t_normal.params['center'])
+
+
+
 class TrajectoriesRadiusTestCase(TrajectoriesTestCase):
     def setUp(self):
         self.t_normal = Trajectories.from_idtracker(trajectories_path,

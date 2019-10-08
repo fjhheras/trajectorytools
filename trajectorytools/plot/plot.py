@@ -81,7 +81,8 @@ class Scene:
 
     @classmethod
     def from_frame(cls, frame, ax, color=None, edgecolor=None,
-                   body_length=1, target=None, focal_acceleration=True):
+                   body_length=1, target=None, focal_acceleration=True,
+                   vel_factor=0.3):
         assert(len(frame.shape) == 2)
         fish = []
         for i in range(frame.shape[0]):
@@ -98,7 +99,7 @@ class Scene:
         else:
             focal_acceleration=None
 
-        return cls(fish, ax, target=target,
+        return cls(fish, ax, target=target, vel_factor=vel_factor,
                    focal_acceleration=focal_acceleration)
 
 
