@@ -9,6 +9,11 @@ def calculate_center_of_mass(trajectories, params):
                       for k in Trajectory.keys_to_copy}
     return CenterMassTrajectory(center_of_mass, params)
 
+def estimate_center_and_radius(t):
+    center_x, center_y, estimated_radius = tt.find_enclosing_circle(t)
+    center_a = np.array([center_x, center_y])
+    return center_a, estimated_radius
+
 class Trajectory:
     keys_to_copy = ['_s', '_v', '_a']
     own_params = True
@@ -124,14 +129,20 @@ class Trajectories(Trajectory):
                             allow_pickle=True).item()
         t = traj_dict['trajectories'].astype(dtype)
 
-        # If the trajectories contain the arena radius information, use it
-        # Otherwise, return None for radius to be estimated from trajectories
-        arena_radius = traj_dict.get('arena_radius', None)
+        # If the trajectories contain the arena radius/center information, use it
+        # Otherwise, return None for radius/center to be estimated from trajectories
+        if 'border' in traj_dict:
+            arena_center, arena_radius = estimate_center_and_radius()
+        elif 'arena_radius' in traj_dict:
+            arena_radius = traj_dict['arena_radius']
+            arena_center = None
+        else:
+            arena_radius, arena_center = None, None
 
         traj = cls.from_positions(t, interpolate_nans=interpolate_nans,
                                   smooth_params=smooth_params,
                                   arena_radius=arena_radius,
-                                  center=center)
+                                  arena_center=arena_center, center=center)
 
         traj.params['frame_rate'] = traj_dict.get('frames_per_second', None)
         traj.params['body_length_px'] = traj_dict.get('body_length', None)
@@ -139,13 +150,14 @@ class Trajectories(Trajectory):
 
     @classmethod
     def from_positions(cls, t, interpolate_nans=True, smooth_params=None,
-                       arena_radius=None, center=False):
+                       arena_radius=None, arena_center=None, center=False):
         """Trajectory from positions
 
         :param t: Positions nd.array.
         :param interpolate_nans: whether to interpolate NaNs
         :param smooth_params: Arguments for smoothing (see tt.smooth)
         :param arena_radius: Declared arena radius (overrides estimation)
+        :param arena_center: Declared arena center (overrides estimation)
         :param center: If True, we offset trajectories (center to 0)
         """
         if smooth_params is None:
@@ -153,15 +165,19 @@ class Trajectories(Trajectory):
         # Interpolate trajectories
         if interpolate_nans: tt.interpolate_nans(t)
 
-        # Center and scale trajectories
-        center_x, center_y, estimated_radius = tt.find_enclosing_circle(t)
-        center_a = np.array([center_x, center_y])
+        # Find center and radius. Then override if necessary
+        if arena_radius == None and arena_center == None:
+            center_a, estimated_radius = estimate_center_and_radius(t)
 
         if arena_radius is None:
             radius = estimated_radius
         else:
             radius = arena_radius
 
+        if arena_center is not None:
+            center_a = arena_center
+
+        # Maybe center trajectories
         if center:
             t -= center_a
             displacement = -center_a
@@ -169,13 +185,14 @@ class Trajectories(Trajectory):
         else:
             displacement = np.array([0.0, 0.0])
 
+        # Smooth trajectories
         if smooth_params['sigma'] > 0:
             t_smooth = tt.smooth(t, **smooth_params)
         else:
             t_smooth = t
 
         trajectories = {}
-        # Smooth trajectories
+
         if smooth_params.get('only_past', False):
             [trajectories['_s'], trajectories['_v'], trajectories['_a']] = \
                 tt.velocity_acceleration_backwards(t_smooth)
