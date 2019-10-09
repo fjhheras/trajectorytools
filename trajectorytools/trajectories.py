@@ -131,8 +131,8 @@ class Trajectories(Trajectory):
 
         # If the trajectories contain the arena radius/center information, use it
         # Otherwise, return None for radius/center to be estimated from trajectories
-        if 'border' in traj_dict:
-            arena_center, arena_radius = estimate_center_and_radius()
+        if 'setup_points' in traj_dict and 'border' in traj_dict['setup_points']:
+            arena_center, arena_radius = estimate_center_and_radius(traj_dict['setup_points']['border'])
         elif 'arena_radius' in traj_dict:
             arena_radius = traj_dict['arena_radius']
             arena_center = None
@@ -166,7 +166,7 @@ class Trajectories(Trajectory):
         if interpolate_nans: tt.interpolate_nans(t)
 
         # Find center and radius. Then override if necessary
-        if arena_radius == None and arena_center == None:
+        if arena_radius is None and arena_center is None:
             center_a, estimated_radius = estimate_center_and_radius(t)
 
         if arena_radius is None:

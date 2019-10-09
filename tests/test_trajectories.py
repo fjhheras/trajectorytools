@@ -7,7 +7,9 @@ from trajectorytools import Trajectories
 from trajectorytools.constants import dir_of_data
 
 trajectories_path = pathlib.Path(dir_of_data) / 'test_trajectories_idtrackerai.npy'
+trajectories_path_border = pathlib.Path(dir_of_data) / 'test_trajectories_idtrackerai_with_border.npy'
 raw_trajectories_path = pathlib.Path(dir_of_data) / 'test_trajectories.npy'
+
 
 class TrajectoriesTestCase(unittest.TestCase):
     def setUp(self):
@@ -47,24 +49,42 @@ class TrajectoriesTestCase(unittest.TestCase):
         nptest.assert_equal(new_t.v, self.t.v[50:100])
         nptest.assert_equal(new_t.a, self.t.a[50:100])
 
+
 class RawTrajectoriesTestCase(TrajectoriesTestCase):
     def setUp(self):
         t = np.load(raw_trajectories_path, allow_pickle=True)
         self.t = Trajectories.from_positions(t)
 
+
+class ArenaRadiusCenterFromBorder(TrajectoriesTestCase):
+    def setUp(self):
+        self.t = Trajectories.from_idtracker(trajectories_path_border)
+
+    def test_arena_radius_and_center_from_border(self):
+        """
+        The width and height of the frame are 1160 and 938 pixels respectively. In the trajectories dictionary there
+        is a key named 'setup_points'
+        """
+        nptest.assert_allclose(self.t.params['center'], (580, 469), rtol=.1, atol=1.)
+        nptest.assert_allclose(self.t.params['radius_px'], 400, rtol=.1, atol=1.)
+
+
 class CenterTrajectoriesTestCase(TrajectoriesTestCase):
     def setUp(self):
         self.t = Trajectories.from_idtracker(trajectories_path, center=True)
+
 
 class SmoothTrajectoriesTestCase(TrajectoriesTestCase):
     def setUp(self):
         self.t = Trajectories.from_idtracker(trajectories_path,
                                              smooth_params={'sigma':1})
 
+
 def assert_global_allclose(a, b, rel_error):
     # For things that are around 0
     abs_error = rel_error*min(a.std(), b.std())
     nptest.assert_allclose(a, b, rtol=0, atol=abs_error)
+
 
 class DoubleTrajectoriesTestCase(TrajectoriesTestCase):
     def setUp(self):
@@ -73,15 +93,18 @@ class DoubleTrajectoriesTestCase(TrajectoriesTestCase):
         self.t2 = Trajectories.from_idtracker(trajectories_path,
                                               smooth_params={'sigma':2})
         self.rel_error = [1e-14]*3
+
     def test_close_to_original(self):
         assert_global_allclose(self.t.s, self.t2.s, self.rel_error[0])
         assert_global_allclose(self.t.v, self.t2.v, self.rel_error[1])
         assert_global_allclose(self.t.a, self.t2.a, self.rel_error[2])
 
+
 class TrivialResample(DoubleTrajectoriesTestCase):
     def setUp(self):
         super().setUp()
         self.t.resample(self.t.params["frame_rate"])
+
 
 class UpDownResample(DoubleTrajectoriesTestCase):
     def setUp(self):
@@ -92,6 +115,7 @@ class UpDownResample(DoubleTrajectoriesTestCase):
         self.t.resample(frame_rate)
         self.rel_error = [2e-3, 5e-2, 0.3]
 
+
 class DownUpResample(DoubleTrajectoriesTestCase):
     def setUp(self):
         super().setUp()
@@ -100,6 +124,7 @@ class DownUpResample(DoubleTrajectoriesTestCase):
         self.t.resample(frame_rate*factor)
         self.t.resample(frame_rate)
         self.rel_error = [5e-2, 0.5, 1.0] #Poor in acceleration (changes fast)
+
 
 class ScaleRadiusTrajectoriesTestCase(TrajectoriesTestCase):
     def setUp(self):
@@ -123,12 +148,12 @@ class ScaleRadiusTrajectoriesTestCase(TrajectoriesTestCase):
         center_transformed = self.t.point_from_px(center_px)
         nptest.assert_allclose(center_transformed,
                                np.zeros_like(center_transformed))
+
     def test_transform_back_center(self):
         center_transformed = np.zeros(2)
         center_px = self.t.point_to_px(center_transformed)
         nptest.assert_allclose(center_px,
                                self.t_normal.params['center'])
-
 
 
 class TrajectoriesRadiusTestCase(TrajectoriesTestCase):
@@ -138,6 +163,7 @@ class TrajectoriesRadiusTestCase(TrajectoriesTestCase):
         self.t = Trajectories.from_idtracker(trajectories_path,
                                              smooth_params={'sigma': 1}
                                              ).normalise_by('radius')
+
     def test_scaling(self):
         self.assertEqual(self.t.params['radius'], 1.0)
         nptest.assert_allclose(self.t.v,
