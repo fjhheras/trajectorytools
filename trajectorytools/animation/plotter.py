@@ -68,4 +68,14 @@ def circle(color = 'k', radius = 1):
         return lines
     return Plotter(first=plot_function, update=update_function)
 
+def labels(color = 'k', fontsize = 15, labels=None):
+    def plot_function(xy, ax):
+        patches = tuple(ax.text(x[0], x[1], l) for l, x in zip(labels[0], xy))
+        return patches
+    def update_function(xy, ax, lines):
+        for i, patch in enumerate(lines):
+            patch.set_position((xy[i,0], xy[i,1]))
+        return lines
+    return Plotter(first=plot_function, update=update_function)
+
 
