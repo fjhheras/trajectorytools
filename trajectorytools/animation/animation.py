@@ -72,7 +72,6 @@ def scatter_labels(positions, **kwargs):
     plotters = [plotter.labels(**kwargs)]
     return AnimatedScatter([positions], plotters = plotters)
 
-
 def scatter_ellipses(positions, velocities, **kwargs):
     data = np.concatenate((positions, velocities), axis = -1)
     plotters = [plotter.ellipse(**kwargs)]
