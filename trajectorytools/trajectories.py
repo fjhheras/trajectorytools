@@ -25,6 +25,9 @@ class Trajectory:
         else:
             self.params = params
 
+    def __len__(self):
+        return len(self._s)
+
     @property
     def number_of_frames(self): return self._s.shape[0]
 
