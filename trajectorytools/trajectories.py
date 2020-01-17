@@ -330,9 +330,12 @@ class FishTrajectories(Trajectories):
 
 
 class TrajectoriesWithPoints(Trajectories):
-    def __init__(self, trajectories, points):
-        self.__dict__.update(trajectories.__dict__)
-        self.points = self.points_from_px(points)
+    def __init__(self, trajectories, params, points=None):
+        super().__init__(trajectories, params)
+        if points is None:
+            self.points = {}
+        else:
+            self.points = points
 
     @classmethod
     def from_idtracker(cls, trajectories_path, **kwargs):
@@ -340,7 +343,15 @@ class TrajectoriesWithPoints(Trajectories):
                             allow_pickle=True).item()
         t = Trajectories.from_idtracker_(traj_dict)
         points = traj_dict['setup_points']
-        return cls(t, points)
+        view_trajectories = {k: getattr(t, k) for k in t.keys_to_copy}
+        twp = cls(view_trajectories, t.params)
+        twp.points=twp.points_from_px(points)
+        return twp
+
+    def __getitem__(self, val):
+        view_traj_with_points = super().__getitem__(val)
+        view_traj_with_points.points = self.points
+        return view_traj_with_points
 
     def points_from_px(self, points):
         new_points = {}

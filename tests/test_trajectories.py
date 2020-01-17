@@ -3,12 +3,13 @@ import unittest
 
 import numpy as np
 import numpy.testing as nptest
-from trajectorytools import Trajectories
+from trajectorytools import Trajectories, TrajectoriesWithPoints
 from trajectorytools.constants import dir_of_data
 
 trajectories_path = pathlib.Path(dir_of_data) / 'test_trajectories_idtrackerai.npy'
 trajectories_path_border = pathlib.Path(dir_of_data) / 'test_trajectories_idtrackerai_with_border.npy'
 raw_trajectories_path = pathlib.Path(dir_of_data) / 'test_trajectories.npy'
+trajectories_with_points_path = pathlib.Path(dir_of_data) / 'trajectories_with_points.npy'
 
 
 class TrajectoriesTestCase(unittest.TestCase):
@@ -48,6 +49,11 @@ class TrajectoriesTestCase(unittest.TestCase):
         nptest.assert_equal(new_t.s, self.t.s[50:100])
         nptest.assert_equal(new_t.v, self.t.v[50:100])
         nptest.assert_equal(new_t.a, self.t.a[50:100])
+
+
+class TrajectoriesWithPointsTestCase(TrajectoriesTestCase):
+    def setUp(self):
+        self.t = TrajectoriesWithPoints.from_idtracker(trajectories_with_points_path)
 
 
 class RawTrajectoriesTestCase(TrajectoriesTestCase):
