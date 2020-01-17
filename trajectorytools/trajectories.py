@@ -73,6 +73,7 @@ class Trajectory:
             self.params['radius'] *= factor
             self.params['length_unit'] = length_unit
             self.params['length_unit_name'] = length_unit_name
+        return factor
 
     def new_time_unit(self, time_unit, time_unit_name='?'):
         factor = self.params['time_unit'] / time_unit
@@ -116,9 +117,15 @@ class Trajectories(Trajectory):
         return cls.from_idtracker(trajectories_path, **kwargs)
 
     @classmethod
-    def from_idtracker(cls, trajectories_path,
-                       interpolate_nans=True, center=False,
-                       smooth_params=None, dtype=np.float64):
+    def from_idtracker(cls, trajectories_path, **kwargs):
+        traj_dict = np.load(trajectories_path, encoding='latin1',
+                            allow_pickle=True).item()
+        return cls.from_idtracker_(traj_dict, **kwargs)
+
+    @classmethod
+    def from_idtracker_(cls, traj_dict,
+                        interpolate_nans=True, center=False,
+                        smooth_params=None, dtype=np.float64):
         """Create Trajectories from a idtracker.ai trajectories file
 
         :param trajectories_path: idtracker.ai generated trajectories file
@@ -128,8 +135,7 @@ class Trajectories(Trajectory):
         :param smooth_params: Parameters of smoothing
         :param dtype: Desired dtype of trajectories.
         """
-        traj_dict = np.load(trajectories_path, encoding='latin1',
-                            allow_pickle=True).item()
+
         t = traj_dict['trajectories'].astype(dtype)
 
         # If the trajectories contain the arena radius/center information, use it
@@ -238,7 +244,7 @@ class Trajectories(Trajectory):
     def new_length_unit(self, *args, **kwargs):
         # Order is important (changes in params): first center of mass, then own
         self.center_of_mass.new_length_unit(*args, **kwargs)
-        super().new_length_unit(*args, **kwargs)
+        return super().new_length_unit(*args, **kwargs)
 
     def new_time_unit(self, *args, **kwargs):
         self.center_of_mass.new_time_unit(*args, **kwargs)
@@ -321,3 +327,45 @@ class FishTrajectories(Trajectories):
             bouts = np.asarray(list(zip(starting_bouts, bout_peaks, next_bout_start)))
             all_bouts.append(bouts)
         return all_bouts
+
+
+class TrajectoriesWithPoints(Trajectories):
+    def __init__(self, trajectories, points):
+        self.__dict__.update(trajectories.__dict__)
+        self.points = self.points_from_px(points)
+
+    @classmethod
+    def from_idtracker(cls, trajectories_path, **kwargs):
+        traj_dict = np.load(trajectories_path, encoding='latin1',
+                            allow_pickle=True).item()
+        t = Trajectories.from_idtracker_(traj_dict)
+        points = traj_dict['setup_points']
+        return cls(t, points)
+
+    def points_from_px(self, points):
+        new_points = {}
+        for key in points:
+            new_points[key] = self.point_from_px(points[key])
+        return new_points
+
+    def new_length_unit(self, *args, **kwargs):
+        factor = super().new_length_unit(*args, **kwargs) #Changes traj
+        for key in self.points:
+            self.points[key] *= factor
+
+    def distance_to_point(self, key):
+        return self.distance_to(self.points[key])
+
+    def orientation_towards_point(self, key):
+        return self.orientation_towards(self.points[key])
+
+    def speed_towards_point(self, key):
+        return self.speed_towards(self.points[key])
+
+    def acceleration_towards_point(self, key):
+        return self.acceleration_towards(self.points[key])
+
+
+
+
+
