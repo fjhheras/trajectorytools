@@ -262,6 +262,20 @@ class Trajectories(Trajectory):
         ones = np.ones(self.raw.shape[:-1], dtype=np.int)
         return np.einsum('ij,j->ij', ones, self.identity_labels)
 
+    """ functions wrt points"""
+
+    def distance_to(self, point):
+        return tt.norm(self.s - point)
+
+    def orientation_towards(self, point):
+        return np.arccos(tt.dot(tt.normalise(point - self.s), self.e))
+
+    def speed_towards(self, point):
+        return tt.dot(tt.normalise(point - self.s), self.v)
+
+    def acceleration_towards(self, point):
+        return tt.dot(tt.normalise(point - self.s), self.a)
+
 
 class FishTrajectories(Trajectories):
     def get_bouts(self, find_max_dict=None, find_min_dict=None):
