@@ -352,7 +352,7 @@ class TrajectoriesWithPoints(Trajectories):
     def from_idtracker(cls, trajectories_path, **kwargs):
         traj_dict = np.load(trajectories_path, encoding='latin1',
                             allow_pickle=True).item()
-        t = Trajectories.from_idtracker_(traj_dict)
+        t = Trajectories.from_idtracker_(traj_dict, **kwargs)
         points = traj_dict['setup_points']
         view_trajectories = {k: getattr(t, k) for k in t.keys_to_copy}
         twp = cls(view_trajectories, t.params)
