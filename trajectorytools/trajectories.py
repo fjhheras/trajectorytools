@@ -257,6 +257,15 @@ class Trajectories(Trajectory):
         super().resample(*args, **kwargs)
 
     @property
+    def interindividual_distances(self):
+        return tt.socialcontext.interindividual_distances(self.s)
+
+    @property
+    def mean_interindividual_distances(self):
+        return np.nansum(self.interindividual_distances, axis=-1)/(
+            self.number_of_individuals - 1)
+
+    @property
     def number_of_individuals(self):
         return self._s.shape[1]
 

@@ -5,6 +5,7 @@ import numpy as np
 import numpy.testing as nptest
 from trajectorytools import Trajectories, TrajectoriesWithPoints
 from trajectorytools.constants import dir_of_data
+import trajectorytools.socialcontext as ttsocial
 
 trajectories_path = pathlib.Path(dir_of_data) / 'test_trajectories_idtrackerai.npy'
 trajectories_path_border = pathlib.Path(dir_of_data) / 'test_trajectories_idtrackerai_with_border.npy'
@@ -50,6 +51,17 @@ class TrajectoriesTestCase(unittest.TestCase):
         nptest.assert_equal(new_t.v, self.t.v[50:100])
         nptest.assert_equal(new_t.a, self.t.a[50:100])
 
+class TrajectoriesTestCase2(TrajectoriesTestCase):
+    def test_interindividual_distances(self):
+        d1 = self.t.interindividual_distances
+        d2 = ttsocial.adjacency_matrix(self.t.s, mode='distance')
+        d3 = ttsocial.adjacency_matrix(self.t.s, mode='distance',
+                                       use_pdist_if_all_nb=False)
+        nptest.assert_equal(d1, d2)
+        nptest.assert_equal(d2, d3)
+
+    def test_mean_interindividual_distances(self):
+        self.t.mean_interindividual_distances
 
 class TrajectoriesWithPointsTestCase(TrajectoriesTestCase):
     def setUp(self):

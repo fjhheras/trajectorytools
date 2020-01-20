@@ -1,4 +1,5 @@
 import scipy.spatial
+import scipy.spatial.distance as spdist
 from sklearn.neighbors import NearestNeighbors
 import numpy as np
 
@@ -84,7 +85,8 @@ def give_indices(positions, num_neighbours):
     return next_neighbours
 
 
-def adjacency_matrix(positions, num_neighbours=None, mode='connectivity'):
+def adjacency_matrix(positions, num_neighbours=None,
+                     mode='connectivity', use_pdist_if_all_nb=True):
     total_time_steps = positions.shape[0]
     individuals = positions.shape[1]
     if num_neighbours is None:
@@ -98,12 +100,21 @@ def adjacency_matrix(positions, num_neighbours=None, mode='connectivity'):
     else:
         raise ValueError("mode should be 'connectivity' or 'distance'")
 
-    for frame in range(total_time_steps):
-        adjacency_m[frame, ...] = _neighbours_indices_in_frame(
-                                            positions[frame], num_neighbours,
-                                            adjacency=True, mode=mode)
+    if (num_neighbours == individuals + 1) and use_pdist_if_all_nb:
+        if mode == 'connectivity':
+            adjacency_m[...] = True
+        else:
+            for frame in range(total_time_steps):
+                adjacency_m[frame, ...] = spdist.squareform(spdist.pdist(positions[frame]))
+    else:
+        for frame in range(total_time_steps):
+            adjacency_m[frame, ...] = _neighbours_indices_in_frame(
+                                                positions[frame], num_neighbours,
+                                                adjacency=True, mode=mode)
     return adjacency_m
 
+def interindividual_distances(positions):
+    return adjacency_matrix(positions, mode='distance')
 
 def restrict(data, indices, individual=None):
     """restrict_with_delay
