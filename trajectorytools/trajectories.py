@@ -120,7 +120,9 @@ class Trajectories(Trajectory):
     def from_idtracker(cls, trajectories_path, **kwargs):
         traj_dict = np.load(trajectories_path, encoding='latin1',
                             allow_pickle=True).item()
-        return cls.from_idtracker_(traj_dict, **kwargs)
+        tr = cls.from_idtracker_(traj_dict, **kwargs)
+        tr.params['path'] = trajectories_path
+        return tr
 
     @classmethod
     def from_idtracker_(cls, traj_dict,
@@ -346,6 +348,7 @@ class TrajectoriesWithPoints(Trajectories):
         view_trajectories = {k: getattr(t, k) for k in t.keys_to_copy}
         twp = cls(view_trajectories, t.params)
         twp.points=twp.points_from_px(points)
+        twp.params['path'] = trajectories_path
         return twp
 
     def __getitem__(self, val):
