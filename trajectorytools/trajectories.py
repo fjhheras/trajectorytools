@@ -285,7 +285,8 @@ class Trajectories(Trajectory):
         return tt.norm(self.s - point)
 
     def orientation_towards(self, point):
-        return np.arccos(tt.dot(tt.normalise(point - self.s), self.e))
+        dot_prod = np.clip(tt.dot(tt.normalise(point - self.s), self.e), -1, 1)
+        return np.arccos(dot_prod)
 
     def speed_towards(self, point):
         return tt.dot(tt.normalise(point - self.s), self.v)
