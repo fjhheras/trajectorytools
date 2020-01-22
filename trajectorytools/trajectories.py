@@ -14,6 +14,32 @@ def estimate_center_and_radius(t):
     center_a = np.array([center_x, center_y])
     return center_a, estimated_radius
 
+def radius_and_center_from_traj_dict(t, traj_dict):
+    # If the trajectories contain the arena radius/center information, use it
+    # Otherwise, return None for radius/center to be estimated from trajectories
+    if 'setup_points' in traj_dict and 'border' in traj_dict['setup_points']:
+        arena_center, arena_radius = estimate_center_and_radius(traj_dict['setup_points']['border'])
+    elif 'arena_radius' in traj_dict:
+        arena_radius = traj_dict['arena_radius']
+        arena_center = None
+    else:
+        arena_radius, arena_center = None, None
+
+
+    # Find center and radius. Then override if necessary
+    if arena_radius is None and arena_center is None:
+        center_a, estimated_radius = estimate_center_and_radius(t)
+
+    if arena_radius is None:
+        radius = estimated_radius
+    else:
+        radius = arena_radius
+
+    if arena_center is not None:
+        center_a = arena_center
+
+    return radius, center_a
+
 class Trajectory:
     keys_to_copy = ['_s', '_v', '_a']
     own_params = True
@@ -65,7 +91,8 @@ class Trajectory:
         self._v *= factor
         self._a *= factor
         if self.own_params:
-            self.params['radius'] *= factor
+            if 'radius' in self.params:
+                self.params['radius'] *= factor
             self.params['length_unit'] = length_unit
             self.params['length_unit_name'] = length_unit_name
         return factor
@@ -166,21 +193,12 @@ class Trajectories(Trajectory):
         """
 
         t = traj_dict['trajectories'].astype(dtype)
-
-        # If the trajectories contain the arena radius/center information, use it
-        # Otherwise, return None for radius/center to be estimated from trajectories
-        if 'setup_points' in traj_dict and 'border' in traj_dict['setup_points']:
-            arena_center, arena_radius = estimate_center_and_radius(traj_dict['setup_points']['border'])
-        elif 'arena_radius' in traj_dict:
-            arena_radius = traj_dict['arena_radius']
-            arena_center = None
-        else:
-            arena_radius, arena_center = None, None
-
         traj = cls.from_positions(t, interpolate_nans=interpolate_nans,
-                                  smooth_params=smooth_params,
-                                  arena_radius=arena_radius,
-                                  arena_center=arena_center)
+                                  smooth_params=smooth_params)
+
+        radius, center_ = radius_and_center_from_traj_dict(traj._s, traj_dict)
+        traj.params.update(dict(radius=radius, radius_px=radius,
+                                _center=center_))
         if center:
             traj.origin_to(traj.params['_center'])
 
@@ -189,8 +207,8 @@ class Trajectories(Trajectory):
         return traj
 
     @classmethod
-    def from_positions(cls, t, interpolate_nans=True, smooth_params=None,
-                       arena_radius=None, arena_center=None):
+    def from_positions(cls, t, interpolate_nans=True, smooth_params=None):
+                       #arena_radius=None, arena_center=None):
         """Trajectory from positions
 
         :param t: Positions nd.array.
@@ -203,18 +221,6 @@ class Trajectories(Trajectory):
             smooth_params = {'sigma': -1, 'only_past': False}
         # Interpolate trajectories
         if interpolate_nans: tt.interpolate_nans(t)
-
-        # Find center and radius. Then override if necessary
-        if arena_radius is None and arena_center is None:
-            center_a, estimated_radius = estimate_center_and_radius(t)
-
-        if arena_radius is None:
-            radius = estimated_radius
-        else:
-            radius = arena_radius
-
-        if arena_center is not None:
-            center_a = arena_center
 
         displacement = np.array([0.0, 0.0])
 
@@ -233,10 +239,10 @@ class Trajectories(Trajectory):
             [trajectories['_s'], trajectories['_v'], trajectories['_a']] = \
                 tt.velocity_acceleration(t_smooth)
 
-        params = {"_center": center_a,              # Units: pixels
+        params = {#"_center": center_a,              # Units: pixels
                   "displacement": displacement,    # Units: pixels
-                  "radius": radius,                # Units: unit length
-                  "radius_px": radius,             # Units: pixels
+                  #"radius": radius,                # Units: unit length
+                  #"radius_px": radius,             # Units: pixels
                   "length_unit": 1,                # Units: pixels
                   "length_unit_name": 'px',
                   "time_unit": 1,  # In frames
