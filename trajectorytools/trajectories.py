@@ -107,7 +107,8 @@ class Trajectory:
 
     def origin_to(self, new_origin, original_units=True):
         assert original_units
-        self._s -= (new_origin + self.params['displacement'])/self.params['length_unit']
+        self._s -= (new_origin + self.params['displacement']
+                    )/self.params['length_unit']
         if self.own_params:
             self.params['displacement'] = -new_origin
 
@@ -407,5 +408,13 @@ class TrajectoriesWithPoints(Trajectories):
 
     def acceleration_towards_point(self, key):
         return self.acceleration_towards(self.points[key])
+
+    def origin_to(self, new_origin, original_units=True):
+        assert original_units
+        for key in self.points:
+            self.points[key] -= (new_origin + self.params['displacement']
+                                 )/self.params['length_unit']
+        super().origin_to(new_origin, original_units=original_units)
+
 
 

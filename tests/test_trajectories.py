@@ -65,8 +65,17 @@ class TrajectoriesTestCase2(TrajectoriesTestCase):
 
 class TrajectoriesWithPointsTestCase(TrajectoriesTestCase):
     def setUp(self):
-        self.t = TrajectoriesWithPoints.from_idtracker(trajectories_with_points_path)
+        self.t = TrajectoriesWithPoints.from_idtracker(
+            trajectories_with_points_path, center=True)
+        self.t_nocenter = TrajectoriesWithPoints.from_idtracker(
+            trajectories_with_points_path, center=False)
 
+    def test_recenter(self):
+        self.t.origin_to(np.zeros(2))
+        nptest.assert_allclose(self.t._s, self.t_nocenter._s)
+        for key in self.t.points:
+            nptest.assert_allclose(self.t.points[key],
+                                   self.t_nocenter.points[key])
 
 class RawTrajectoriesTestCase(TrajectoriesTestCase):
     def setUp(self):
