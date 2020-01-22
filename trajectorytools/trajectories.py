@@ -65,7 +65,6 @@ class Trajectory:
         self._v *= factor
         self._a *= factor
         if self.own_params:
-            #self.params['center'] *= factor
             self.params['radius'] *= factor
             self.params['length_unit'] = length_unit
             self.params['length_unit_name'] = length_unit_name
@@ -96,8 +95,9 @@ class Trajectory:
         if self.own_params:
             self.params['frame_rate'] = new_frame_rate
             self.params['time_unit'] *= fraction
-    """ functions wrt points"""
 
+
+    """ functions wrt points"""
     def distance_to(self, point):
         return tt.norm(self.s - point)
 
@@ -119,7 +119,7 @@ class Trajectory:
 
     @property
     def distance_to_origin(self):
-        return self.distance_to(np.zeros(2)) #tt.norm(self._s - self.params['center'])
+        return self.distance_to(np.zeros(2))
 
 
 
@@ -237,7 +237,7 @@ class Trajectories(Trajectory):
             [trajectories['_s'], trajectories['_v'], trajectories['_a']] = \
                 tt.velocity_acceleration(t_smooth)
 
-        params = {"center": center_a,              # Units: pixels
+        params = {"_center": center_a,              # Units: pixels
                   "displacement": displacement,    # Units: pixels
                   "radius": radius,                # Units: unit length
                   "radius_px": radius,             # Units: pixels
@@ -389,9 +389,10 @@ class TrajectoriesWithPoints(Trajectories):
         return new_points
 
     def new_length_unit(self, *args, **kwargs):
-        factor = super().new_length_unit(*args, **kwargs) #Changes traj
+        factor = super().new_length_unit(*args, **kwargs) # Changes traj
         for key in self.points:
             self.points[key] *= factor
+        return factor
 
     def distance_to_point(self, key):
         return self.distance_to(self.points[key])
@@ -404,8 +405,5 @@ class TrajectoriesWithPoints(Trajectories):
 
     def acceleration_towards_point(self, key):
         return self.acceleration_towards(self.points[key])
-
-
-
 
 

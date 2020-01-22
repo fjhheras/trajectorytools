@@ -83,7 +83,7 @@ class ArenaRadiusCenterFromBorder(TrajectoriesTestCase):
         The width and height of the frame are 1160 and 938 pixels respectively. In the trajectories dictionary there
         is a key named 'setup_points'
         """
-        nptest.assert_allclose(self.t.params['center'], (580, 469), rtol=.1, atol=1.)
+        nptest.assert_allclose(self.t.params['_center'], (580, 469), rtol=.1, atol=1.)
         nptest.assert_allclose(self.t.params['radius_px'], 400, rtol=.1, atol=1.)
 
 
@@ -96,7 +96,7 @@ class CenterTrajectoriesTestCase(TrajectoriesTestCase):
         nptest.assert_allclose(self.t_nocenter._s, self.t._s)
 
     def test_recenter2(self):
-        self.t_nocenter.origin_to(self.t.params['center'])
+        self.t_nocenter.origin_to(self.t.params['_center'])
         nptest.assert_allclose(self.t_nocenter._s, self.t._s)
 
 class SmoothTrajectoriesTestCase(TrajectoriesTestCase):
@@ -119,7 +119,7 @@ class CenterScaleTrajectoriesTestCase(TrajectoriesTestCase):
         nptest.assert_allclose(self.t_nocenter._s, self.t._s)
         nptest.assert_allclose(self.t_nocenter._v, self.t._v)
     def test_recenter2(self):
-        self.t_nocenter.origin_to(self.t.params['center'])
+        self.t_nocenter.origin_to(self.t.params['_center'])
         nptest.assert_allclose(self.t_nocenter._s, self.t._s)
         nptest.assert_allclose(self.t_nocenter._v, self.t._v)
 
@@ -171,8 +171,8 @@ class ScaleRadiusTrajectoriesTestCase(TrajectoriesTestCase):
 
     def test_scale(self):
         corrected_s = self.t_normal.s
-        corrected_s[..., 0] -= self.t_normal.params['center'][0]
-        corrected_s[..., 1] -= self.t_normal.params['center'][1]
+        corrected_s[..., 0] -= self.t_normal.params['_center'][0]
+        corrected_s[..., 1] -= self.t_normal.params['_center'][1]
         corrected_s /= self.t.params['radius_px']
         corrected_v = self.t_normal.v / self.t.params['radius_px']
         corrected_a = self.t_normal.a / self.t.params['radius_px']
@@ -181,7 +181,7 @@ class ScaleRadiusTrajectoriesTestCase(TrajectoriesTestCase):
         nptest.assert_allclose(self.t.a, corrected_a, atol=1e-15)
 
     def test_transform_center(self):
-        center_px = self.t_normal.params['center']
+        center_px = self.t_normal.params['_center']
         center_transformed = self.t.point_from_px(center_px)
         nptest.assert_allclose(center_transformed,
                                np.zeros_like(center_transformed))
@@ -190,7 +190,7 @@ class ScaleRadiusTrajectoriesTestCase(TrajectoriesTestCase):
         center_transformed = np.zeros(2)
         center_px = self.t.point_to_px(center_transformed)
         nptest.assert_allclose(center_px,
-                               self.t_normal.params['center'])
+                               self.t_normal.params['_center'])
 
 
 class TrajectoriesRadiusTestCase(TrajectoriesTestCase):
