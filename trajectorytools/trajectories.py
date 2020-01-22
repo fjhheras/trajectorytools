@@ -180,7 +180,9 @@ class Trajectories(Trajectory):
         traj = cls.from_positions(t, interpolate_nans=interpolate_nans,
                                   smooth_params=smooth_params,
                                   arena_radius=arena_radius,
-                                  arena_center=arena_center, center=center)
+                                  arena_center=arena_center)
+        if center:
+            traj.origin_to(traj.params['_center'])
 
         traj.params['frame_rate'] = traj_dict.get('frames_per_second', None)
         traj.params['body_length_px'] = traj_dict.get('body_length', None)
@@ -188,7 +190,7 @@ class Trajectories(Trajectory):
 
     @classmethod
     def from_positions(cls, t, interpolate_nans=True, smooth_params=None,
-                       arena_radius=None, arena_center=None, center=False):
+                       arena_radius=None, arena_center=None):
         """Trajectory from positions
 
         :param t: Positions nd.array.
@@ -196,7 +198,6 @@ class Trajectories(Trajectory):
         :param smooth_params: Arguments for smoothing (see tt.smooth)
         :param arena_radius: Declared arena radius (overrides estimation)
         :param arena_center: Declared arena center (overrides estimation)
-        :param center: If True, we offset trajectories (center to 0)
         """
         if smooth_params is None:
             smooth_params = {'sigma': -1, 'only_past': False}
@@ -215,12 +216,7 @@ class Trajectories(Trajectory):
         if arena_center is not None:
             center_a = arena_center
 
-        # Maybe center trajectories
-        if center:
-            t -= center_a
-            displacement = -center_a
-        else:
-            displacement = np.array([0.0, 0.0])
+        displacement = np.array([0.0, 0.0])
 
         # Smooth trajectories
         if smooth_params['sigma'] > 0:
