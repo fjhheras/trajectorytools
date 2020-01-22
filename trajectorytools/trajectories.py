@@ -47,10 +47,6 @@ class Trajectory:
     def acceleration(self): return tt.norm(self._a)
 
     @property
-    def distance_to_center(self):
-        return tt.norm(self._s - self.params['center'])
-
-    @property
     def e(self): return tt.normalise(self._v)
 
     @property
@@ -69,7 +65,7 @@ class Trajectory:
         self._v *= factor
         self._a *= factor
         if self.own_params:
-            self.params['center'] *= factor
+            #self.params['center'] *= factor
             self.params['radius'] *= factor
             self.params['length_unit'] = length_unit
             self.params['length_unit_name'] = length_unit_name
@@ -83,6 +79,12 @@ class Trajectory:
             self.params['time_unit'] = time_unit
             self.params['time_unit_name'] = time_unit_name
 
+    def origin_to(self, new_origin, original_units=True):
+        assert original_units
+        self._s -= (new_origin + self.params['displacement'])/self.params['length_unit']
+        if self.own_params:
+            self.params['displacement'] = -new_origin
+
     def resample(self, new_frame_rate, **kwargs):
         if 'frame_rate' not in self.params:
             raise Exception("Frame rate not in trajectories")
@@ -94,6 +96,30 @@ class Trajectory:
         if self.own_params:
             self.params['frame_rate'] = new_frame_rate
             self.params['time_unit'] *= fraction
+    """ functions wrt points"""
+
+    def distance_to(self, point):
+        return tt.norm(self.s - point)
+
+    def orientation_towards(self, point):
+        return np.arccos(tt.dot(tt.normalise(point - self.s), self.e))
+
+    def speed_towards(self, point):
+        return tt.dot(tt.normalise(point - self.s), self.v)
+
+    def acceleration_towards(self, point):
+        return tt.dot(tt.normalise(point - self.s), self.a)
+
+    @property
+    def distance_to_center(self):
+        print('Warning: this function is deprecated')
+        print('The original center is not remembered nor used')
+        return self.distance_to_origin()
+
+    @property
+    def distance_to_origin(self):
+        return self.distance_to(np.zeros(2)) #tt.norm(self._s - self.params['center'])
+
 
 
 class CenterMassTrajectory(Trajectory):
@@ -192,7 +218,6 @@ class Trajectories(Trajectory):
         if center:
             t -= center_a
             displacement = -center_a
-            center_a = np.array([0.0, 0.0])
         else:
             displacement = np.array([0.0, 0.0])
 
@@ -252,6 +277,11 @@ class Trajectories(Trajectory):
         self.center_of_mass.new_time_unit(*args, **kwargs)
         super().new_time_unit(*args, **kwargs)
 
+    def origin_to(self, *args, **kwargs):
+        self.center_of_mass.origin_to(*args, **kwargs)
+        super().origin_to(*args, **kwargs)
+        return self
+
     def resample(self, *args, **kwargs):
         self.center_of_mass.resample(*args, **kwargs)
         super().resample(*args, **kwargs)
@@ -278,20 +308,6 @@ class Trajectories(Trajectory):
     def identities_array(self):
         ones = np.ones(self.raw.shape[:-1], dtype=np.int)
         return np.einsum('ij,j->ij', ones, self.identity_labels)
-
-    """ functions wrt points"""
-
-    def distance_to(self, point):
-        return tt.norm(self.s - point)
-
-    def orientation_towards(self, point):
-        return np.arccos(tt.dot(tt.normalise(point - self.s), self.e))
-
-    def speed_towards(self, point):
-        return tt.dot(tt.normalise(point - self.s), self.v)
-
-    def acceleration_towards(self, point):
-        return tt.dot(tt.normalise(point - self.s), self.a)
 
 
 class FishTrajectories(Trajectories):
