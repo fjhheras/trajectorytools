@@ -89,20 +89,39 @@ class ArenaRadiusCenterFromBorder(TrajectoriesTestCase):
 
 class CenterTrajectoriesTestCase(TrajectoriesTestCase):
     def setUp(self):
+        self.t_nocenter = Trajectories.from_idtracker(trajectories_path)
         self.t = Trajectories.from_idtracker(trajectories_path, center=True)
+    def test_recenter(self):
+        self.t.origin_to(np.zeros(2))
+        nptest.assert_allclose(self.t_nocenter._s, self.t._s)
 
+    def test_recenter2(self):
+        self.t_nocenter.origin_to(self.t.params['center'])
+        nptest.assert_allclose(self.t_nocenter._s, self.t._s)
 
 class SmoothTrajectoriesTestCase(TrajectoriesTestCase):
     def setUp(self):
         self.t = Trajectories.from_idtracker(trajectories_path,
                                              smooth_params={'sigma':1})
 
-
 def assert_global_allclose(a, b, rel_error):
     # For things that are around 0
     abs_error = rel_error*min(a.std(), b.std())
     nptest.assert_allclose(a, b, rtol=0, atol=abs_error)
 
+class CenterScaleTrajectoriesTestCase(TrajectoriesTestCase):
+    def setUp(self):
+        self.t_nocenter = Trajectories.from_idtracker(trajectories_path).normalise_by('radius')
+        self.t = Trajectories.from_idtracker(trajectories_path, center=True).normalise_by('radius')
+        self.rel_error = [1e-14]*2
+    def test_recenter(self):
+        self.t.origin_to(np.zeros(2))
+        nptest.assert_allclose(self.t_nocenter._s, self.t._s)
+        nptest.assert_allclose(self.t_nocenter._v, self.t._v)
+    def test_recenter2(self):
+        self.t_nocenter.origin_to(self.t.params['center'])
+        nptest.assert_allclose(self.t_nocenter._s, self.t._s)
+        nptest.assert_allclose(self.t_nocenter._v, self.t._v)
 
 class DoubleTrajectoriesTestCase(TrajectoriesTestCase):
     def setUp(self):
