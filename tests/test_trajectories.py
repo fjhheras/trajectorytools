@@ -51,6 +51,7 @@ class TrajectoriesTestCase(unittest.TestCase):
         nptest.assert_equal(new_t.v, self.t.v[50:100])
         nptest.assert_equal(new_t.a, self.t.a[50:100])
 
+
 class TrajectoriesTestCase2(TrajectoriesTestCase):
     def test_interindividual_distances(self):
         d1 = self.t.interindividual_distances
@@ -63,7 +64,23 @@ class TrajectoriesTestCase2(TrajectoriesTestCase):
     def test_mean_interindividual_distances(self):
         self.t.mean_interindividual_distances
 
-class TrajectoriesWithPointsTestCase(TrajectoriesTestCase):
+
+class TrajectoriesTestCase3(TrajectoriesTestCase):
+    def setUp(self):
+        self.t = Trajectories.from_idtracker(trajectories_path)
+        self.t2 = Trajectories.from_idtracker(trajectories_path)
+
+    def test_slice_and_unit_change(self, new_length_unit=10, new_time_unit=3):
+
+        t2_slice = self.t2[50:100]
+
+        t2_slice.new_length_unit(new_length_unit)
+        t2_slice.new_time_unit(new_time_unit)
+
+        nptest.assert_allclose(self.t.s, self.t2.s)
+
+
+class TrajectoriesWithPointsTestCaseCenter(TrajectoriesTestCase):
     def setUp(self):
         self.t = TrajectoriesWithPoints.from_idtracker(
             trajectories_with_points_path, center=True)
@@ -76,6 +93,142 @@ class TrajectoriesWithPointsTestCase(TrajectoriesTestCase):
         for key in self.t.points:
             nptest.assert_allclose(self.t.points[key],
                                    self.t_nocenter.points[key])
+
+
+class TrajectoriesWithPointsTestCaseChangeLengthUnit(TrajectoriesTestCase):
+    def setUp(self):
+        self.t = TrajectoriesWithPoints.from_idtracker(
+            trajectories_with_points_path, center=True)
+        self.t2 = TrajectoriesWithPoints.from_idtracker(
+            trajectories_with_points_path, center=True)
+
+
+    def test_check_unit_length_change_in_points(self, new_length_unit=10):
+        length_unit = self.t.params['length_unit']
+
+        factor_length = length_unit / new_length_unit
+
+        factor = self.t.new_length_unit(new_length_unit)
+        nptest.assert_allclose(factor, factor_length)
+
+        for point in self.t.points:
+            nptest.assert_allclose(self.t.points[point], self.t2.points[point] * factor_length)
+
+
+    def test_check_unit_length_change_in_points_twice(self, new_length_unit=10):
+        length_unit = self.t.params['length_unit']
+
+        factor_length = length_unit /new_length_unit
+
+        factor = self.t.new_length_unit(new_length_unit)
+        nptest.assert_allclose(factor, factor_length)
+        factor = self.t.new_length_unit(new_length_unit)
+        nptest.assert_allclose(factor, 1)
+
+        for point in self.t.points:
+            nptest.assert_allclose(self.t.points[point], self.t2.points[point] * factor_length)
+
+    def test_check_unit_length_change_in_points_and_back(self, new_length_unit=10):
+        length_unit = self.t.params['length_unit']
+
+        factor_length = length_unit /new_length_unit
+
+        factor = self.t.new_length_unit(new_length_unit)
+        nptest.assert_allclose(factor, factor_length)
+        factor = self.t.new_length_unit(1)
+        nptest.assert_allclose(factor, 1/factor_length)
+
+        for point in self.t.points:
+            nptest.assert_allclose(self.t.points[point], self.t2.points[point])
+
+    def test_check_unit_length_change_in_points_and_back_twice(self, new_length_unit=10):
+        length_unit = self.t.params['length_unit']
+
+        factor_length = length_unit /new_length_unit
+
+        factor = self.t.new_length_unit(new_length_unit)
+        nptest.assert_allclose(factor, factor_length)
+        factor = self.t.new_length_unit(1)
+        nptest.assert_allclose(factor, 1/factor_length)
+        factor = self.t.new_length_unit(1)
+        nptest.assert_allclose(factor, 1)
+
+        for point in self.t.points:
+            nptest.assert_allclose(self.t.points[point], self.t2.points[point])
+
+
+class TrajectoriesWithPointsSlicedTestCaseChangeLengthUnit(TrajectoriesTestCase):
+    def setUp(self):
+        self.t = TrajectoriesWithPoints.from_idtracker(
+            trajectories_with_points_path, center=True)
+        self.t2 = TrajectoriesWithPoints.from_idtracker(
+            trajectories_with_points_path, center=True)
+
+
+    def test_check_unit_length_change_in_points(self, new_length_unit=10):
+        length_unit = self.t.params['length_unit']
+
+        factor_length = length_unit /new_length_unit
+
+        factor = self.t.new_length_unit(new_length_unit)
+        nptest.assert_allclose(factor, factor_length)
+
+        sliced_t = self.t[50:100]
+
+        for point in self.t.points:
+            nptest.assert_allclose(sliced_t.points[point], self.t2.points[point] * factor_length)
+
+
+    def test_check_unit_length_change_in_points_twice(self, new_length_unit=10):
+        length_unit = self.t.params['length_unit']
+
+        factor_length = length_unit /new_length_unit
+
+        factor = self.t.new_length_unit(new_length_unit)
+        nptest.assert_allclose(factor, factor_length)
+
+        sliced_t = self.t[50:100]
+        factor = sliced_t.new_length_unit(new_length_unit)
+        nptest.assert_allclose(factor, 1)
+
+        for point in self.t.points:
+            nptest.assert_allclose(sliced_t.points[point], self.t2.points[point] * factor_length)
+
+    def test_check_unit_length_change_in_points_and_back(self, new_length_unit=10):
+        length_unit = self.t.params['length_unit']
+
+        factor_length = length_unit /new_length_unit
+
+        factor = self.t.new_length_unit(new_length_unit)
+        nptest.assert_allclose(factor, factor_length)
+
+        sliced_t = self.t[50:100]
+        factor = sliced_t.new_length_unit(1)
+        nptest.assert_allclose(factor, 1/factor_length)
+
+        for point in self.t.points:
+            nptest.assert_allclose(sliced_t.points[point], self.t2.points[point])
+
+    def test_check_unit_length_change_in_points_and_back_twice(self, new_length_unit=10):
+        length_unit = self.t.params['length_unit']
+
+        factor_length = length_unit /new_length_unit
+
+        factor = self.t.new_length_unit(new_length_unit)
+        nptest.assert_allclose(factor, factor_length)
+
+        sliced_t1 = self.t[50:100]
+        factor = sliced_t1.new_length_unit(1)
+        nptest.assert_allclose(factor, 1/factor_length)
+
+        sliced_t2 = self.t[150:200]
+        factor = sliced_t2.new_length_unit(1)
+        nptest.assert_allclose(factor, 1/factor_length)
+
+        for point in self.t.points:
+            nptest.assert_allclose(sliced_t1.points[point], self.t2.points[point])
+            nptest.assert_allclose(sliced_t2.points[point], self.t2.points[point])
+
 
 class RawTrajectoriesTestCase(TrajectoriesTestCase):
     def setUp(self):

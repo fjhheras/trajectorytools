@@ -87,28 +87,27 @@ class Trajectory:
 
     def new_length_unit(self, length_unit, length_unit_name='?'):
         factor = self.params['length_unit'] / length_unit
-        self._s *= factor
-        self._v *= factor
-        self._a *= factor
+        self._s = self._s * factor
+        self._v = self._v * factor
+        self._a = self._a * factor
         if self.own_params:
             if 'radius' in self.params:
-                self.params['radius'] *= factor
+                self.params['radius'] = self.params['radius'] * factor
             self.params['length_unit'] = length_unit
             self.params['length_unit_name'] = length_unit_name
         return factor
 
     def new_time_unit(self, time_unit, time_unit_name='?'):
         factor = self.params['time_unit'] / time_unit
-        self._v /= factor
-        self._a /= factor**2
+        self._v = self._v / factor
+        self._a = self._a / factor**2
         if self.own_params:
             self.params['time_unit'] = time_unit
             self.params['time_unit_name'] = time_unit_name
 
     def origin_to(self, new_origin, original_units=True):
         assert original_units
-        self._s -= (new_origin + self.params['displacement']
-                    )/self.params['length_unit']
+        self._s = self._s - (new_origin + self.params['displacement'])/self.params['length_unit']
         if self.own_params:
             self.params['displacement'] = -new_origin
 
@@ -122,7 +121,7 @@ class Trajectory:
         self._a = tt.resample(self._a, new_frame_rate, old_frame_rate, kwargs)
         if self.own_params:
             self.params['frame_rate'] = new_frame_rate
-            self.params['time_unit'] *= fraction
+            self.params['time_unit'] = self.params['time_unit'] * fraction
 
 
     """ functions wrt points"""
@@ -393,8 +392,10 @@ class TrajectoriesWithPoints(Trajectories):
 
     def new_length_unit(self, *args, **kwargs):
         factor = super().new_length_unit(*args, **kwargs) # Changes traj
+        new_points = {}
         for key in self.points:
-            self.points[key] *= factor
+            new_points[key] = self.points[key] * factor
+        self.points = new_points
         return factor
 
     def distance_to_point(self, key):
@@ -411,9 +412,11 @@ class TrajectoriesWithPoints(Trajectories):
 
     def origin_to(self, new_origin, original_units=True):
         assert original_units
+        new_points = {}
         for key in self.points:
-            self.points[key] -= (new_origin + self.params['displacement']
-                                 )/self.params['length_unit']
+            new_points[key] = self.points[key] - (new_origin + self.params['displacement']
+                                                  )/self.params['length_unit']
+        self.points = new_points
         super().origin_to(new_origin, original_units=original_units)
 
 
