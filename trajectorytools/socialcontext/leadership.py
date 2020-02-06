@@ -56,21 +56,72 @@ def sweep_delayed_orientation_with_neighbours(orientation, indices, max_delay):
     sweep_delay_P = tt.collective.polarization(sweep_delay_e)
     # dimensions: delay x time x num_individuals x 2
     restricted_orientation = orientation[:total_time_steps]
-    projected_orientation = np.einsum('...j,i...j->i...',restricted_orientation, sweep_delay_P)
+    projected_orientation = np.einsum('...j,i...j->i...', restricted_orientation, sweep_delay_P)
     # dimensions: delay x time x num_individuals
     return projected_orientation, sweep_delay_e
 
 
-def fleshout_with_delay_(data, indices, sweeped_delays, frame, inplace = None):
+def dot_product_per_frame_with_delays(data, indices, sweeped_delays, frame, inplace=None):
+    """
+
+    :param data: array of orientations (total_frames, num_individuals, 2)
+    :param indices: indices of neighbours (total_frames, num_individuals, num_individuals-1)
+    :param sweeped_delays: arrays of sweeped orientations with lag (num_delays, total_frames-num_delays, num_individuals, num_individuals-1, 2)
+    :param frame: frame to compute
+    :param inplace: (num_delays, num_individuals, num_individual)
+    :return: (num_delays, num_individuals, num_individual)
+    """
+
     num_individuals = data.shape[1]
     max_delay = sweeped_delays.shape[0]
     if inplace is None:
         inplace = np.zeros([max_delay, num_individuals, num_individuals], dtype=data.dtype)
     for i in range(num_individuals):
-        sweeped_delays_r = sweeped_delays[:,frame,i,:]
-        orientation_r = data[frame,i]
-        inplace[:,i,indices[frame,i]] += np.einsum('ijk,k->ij',sweeped_delays_r, orientation_r)
+        sweeped_delays_r = sweeped_delays[:, frame, i, :]
+        orientation_r = data[frame, i]
+        inplace[:, i, indices[frame, i]] += np.einsum('ijk,k->ij', sweeped_delays_r, orientation_r)
     return inplace
+
+
+def dot_product_with_delays(data, indices, sweep_delayed_e, frames):
+    inplace = dot_product_per_frame_with_delays(data, indices, sweep_delayed_e, frames[0])
+    for frame in frames[1:]:
+        inplace = dot_product_per_frame_with_delays(data, indices, sweep_delayed_e, frame, inplace=inplace)
+    return inplace/len(frames)
+
+
+def sliding_average_dot_product_with_delays(data, indices, sweep_delayed_e, start_frame=0, end_frame=None, window_size=50):
+    """
+
+    :param data: array of orientations (total_frames, num_individuals, 2)
+    :param indices: indices of neighbours (total_frames, num_individuals, num_individuals-1)
+    :param sweep_delayed_e: arrays of sweeped orientations with lag (num_delays, total_frames-num_delays, num_individuals, num_individuals-1, 2)
+    :param start_frame: 0
+    :param end_frame:
+    :param window_size:
+    :return:
+    """
+    assert end_frame + window_size < data.shape[0]
+    frames = range(start_frame, end_frame+window_size)
+    fleshout_list = [dot_product_per_frame_with_delays(data, indices, sweep_delayed_e, frame) for frame in frames]
+    return [sum(fleshout_list[i:(i+window_size)])/window_size for i in range(end_frame-start_frame)]
+
+
+def sliding_average_dot_product_with_delays2(data, indices, sweep_delayed_e, start_frame=0, end_frame=None, num_frames_to_average = 50):
+    max_delay = sweep_delayed_e.shape[0]
+    frames = range(start_frame, end_frame+num_frames_to_average)
+    ## The 2-by-2 xcorrelation in sparse matrix: max delay x num_individuals x num_individuals
+    fleshout_list = [dot_product_per_frame_with_delays(data, indices, sweep_delayed_e, frame) for frame in frames]
+    ## A binary matrix (num_individuals x num_individuals) telling us whether individuals are neighbours in a given frame
+    connection_matrix_list = [give_connection_matrix(indices[frame]) for frame in frames]
+    output = []
+    for i in range(end_frame-start_frame):
+        sum_fleshout = sum(fleshout_list[i:(i+num_frames_to_average)])
+        sum_connections = sum(connection_matrix_list[i:(i+num_frames_to_average)])
+        for t in range(max_delay):
+            sum_fleshout[t][np.where(sum_connections>0)] /= sum_connections[np.where(sum_connections>0)]
+        output.append(sum_fleshout)
+    return output
 
 
 def give_connection_matrix(indices_in_frame, inplace = None):
@@ -83,40 +134,10 @@ def give_connection_matrix(indices_in_frame, inplace = None):
         connection_matrix[i, indices_in_frame[i,:]] += 1.0
     return connection_matrix
 
-
-def fleshout_with_delay(data, indices, sweep_delayed_e, frames):
-    inplace = fleshout_with_delay_(data, indices, sweep_delayed_e, frames[0])
-    for frame in frames[1:]:
-        inplace = fleshout_with_delay_(data, indices, sweep_delayed_e, frame, inplace=inplace)
-    return inplace/len(frames)
-
-
-def sliding_average_fleshout_with_delay(data, indices, sweep_delayed_e, start_frame=0, end_frame=None, num_frames_to_average = 50):
-    frames = range(start_frame, end_frame+num_frames_to_average)
-    fleshout_list = [fleshout_with_delay_(data, indices, sweep_delayed_e, frame) for frame in frames]
-    return [sum(fleshout_list[i:(i+num_frames_to_average)])/num_frames_to_average for i in range(end_frame-start_frame)]
-
-
-def sliding_average_fleshout_with_delay2(data, indices, sweep_delayed_e, start_frame=0, end_frame=None, num_frames_to_average = 50):
-    max_delay = sweep_delayed_e.shape[0]
-    frames = range(start_frame, end_frame+num_frames_to_average)
-    ## The 2-by-2 xcorrelation in sparse matrix: max delay x num_individuals x num_individuals
-    fleshout_list = [fleshout_with_delay_(data, indices, sweep_delayed_e, frame) for frame in frames]
-    ## A binary matrix (num_individuals x num_individuals) telling us whether individuals are neighbours in a given frame
-    connection_matrix_list = [give_connection_matrix(indices[frame]) for frame in frames]
-    output = []
-    for i in range(end_frame-start_frame):
-        sum_fleshout = sum(fleshout_list[i:(i+num_frames_to_average)])
-        sum_connections = sum(connection_matrix_list[i:(i+num_frames_to_average)])
-        for t in range(max_delay):
-            sum_fleshout[t][np.where(sum_connections>0)] /= sum_connections[np.where(sum_connections>0)]
-        output.append(sum_fleshout)
-    return output
-
 # For debugging
 
 
-def fleshout_with_delay_slow_(data, indices, sweeped_delays, frame, inplace = None):
+def dot_product_with_delays_slow(data, indices, sweeped_delays, frame, inplace = None):
     # Only for debugging
     num_restricted = indices.shape[-1]
     num_individuals = data.shape[1]
@@ -129,3 +150,6 @@ def fleshout_with_delay_slow_(data, indices, sweeped_delays, frame, inplace = No
             orientation = data[frame,i]
             inplace[:,i,j] += tt.dot(sweep_delays_r, orientation)
     return inplace
+
+
+
