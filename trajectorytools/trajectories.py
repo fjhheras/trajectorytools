@@ -20,7 +20,7 @@ def estimate_center_and_radius(t):
 
 def radius_and_center_from_traj_dict(t, traj_dict):
     # If the trajectories contain the arena radius/center information, use it
-    # Otherwise, return None for radius/center to be estimated from trajectories
+    # Otherwise, return None to estimate radius/center from trajectories
     if 'setup_points' in traj_dict and 'border' in traj_dict['setup_points']:
         arena_center, arena_radius = estimate_center_and_radius(
             traj_dict['setup_points']['border'])
@@ -192,7 +192,6 @@ class Trajectories(Trajectory):
         return f"<{self.__class__.__name__} " + maybe_loaded\
             + f"-- frames:{self._s.shape[0]}, individuals:{self._s.shape[1]}>"
 
-
     @classmethod
     def from_idtrackerai(cls, trajectories_path, **kwargs):
         return cls.from_idtracker(trajectories_path, **kwargs)
@@ -340,12 +339,6 @@ class Trajectories(Trajectory):
     def identity_labels(self):
         # Placeholder, in case in the future labels are explicitly given
         return np.arange(self.number_of_individuals)
-
-    #@property
-    #def identities_array(self):
-    #    ones = np.ones(self.raw.shape[:-1], dtype=np.int)
-    #    return np.einsum('ij,j->ij', ones, self.identity_labels)
-
 
 class FishTrajectories(Trajectories):
     def get_bouts(self, find_max_dict=None, find_min_dict=None):
