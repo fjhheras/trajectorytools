@@ -184,6 +184,15 @@ class Trajectories(Trajectory):
     def view(self, start=None, end=None):
         return self[slice(start, end)]
 
+    def __str__(self):
+        if 'path' in self.params:
+            maybe_loaded = f"from {self.params['path']} "
+        else:
+            maybe_loaded = ''
+        return f"<{self.__class__.__name__} " + maybe_loaded\
+            + f"-- frames:{self._s.shape[0]}, individuals:{self._s.shape[1]}>"
+
+
     @classmethod
     def from_idtrackerai(cls, trajectories_path, **kwargs):
         return cls.from_idtracker(trajectories_path, **kwargs)
