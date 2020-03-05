@@ -5,6 +5,15 @@ import trajectorytools as tt
 
 
 def calculate_center_of_mass(trajectories, params):
+    """calculate_center_of_mass
+    
+    Produces a CenterMassTrajectory, with the position, velocity and acceleration
+    of the center of mass.
+
+    :param trajectories: Dictionary of numpy arrays for position ('_s'),
+    velocity ('_v') and acceleration ('_a')
+    :param params: Dictionary of parameters
+    """
     center_of_mass = {
         k: np.nanmean(trajectories[k], axis=1)
         for k in Trajectory.keys_to_copy
@@ -12,15 +21,27 @@ def calculate_center_of_mass(trajectories, params):
     return CenterMassTrajectory(center_of_mass, params)
 
 
-def estimate_center_and_radius(t):
-    center_x, center_y, estimated_radius = tt.find_enclosing_circle(t)
+def estimate_center_and_radius(locations):
+    """ Estimates center and radius of the smallest circle containing all points
+
+    :param locations: Numpy array of locations. It can be any shape, but last
+    dim must be 2 (x, y)
+    """
+    center_x, center_y, estimated_radius = tt.find_enclosing_circle(locations)
     center_a = np.array([center_x, center_y])
     return center_a, estimated_radius
 
 
-def radius_and_center_from_traj_dict(t, traj_dict):
-    # If the trajectories contain the arena radius/center information, use it
-    # Otherwise, return None to estimate radius/center from trajectories
+def radius_and_center_from_traj_dict(locations, traj_dict):
+    """Obtains radius and center of the arena
+        
+    If the trajectories contain the arena radius/center information, use it
+    Otherwise, return None to estimate radius/center from trajectories
+
+    :param locations: Numpy array of locations. Last dim must be (x, y)
+    :param traj_dict:
+    """
+    
     if 'setup_points' in traj_dict and 'border' in traj_dict['setup_points']:
         arena_center, arena_radius = estimate_center_and_radius(
             traj_dict['setup_points']['border'])
@@ -32,7 +53,7 @@ def radius_and_center_from_traj_dict(t, traj_dict):
 
     # Find center and radius. Then override if necessary
     if arena_radius is None and arena_center is None:
-        center_a, estimated_radius = estimate_center_and_radius(t)
+        center_a, estimated_radius = estimate_center_and_radius(locations)
 
     if arena_radius is None:
         radius = estimated_radius
