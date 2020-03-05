@@ -181,6 +181,13 @@ class Trajectories(Trajectory):
         }
         return self.__class__(view_trajectories, self.params)
 
+    def restrict_individuals(self, val):
+        view_trajectories = {
+                k: getattr(self, k)[:, val]
+            for k in self.keys_to_copy
+        }
+        return self.__class__(view_trajectories, self.params)
+
     def view(self, start=None, end=None):
         return self[slice(start, end)]
 
@@ -339,6 +346,7 @@ class Trajectories(Trajectory):
     def identity_labels(self):
         # Placeholder, in case in the future labels are explicitly given
         return np.arange(self.number_of_individuals)
+
 
 class FishTrajectories(Trajectories):
     def get_bouts(self, find_max_dict=None, find_min_dict=None):
