@@ -51,6 +51,16 @@ class TrajectoriesTestCase(unittest.TestCase):
         nptest.assert_equal(new_t.v, self.t.v[50:100])
         nptest.assert_equal(new_t.a, self.t.a[50:100])
 
+    def test_restrict_individuals(self):
+        n_individuals = 3
+        individuals = np.random.permutation(np.arange(self.t.number_of_individuals))[:n_individuals]
+        new_t = self.t.restrict_individuals(individuals)
+        nptest.assert_equal(new_t.s, self.t.s[:, individuals])
+        nptest.assert_equal(new_t.v, self.t.v[:, individuals])
+        nptest.assert_equal(new_t.a, self.t.a[:, individuals])
+
+       
+
 
 class TrajectoriesTestCase2(TrajectoriesTestCase):
     def test_interindividual_distances(self):
