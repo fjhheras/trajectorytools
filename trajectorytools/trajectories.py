@@ -164,15 +164,23 @@ class Trajectory:
     def distance_to(self, point):
         return tt.norm(self.s - point)
 
-    def orientation_towards(self, point):
-        dot_prod = np.clip(tt.dot(tt.normalise(point - self.s), self.e), -1, 1)
-        return np.arccos(dot_prod)
+    def _projection_vector_towards(self, point, vector):
+        return tt.dot(tt.normalise(point - self.s), vector)
+
+    def orientation_towards(self, point):  # Soon to be deprecated
+        return self.angle_towards(point)
+
+    def angle_towards(self, point):
+        return np.arccos(np.clip(self.e_towards(point), -1, 1))
+
+    def e_towards(self, point):
+        return self._projection_vector_towards(point, self.e)
 
     def speed_towards(self, point):
-        return tt.dot(tt.normalise(point - self.s), self.v)
+        return self._projection_vector_towards(point, self._v)
 
     def acceleration_towards(self, point):
-        return tt.dot(tt.normalise(point - self.s), self.a)
+        return self._projection_vector_towards(point, self._a)
 
     @property
     def distance_to_center(self):

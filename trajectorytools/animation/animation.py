@@ -16,7 +16,6 @@ class AnimatedScatter(object):
     def prepare(self, interval = 20, limits = [-1, 1, -1, 1],
                 axis_off = True, fig_ax = None):
         frames = self.datasets[0].shape[0] - 1
-        print("Frames:", frames)
         self.scatters = [Scatter(self.datasets[i], plotter = self.plotters[i])
                          for i in range(len(self.datasets))]
         # Setup the figure and axes...
