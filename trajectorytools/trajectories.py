@@ -147,6 +147,7 @@ class Trajectory:
                              ) / self.params['length_unit']
         if self.own_params:
             self.params['displacement'] = -new_origin
+        return self
 
     def resample(self, new_frame_rate, **kwargs):
         if 'frame_rate' not in self.params:
@@ -202,6 +203,19 @@ class Trajectories(Trajectory):
         super().__init__(trajectories, params)
         self.center_of_mass = calculate_center_of_mass(trajectories,
                                                        self.params)
+    def _dict_to_save(self):
+        traj_data = {key: self.__dict__[key] for key in self.keys_to_copy}
+        params = self.params
+        return {'traj_data': traj_data, 'params': params, 
+                'class_name': self.__class__.__name__} 
+
+    def save(self, filename):
+        np.save(filename, self._dict_to_save())
+
+    @classmethod
+    def load(cls, filename):
+        loaded_dict = np.load(filename, allow_pickle=True).item()
+        return cls(loaded_dict['traj_data'], loaded_dict['params'])
 
     def __getitem__(self, val):
         view_trajectories = {
@@ -441,18 +455,39 @@ class TrajectoriesWithPoints(Trajectories):
         else:
             self.points = points
 
+    def _dict_to_save(self):
+        update_dict = {'points': self.points}
+        return {**super()._dict_to_save(), **update_dict}
+   
+
     @classmethod
-    def from_idtracker(cls, trajectories_path, **kwargs):
-        traj_dict = np.load(trajectories_path,
-                            encoding='latin1',
-                            allow_pickle=True).item()
-        t = Trajectories.from_idtracker_(traj_dict, **kwargs)
+    def load(cls, filename):
+        loaded_dict = np.load(filename, allow_pickle=True).item()
+        return cls(loaded_dict['traj_data'], loaded_dict['params'], 
+                   points=loaded_dict['points'])
+
+
+
+    @classmethod
+    def from_idtracker_(cls, traj_dict, **kwargs):
+        twp = super().from_idtracker_(traj_dict, **kwargs)
         points = traj_dict['setup_points']
-        view_trajectories = {k: getattr(t, k) for k in t.keys_to_copy}
-        twp = cls(view_trajectories, t.params)
         twp.points = twp.points_from_px(points)
-        twp.params['path'] = trajectories_path
         return twp
+
+    #@classmethod
+    #def from_idtracker(cls, trajectories_path, **kwargs):
+    #    traj_dict = np.load(trajectories_path,
+    #                        encoding='latin1',
+    #                        allow_pickle=True).item()
+    #    t = Trajectories.from_idtracker_(traj_dict, **kwargs)
+    #    points = traj_dict['setup_points']
+    #    view_trajectories = {k: getattr(t, k) for k in t.keys_to_copy}
+    #    twp = cls(view_trajectories, t.params)
+    #    twp.points = twp.points_from_px(points)
+    #    twp.params['path'] = trajectories_path
+    #    return twp
+
 
     def __getitem__(self, val):
         view_traj_with_points = super().__getitem__(val)
@@ -479,6 +514,9 @@ class TrajectoriesWithPoints(Trajectories):
     def orientation_towards_point(self, key):
         return self.orientation_towards(self.points[key])
 
+    def e_towards_point(self, key):
+        return self.e_towards(self.points[key])
+
     def speed_towards_point(self, key):
         return self.speed_towards(self.points[key])
 
@@ -494,3 +532,4 @@ class TrajectoriesWithPoints(Trajectories):
             new_points[key] = self.points[key] - correction
         self.points = new_points
         super().origin_to(new_origin, original_units=original_units)
+        return self

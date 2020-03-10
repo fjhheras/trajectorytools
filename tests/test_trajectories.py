@@ -1,4 +1,5 @@
 import pathlib
+import tempfile
 import unittest
 
 import numpy as np
@@ -59,7 +60,29 @@ class TrajectoriesTestCase(unittest.TestCase):
         nptest.assert_equal(new_t.v, self.t.v[:, individuals])
         nptest.assert_equal(new_t.a, self.t.a[:, individuals])
 
-       
+class TrajectoriesTestCaseSaveLoad(TrajectoriesTestCase):
+    def setUp(self):
+        t = Trajectories.from_idtracker(trajectories_path)
+        temporary_file = tempfile.mkstemp('.npy', 'trajectorytoolstest', '/tmp')[1] 
+        t.save(temporary_file)
+        self.t = Trajectories.load(temporary_file)
+        self.t1 = Trajectories.from_idtracker(trajectories_path)
+
+    def test_save_and_load_equal(self):
+        nptest.assert_equal(self.t1.s, self.t.s)
+        nptest.assert_equal(self.t1.v, self.t.v)
+        nptest.assert_equal(self.t1.a, self.t.a)
+        for key in self.t.params:
+            try:
+                assert(self.t.params[key] == self.t1.params[key])
+            except ValueError:
+                nptest.assert_equal(self.t.params[key], self.t1.params[key])
+        for key in self.t1.params:
+            try:
+                assert(self.t.params[key] == self.t1.params[key])
+            except ValueError:
+                nptest.assert_equal(self.t.params[key], self.t1.params[key])
+
 
 
 class TrajectoriesTestCase2(TrajectoriesTestCase):
@@ -89,85 +112,102 @@ class TrajectoriesTestCase3(TrajectoriesTestCase):
 
         nptest.assert_allclose(self.t.s, self.t2.s)
 
-
-class TrajectoriesWithPointsTestCaseCenter(TrajectoriesTestCase):
+class TrajectoriesWithPointsTestCase(TrajectoriesTestCase):
     def setUp(self):
         self.t = TrajectoriesWithPoints.from_idtracker(
             trajectories_with_points_path, center=True)
-        self.t_nocenter = TrajectoriesWithPoints.from_idtracker(
+    
+    def test_correct_class(self):
+        assert isinstance(self.t, TrajectoriesWithPoints) 
+
+
+class TrajectoriesWithPointsTestCaseSaveLoad(TrajectoriesWithPointsTestCase):
+    def setUp(self):
+        t = TrajectoriesWithPoints.from_idtracker(trajectories_with_points_path)
+        temporary_file = tempfile.mkstemp('.npy', 'trajectorytoolstest', '/tmp')[1] 
+        t.save(temporary_file)
+        self.t = TrajectoriesWithPoints.load(temporary_file)
+        self.t1 = TrajectoriesWithPoints.from_idtracker(trajectories_with_points_path)
+
+
+    def test_save_and_load_equal(self):
+        nptest.assert_equal(self.t1.s, self.t.s)
+        nptest.assert_equal(self.t1.v, self.t.v)
+        nptest.assert_equal(self.t1.a, self.t.a)
+        for key in self.t.points:
+            try:
+                assert(self.t.points[key] == self.t1.points[key])
+            except ValueError:
+                nptest.assert_equal(self.t.points[key], self.t1.points[key])
+        for key in self.t1.points:
+            try:
+                assert(self.t.points[key] == self.t1.points[key])
+            except ValueError:
+                nptest.assert_equal(self.t.points[key], self.t1.points[key])
+
+
+class TrajectoriesWithPointsTestCaseCenter(TrajectoriesWithPointsTestCase):
+    def setUp(self):
+        self.t = TrajectoriesWithPoints.from_idtracker(
             trajectories_with_points_path, center=False)
+        self.t_center = TrajectoriesWithPoints.from_idtracker(
+            trajectories_with_points_path, center=True)
 
     def test_recenter(self):
-        self.t.origin_to(np.zeros(2))
-        nptest.assert_allclose(self.t._s, self.t_nocenter._s)
-        for key in self.t.points:
-            nptest.assert_allclose(self.t.points[key],
-                                   self.t_nocenter.points[key])
+        self.t_center.origin_to(np.zeros(2))
+        nptest.assert_allclose(self.t_center._s, self.t._s)
+        for key in self.t_center.points:
+            nptest.assert_allclose(self.t_center.points[key],
+                                   self.t.points[key])
 
-
-class TrajectoriesWithPointsTestCaseChangeLengthUnit(TrajectoriesTestCase):
+class TrajectoriesWithPointsTestCaseChangeLengthUnit(TrajectoriesWithPointsTestCase):
     def setUp(self):
         self.t = TrajectoriesWithPoints.from_idtracker(
             trajectories_with_points_path, center=True)
         self.t2 = TrajectoriesWithPoints.from_idtracker(
             trajectories_with_points_path, center=True)
+        self.new_length_unit = 10
+        # Scaling trajectory self.t by 10
+        self.factor = self.t.new_length_unit(self.new_length_unit)
 
-
-    def test_check_unit_length_change_in_points(self, new_length_unit=10):
-        length_unit = self.t.params['length_unit']
-
-        factor_length = length_unit / new_length_unit
-
-        factor = self.t.new_length_unit(new_length_unit)
-        nptest.assert_allclose(factor, factor_length)
-
+    def test_check_unit_length_change_in_points(self):
+        length_unit = self.t2.params['length_unit']
+        factor_length = length_unit / self.new_length_unit
+        nptest.assert_allclose(self.factor, factor_length)
+        
         for point in self.t.points:
             nptest.assert_allclose(self.t.points[point], self.t2.points[point] * factor_length)
 
 
-    def test_check_unit_length_change_in_points_twice(self, new_length_unit=10):
-        length_unit = self.t.params['length_unit']
+    def test_check_unit_length_change_in_points_twice(self):
+        length_unit = self.t2.params['length_unit']
+        factor_length = length_unit / self.new_length_unit #Factor of first change
 
-        factor_length = length_unit /new_length_unit
-
-        factor = self.t.new_length_unit(new_length_unit)
-        nptest.assert_allclose(factor, factor_length)
-        factor = self.t.new_length_unit(new_length_unit)
-        nptest.assert_allclose(factor, 1)
+        # Factor 1 in the second change 
+        factor2 = self.t.new_length_unit(self.new_length_unit)
+        nptest.assert_allclose(factor2, 1)
 
         for point in self.t.points:
             nptest.assert_allclose(self.t.points[point], self.t2.points[point] * factor_length)
 
-    def test_check_unit_length_change_in_points_and_back(self, new_length_unit=10):
-        length_unit = self.t.params['length_unit']
-
-        factor_length = length_unit /new_length_unit
-
-        factor = self.t.new_length_unit(new_length_unit)
-        nptest.assert_allclose(factor, factor_length)
-        factor = self.t.new_length_unit(1)
-        nptest.assert_allclose(factor, 1/factor_length)
+    def test_check_unit_length_change_in_points_and_back(self):
+        factor2 = self.t.new_length_unit(1)
+        nptest.assert_allclose(factor2, 1/self.factor)
 
         for point in self.t.points:
             nptest.assert_allclose(self.t.points[point], self.t2.points[point])
 
-    def test_check_unit_length_change_in_points_and_back_twice(self, new_length_unit=10):
-        length_unit = self.t.params['length_unit']
-
-        factor_length = length_unit /new_length_unit
-
-        factor = self.t.new_length_unit(new_length_unit)
-        nptest.assert_allclose(factor, factor_length)
-        factor = self.t.new_length_unit(1)
-        nptest.assert_allclose(factor, 1/factor_length)
-        factor = self.t.new_length_unit(1)
-        nptest.assert_allclose(factor, 1)
+    def test_check_unit_length_change_in_points_and_back_twice(self):
+        factor2 = self.t.new_length_unit(1)
+        nptest.assert_allclose(factor2, 1/self.factor)
+        factor3 = self.t.new_length_unit(1)
+        nptest.assert_allclose(factor3, 1)
 
         for point in self.t.points:
             nptest.assert_allclose(self.t.points[point], self.t2.points[point])
 
 
-class TrajectoriesWithPointsSlicedTestCaseChangeLengthUnit(TrajectoriesTestCase):
+class TrajectoriesWithPointsSlicedTestCaseChangeLengthUnit(TrajectoriesWithPointsTestCase):
     def setUp(self):
         self.t = TrajectoriesWithPoints.from_idtracker(
             trajectories_with_points_path, center=True)
