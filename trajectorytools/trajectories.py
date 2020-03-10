@@ -5,30 +5,55 @@ import trajectorytools as tt
 
 
 def calculate_center_of_mass(trajectories, params):
-    center_of_mass = {k: np.nanmean(trajectories[k], axis=1)
-                      for k in Trajectory.keys_to_copy}
+    """calculate_center_of_mass
+    
+    Produces a CenterMassTrajectory, with the position, velocity and acceleration
+    of the center of mass.
+
+    :param trajectories: Dictionary of numpy arrays for position ('_s'),
+    velocity ('_v') and acceleration ('_a')
+    :param params: Dictionary of parameters
+    """
+    center_of_mass = {
+        k: np.nanmean(trajectories[k], axis=1)
+        for k in Trajectory.keys_to_copy
+    }
     return CenterMassTrajectory(center_of_mass, params)
 
-def estimate_center_and_radius(t):
-    center_x, center_y, estimated_radius = tt.find_enclosing_circle(t)
+
+def estimate_center_and_radius(locations):
+    """ Estimates center and radius of the smallest circle containing all points
+
+    :param locations: Numpy array of locations. It can be any shape, but last
+    dim must be 2 (x, y)
+    """
+    center_x, center_y, estimated_radius = tt.find_enclosing_circle(locations)
     center_a = np.array([center_x, center_y])
     return center_a, estimated_radius
 
-def radius_and_center_from_traj_dict(t, traj_dict):
-    # If the trajectories contain the arena radius/center information, use it
-    # Otherwise, return None for radius/center to be estimated from trajectories
+
+def radius_and_center_from_traj_dict(locations, traj_dict):
+    """Obtains radius and center of the arena
+        
+    If the trajectories contain the arena radius/center information, use it
+    Otherwise, return None to estimate radius/center from trajectories
+
+    :param locations: Numpy array of locations. Last dim must be (x, y)
+    :param traj_dict:
+    """
+    
     if 'setup_points' in traj_dict and 'border' in traj_dict['setup_points']:
-        arena_center, arena_radius = estimate_center_and_radius(traj_dict['setup_points']['border'])
+        arena_center, arena_radius = estimate_center_and_radius(
+            traj_dict['setup_points']['border'])
     elif 'arena_radius' in traj_dict:
         arena_radius = traj_dict['arena_radius']
         arena_center = None
     else:
         arena_radius, arena_center = None, None
 
-
     # Find center and radius. Then override if necessary
     if arena_radius is None and arena_center is None:
-        center_a, estimated_radius = estimate_center_and_radius(t)
+        center_a, estimated_radius = estimate_center_and_radius(locations)
 
     if arena_radius is None:
         radius = estimated_radius
@@ -40,9 +65,11 @@ def radius_and_center_from_traj_dict(t, traj_dict):
 
     return radius, center_a
 
+
 class Trajectory:
     keys_to_copy = ['_s', '_v', '_a']
     own_params = True
+
     def __init__(self, trajectories, params):
         for key in self.keys_to_copy:
             setattr(self, key, trajectories[key])
@@ -55,35 +82,44 @@ class Trajectory:
         return len(self._s)
 
     @property
-    def number_of_frames(self): return self._s.shape[0]
+    def number_of_frames(self):
+        return self._s.shape[0]
 
     @property
-    def s(self): return self._s.copy()
+    def s(self):
+        return self._s.copy()
 
     @property
-    def v(self): return self._v.copy()
+    def v(self):
+        return self._v.copy()
 
     @property
-    def a(self): return self._a.copy()
+    def a(self):
+        return self._a.copy()
 
     @property
-    def speed(self): return tt.norm(self._v)
+    def speed(self):
+        return tt.norm(self._v)
 
     @property
-    def acceleration(self): return tt.norm(self._a)
+    def acceleration(self):
+        return tt.norm(self._a)
 
     @property
-    def e(self): return tt.normalise(self._v)
+    def e(self):
+        return tt.normalise(self._v)
 
     @property
-    def tg_acceleration(self): return tt.dot(self._a, self.e)
+    def tg_acceleration(self):
+        return tt.dot(self._a, self.e)
 
     @property
-    def curvature(self): return tt.curvature(self._v, self._a)
+    def curvature(self):
+        return tt.curvature(self._v, self._a)
 
     @property
-    def normal_acceleration(self): return np.square(self.speed)*self.curvature
-
+    def normal_acceleration(self):
+        return np.square(self.speed) * self.curvature
 
     def new_length_unit(self, length_unit, length_unit_name='?'):
         factor = self.params['length_unit'] / length_unit
@@ -107,15 +143,17 @@ class Trajectory:
 
     def origin_to(self, new_origin, original_units=True):
         assert original_units
-        self._s = self._s - (new_origin + self.params['displacement'])/self.params['length_unit']
+        self._s = self._s - (new_origin + self.params['displacement']
+                             ) / self.params['length_unit']
         if self.own_params:
             self.params['displacement'] = -new_origin
+        return self
 
     def resample(self, new_frame_rate, **kwargs):
         if 'frame_rate' not in self.params:
             raise Exception("Frame rate not in trajectories")
         old_frame_rate = self.params['frame_rate']
-        fraction = new_frame_rate/old_frame_rate
+        fraction = new_frame_rate / old_frame_rate
         self._s = tt.resample(self._s, new_frame_rate, old_frame_rate, kwargs)
         self._v = tt.resample(self._v, new_frame_rate, old_frame_rate, kwargs)
         self._a = tt.resample(self._a, new_frame_rate, old_frame_rate, kwargs)
@@ -123,20 +161,27 @@ class Trajectory:
             self.params['frame_rate'] = new_frame_rate
             self.params['time_unit'] = self.params['time_unit'] * fraction
 
-
     """ functions wrt points"""
     def distance_to(self, point):
         return tt.norm(self.s - point)
 
-    def orientation_towards(self, point):
-        dot_prod = np.clip(tt.dot(tt.normalise(point - self.s), self.e), -1, 1)
-        return np.arccos(dot_prod)
+    def _projection_vector_towards(self, point, vector):
+        return tt.dot(tt.normalise(point - self.s), vector)
+
+    def orientation_towards(self, point):  # Soon to be deprecated
+        return self.angle_towards(point)
+
+    def angle_towards(self, point):
+        return np.arccos(np.clip(self.e_towards(point), -1, 1))
+
+    def e_towards(self, point):
+        return self._projection_vector_towards(point, self.e)
 
     def speed_towards(self, point):
-        return tt.dot(tt.normalise(point - self.s), self.v)
+        return self._projection_vector_towards(point, self._v)
 
     def acceleration_towards(self, point):
-        return tt.dot(tt.normalise(point - self.s), self.a)
+        return self._projection_vector_towards(point, self._a)
 
     @property
     def distance_to_center(self):
@@ -149,22 +194,53 @@ class Trajectory:
         return self.distance_to(np.zeros(2))
 
 
-
 class CenterMassTrajectory(Trajectory):
-    own_params = False #Parameters are shared with parent
+    own_params = False  # Parameters are shared with parent
+
 
 class Trajectories(Trajectory):
     def __init__(self, trajectories, params):
         super().__init__(trajectories, params)
-        self.center_of_mass = calculate_center_of_mass(trajectories, self.params)
+        self.center_of_mass = calculate_center_of_mass(trajectories,
+                                                       self.params)
+    def _dict_to_save(self):
+        traj_data = {key: self.__dict__[key] for key in self.keys_to_copy}
+        params = self.params
+        return {'traj_data': traj_data, 'params': params, 
+                'class_name': self.__class__.__name__} 
+
+    def save(self, filename):
+        np.save(filename, self._dict_to_save())
+
+    @classmethod
+    def load(cls, filename):
+        loaded_dict = np.load(filename, allow_pickle=True).item()
+        return cls(loaded_dict['traj_data'], loaded_dict['params'])
 
     def __getitem__(self, val):
-        view_trajectories = {k: getattr(self, k)[val]
-                             for k in self.keys_to_copy}
+        view_trajectories = {
+            k: getattr(self, k)[val]
+            for k in self.keys_to_copy
+        }
+        return self.__class__(view_trajectories, self.params)
+
+    def restrict_individuals(self, val):
+        view_trajectories = {
+                k: getattr(self, k)[:, val]
+            for k in self.keys_to_copy
+        }
         return self.__class__(view_trajectories, self.params)
 
     def view(self, start=None, end=None):
         return self[slice(start, end)]
+
+    def __str__(self):
+        if 'path' in self.params:
+            maybe_loaded = f"from {self.params['path']} "
+        else:
+            maybe_loaded = ''
+        return f"<{self.__class__.__name__} " + maybe_loaded\
+            + f"-- frames:{self._s.shape[0]}, individuals:{self._s.shape[1]}>"
 
     @classmethod
     def from_idtrackerai(cls, trajectories_path, **kwargs):
@@ -172,19 +248,27 @@ class Trajectories(Trajectory):
 
     @classmethod
     def from_idtracker(cls, trajectories_path, **kwargs):
-        traj_dict = np.load(trajectories_path, encoding='latin1',
+        """Create Trajectories from a idtracker.ai trajectories file
+
+        :param trajectories_path: idtracker.ai generated file
+        """
+        traj_dict = np.load(trajectories_path,
+                            encoding='latin1',
                             allow_pickle=True).item()
         tr = cls.from_idtracker_(traj_dict, **kwargs)
         tr.params['path'] = trajectories_path
         return tr
 
     @classmethod
-    def from_idtracker_(cls, traj_dict,
-                        interpolate_nans=True, center=False,
-                        smooth_params=None, dtype=np.float64):
-        """Create Trajectories from a idtracker.ai trajectories file
+    def from_idtracker_(cls,
+                        traj_dict,
+                        interpolate_nans=True,
+                        center=False,
+                        smooth_params=None,
+                        dtype=np.float64):
+        """Create Trajectories from a idtracker.ai trajectories dictionary
 
-        :param trajectories_path: idtracker.ai generated trajectories file
+        :param traj_dict: idtracker.ai generated dictionary
         :param interpolate_nans: whether to interpolate NaNs
         :param center: Whether to center trajectories, using a center estimated
         from the trajectories.
@@ -193,12 +277,13 @@ class Trajectories(Trajectory):
         """
 
         t = traj_dict['trajectories'].astype(dtype)
-        traj = cls.from_positions(t, interpolate_nans=interpolate_nans,
+        traj = cls.from_positions(t,
+                                  interpolate_nans=interpolate_nans,
                                   smooth_params=smooth_params)
 
         radius, center_ = radius_and_center_from_traj_dict(traj._s, traj_dict)
-        traj.params.update(dict(radius=radius, radius_px=radius,
-                                _center=center_))
+        traj.params.update(
+            dict(radius=radius, radius_px=radius, _center=center_))
         if center:
             traj.origin_to(traj.params['_center'])
 
@@ -208,19 +293,17 @@ class Trajectories(Trajectory):
 
     @classmethod
     def from_positions(cls, t, interpolate_nans=True, smooth_params=None):
-                       #arena_radius=None, arena_center=None):
         """Trajectory from positions
 
         :param t: Positions nd.array.
         :param interpolate_nans: whether to interpolate NaNs
         :param smooth_params: Arguments for smoothing (see tt.smooth)
-        :param arena_radius: Declared arena radius (overrides estimation)
-        :param arena_center: Declared arena center (overrides estimation)
         """
         if smooth_params is None:
             smooth_params = {'sigma': -1, 'only_past': False}
         # Interpolate trajectories
-        if interpolate_nans: tt.interpolate_nans(t)
+        if interpolate_nans:
+            tt.interpolate_nans(t)
 
         displacement = np.array([0.0, 0.0])
 
@@ -239,22 +322,22 @@ class Trajectories(Trajectory):
             [trajectories['_s'], trajectories['_v'], trajectories['_a']] = \
                 tt.velocity_acceleration(t_smooth)
 
-        params = {#"_center": center_a,              # Units: pixels
-                  "displacement": displacement,    # Units: pixels
-                  #"radius": radius,                # Units: unit length
-                  #"radius_px": radius,             # Units: pixels
-                  "length_unit": 1,                # Units: pixels
-                  "length_unit_name": 'px',
-                  "time_unit": 1,  # In frames
-                  "time_unit_name": 'frames'}
+        params = {
+            "displacement": displacement,  # Units: pixels
+            "length_unit": 1,  # Units: pixels
+            "length_unit_name": 'px',
+            "time_unit": 1,  # In frames
+            "time_unit_name": 'frames'
+        }
 
         return cls(trajectories, params)
 
     def point_from_px(self, point):
-        return (point + self.params['displacement'])/self.params['length_unit']
+        return (point +
+                self.params['displacement']) / self.params['length_unit']
 
     def point_to_px(self, point):
-        return point*self.params['length_unit'] - self.params['displacement']
+        return point * self.params['length_unit'] - self.params['displacement']
 
     def normalise_by(self, normaliser):
         if not isinstance(normaliser, str):
@@ -272,7 +355,7 @@ class Trajectories(Trajectory):
         return self
 
     def new_length_unit(self, *args, **kwargs):
-        # Order is important (changes in params): first center of mass, then own
+        # Order is important (changes params): first center of mass, then own
         self.center_of_mass.new_length_unit(*args, **kwargs)
         return super().new_length_unit(*args, **kwargs)
 
@@ -295,8 +378,8 @@ class Trajectories(Trajectory):
 
     @property
     def mean_interindividual_distances(self):
-        return np.nansum(self.interindividual_distances, axis=-1)/(
-            self.number_of_individuals - 1)
+        return np.nansum(self.interindividual_distances,
+                         axis=-1) / (self.number_of_individuals - 1)
 
     @property
     def number_of_individuals(self):
@@ -306,11 +389,6 @@ class Trajectories(Trajectory):
     def identity_labels(self):
         # Placeholder, in case in the future labels are explicitly given
         return np.arange(self.number_of_individuals)
-
-    @property
-    def identities_array(self):
-        ones = np.ones(self.raw.shape[:-1], dtype=np.int)
-        return np.einsum('ij,j->ij', ones, self.identity_labels)
 
 
 class FishTrajectories(Trajectories):
@@ -327,8 +405,10 @@ class FishTrajectories(Trajectories):
         the next bout
         """
 
-        if find_max_dict is None: find_max_dict = {}
-        if find_min_dict is None: find_min_dict = {}
+        if find_max_dict is None:
+            find_max_dict = {}
+        if find_min_dict is None:
+            find_min_dict = {}
 
         all_bouts = []
         for focal in range(self.number_of_individuals):
@@ -339,22 +419,30 @@ class FishTrajectories(Trajectories):
                                             **find_max_dict)[0]
 
             # Filter out NaNs
-            min_frames = [f for f in min_frames_
-                          if not np.isnan(self._s[f, focal, 0])]
-            max_frames = [f for f in max_frames_
-                          if not np.isnan(self._s[f, focal, 0])]
+            min_frames = [
+                f for f in min_frames_ if not np.isnan(self._s[f, focal, 0])
+            ]
+            max_frames = [
+                f for f in max_frames_ if not np.isnan(self._s[f, focal, 0])
+            ]
 
             # Obtain couples of consecutive minima and maxima
             frames = min_frames + max_frames
-            frameismax = [False]*len(min_frames) + [True]*len(max_frames)
-            ordered_frames, ordered_ismax = zip(*sorted(zip(frames, frameismax)))
-            bouts = [ordered_frames[i:i+2] for i in range(len(ordered_frames)-1)
-                     if not ordered_ismax[i] and ordered_ismax[i+1]]
+            frameismax = [False] * len(min_frames) + [True] * len(max_frames)
+            ordered_frames, ordered_ismax = zip(
+                *sorted(zip(frames, frameismax)))
+            bouts = [
+                ordered_frames[i:i + 2]
+                for i in range(len(ordered_frames) - 1)
+                if not ordered_ismax[i] and ordered_ismax[i + 1]
+            ]
 
             # Ordering, and adding next_bout
             starting_bouts, bout_peaks = zip(*bouts)
-            next_bout_start = list(starting_bouts[1:]) + [self.number_of_frames-1]
-            bouts = np.asarray(list(zip(starting_bouts, bout_peaks, next_bout_start)))
+            next_bout_start = list(
+                starting_bouts[1:]) + [self.number_of_frames - 1]
+            bouts = np.asarray(
+                list(zip(starting_bouts, bout_peaks, next_bout_start)))
             all_bouts.append(bouts)
         return all_bouts
 
@@ -367,17 +455,39 @@ class TrajectoriesWithPoints(Trajectories):
         else:
             self.points = points
 
+    def _dict_to_save(self):
+        update_dict = {'points': self.points}
+        return {**super()._dict_to_save(), **update_dict}
+   
+
     @classmethod
-    def from_idtracker(cls, trajectories_path, **kwargs):
-        traj_dict = np.load(trajectories_path, encoding='latin1',
-                            allow_pickle=True).item()
-        t = Trajectories.from_idtracker_(traj_dict, **kwargs)
+    def load(cls, filename):
+        loaded_dict = np.load(filename, allow_pickle=True).item()
+        return cls(loaded_dict['traj_data'], loaded_dict['params'], 
+                   points=loaded_dict['points'])
+
+
+
+    @classmethod
+    def from_idtracker_(cls, traj_dict, **kwargs):
+        twp = super().from_idtracker_(traj_dict, **kwargs)
         points = traj_dict['setup_points']
-        view_trajectories = {k: getattr(t, k) for k in t.keys_to_copy}
-        twp = cls(view_trajectories, t.params)
-        twp.points=twp.points_from_px(points)
-        twp.params['path'] = trajectories_path
+        twp.points = twp.points_from_px(points)
         return twp
+
+    #@classmethod
+    #def from_idtracker(cls, trajectories_path, **kwargs):
+    #    traj_dict = np.load(trajectories_path,
+    #                        encoding='latin1',
+    #                        allow_pickle=True).item()
+    #    t = Trajectories.from_idtracker_(traj_dict, **kwargs)
+    #    points = traj_dict['setup_points']
+    #    view_trajectories = {k: getattr(t, k) for k in t.keys_to_copy}
+    #    twp = cls(view_trajectories, t.params)
+    #    twp.points = twp.points_from_px(points)
+    #    twp.params['path'] = trajectories_path
+    #    return twp
+
 
     def __getitem__(self, val):
         view_traj_with_points = super().__getitem__(val)
@@ -391,7 +501,7 @@ class TrajectoriesWithPoints(Trajectories):
         return new_points
 
     def new_length_unit(self, *args, **kwargs):
-        factor = super().new_length_unit(*args, **kwargs) # Changes traj
+        factor = super().new_length_unit(*args, **kwargs)  # Changes traj
         new_points = {}
         for key in self.points:
             new_points[key] = self.points[key] * factor
@@ -404,6 +514,9 @@ class TrajectoriesWithPoints(Trajectories):
     def orientation_towards_point(self, key):
         return self.orientation_towards(self.points[key])
 
+    def e_towards_point(self, key):
+        return self.e_towards(self.points[key])
+
     def speed_towards_point(self, key):
         return self.speed_towards(self.points[key])
 
@@ -414,10 +527,9 @@ class TrajectoriesWithPoints(Trajectories):
         assert original_units
         new_points = {}
         for key in self.points:
-            new_points[key] = self.points[key] - (new_origin + self.params['displacement']
-                                                  )/self.params['length_unit']
+            correction = (new_origin + self.params['displacement']
+                          ) / self.params['length_unit']
+            new_points[key] = self.points[key] - correction
         self.points = new_points
         super().origin_to(new_origin, original_units=original_units)
-
-
-
+        return self
