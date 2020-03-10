@@ -100,7 +100,7 @@ def adjacency_matrix(positions, num_neighbours=None,
     else:
         raise ValueError("mode should be 'connectivity' or 'distance'")
 
-    if (num_neighbours == individuals + 1) and use_pdist_if_all_nb:
+    if (num_neighbours == individuals - 1) and use_pdist_if_all_nb:
         if mode == 'connectivity':
             adjacency_m[...] = True
         else:
