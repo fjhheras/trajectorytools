@@ -114,14 +114,18 @@ class TrajectoriesTestCase3(TrajectoriesTestCase):
 
 
 class TrajectoriesTestCase4(TrajectoriesTestCase):
+    def setUp(self):
+        super().setUp()
+        self.index_cut = np.random.randint(self.t.number_of_frames - 4) + 2
+
     def test_shape(self):
-       assert self.t.distance_travelled.shape[0] == self.t.s.shape[0]
-       assert self.t.distance_travelled.shape[1] == self.t.s.shape[1]
+        assert self.t.distance_travelled.shape[0] == self.t.s.shape[0]
+        assert self.t.distance_travelled.shape[1] == self.t.s.shape[1]
 
     def test_first_frame_zero(self):
         assert np.all(self.t.distance_travelled[0] == 0)
 
-    def test_split_consistency(self):
+    def test_split_consistency1(self):
         shift = self.t.distance_travelled[30:] - self.t[30:].distance_travelled
         nptest.assert_allclose(shift[0], shift[1])
 
@@ -135,6 +139,17 @@ class TrajectoriesTestCase4(TrajectoriesTestCase):
         s = self.t[30:].distance_travelled
         all = self.t.distance_travelled
         nptest.assert_allclose(all[30:], s + f[-1])
+
+    def test_split_consistency(self):
+        from_first = self.t[:self.index_cut].distance_travelled
+        from_second = self.t[(self.index_cut - 1):].distance_travelled
+        from_original = self.t.distance_travelled 
+        # Distance travelled in the first part should be the same
+        nptest.assert_allclose(from_original[:self.index_cut], from_first)
+        # Distance travelled in second is offset by total travelled in first
+        total_travelled_in_first = from_first[-1]
+        nptest.assert_allclose(from_original[(self.index_cut - 1):], 
+                               from_second + total_travelled_in_first)
 
 
 class TrajectoriesWithPointsTestCase(TrajectoriesTestCase):
