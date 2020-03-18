@@ -112,6 +112,31 @@ class TrajectoriesTestCase3(TrajectoriesTestCase):
 
         nptest.assert_allclose(self.t.s, self.t2.s)
 
+
+class TrajectoriesTestCase4(TrajectoriesTestCase):
+    def test_shape(self):
+       assert self.t.distance_travelled.shape[0] == self.t.s.shape[0]
+       assert self.t.distance_travelled.shape[1] == self.t.s.shape[1]
+
+    def test_first_frame_zero(self):
+        assert np.all(self.t.distance_travelled[0] == 0)
+
+    def test_split_consistency(self):
+        shift = self.t.distance_travelled[30:] - self.t[30:].distance_travelled
+        nptest.assert_allclose(shift[0], shift[1])
+
+    def test_split_consistency2(self):
+        d1 = self.t[30:].distance_travelled
+        d = self.t.distance_travelled[30:]
+        nptest.assert_allclose(d1[1], d[1]-d[0])
+
+    def test_split_consistency3(self):
+        f = self.t[:31].distance_travelled
+        s = self.t[30:].distance_travelled
+        all = self.t.distance_travelled
+        nptest.assert_allclose(all[30:], s + f[-1])
+
+
 class TrajectoriesWithPointsTestCase(TrajectoriesTestCase):
     def setUp(self):
         self.t = TrajectoriesWithPoints.from_idtracker(

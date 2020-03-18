@@ -121,6 +121,11 @@ class Trajectory:
     def normal_acceleration(self):
         return np.square(self.speed) * self.curvature
 
+    @property
+    def distance_travelled(self):
+        return np.vstack([np.zeros((1, self.s.shape[1])),
+                          np.cumsum(np.sqrt(np.sum(np.diff(self.s, axis=0) ** 2, axis=-1)), axis=0)])
+
     def new_length_unit(self, length_unit, length_unit_name='?'):
         factor = self.params['length_unit'] / length_unit
         self._s = self._s * factor
