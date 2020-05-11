@@ -8,6 +8,7 @@ from trajectorytools import Trajectories, TrajectoriesWithPoints
 import trajectorytools.constants as cons
 import trajectorytools.socialcontext as ttsocial
 
+
 class TrajectoriesTestCase(unittest.TestCase):
     def setUp(self):
         self.t = Trajectories.from_idtracker(cons.test_trajectories_path)
