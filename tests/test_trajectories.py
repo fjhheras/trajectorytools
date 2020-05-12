@@ -39,7 +39,7 @@ class TrajectoriesTestCase(unittest.TestCase):
 
     def test_slice(self):
         new_t = self.t[50:100]
-        assert(isinstance(new_t, Trajectories))
+        assert isinstance(new_t, Trajectories)
         self.assertEqual(new_t.number_of_individuals,
                          self.t.number_of_individuals)
         nptest.assert_equal(new_t.s, self.t.s[50:100])
@@ -325,10 +325,9 @@ class ArenaRadiusCenterFromBorder(TrajectoriesTestCase):
         self.t = Trajectories.from_idtracker(cons.test_trajectories_path_border)
 
     def test_arena_radius_and_center_from_border(self):
-        """
-        The width and height of the frame are 1160 and 938 pixels respectively. In the trajectories dictionary there
-        is a key named 'setup_points'
-        """
+        # The width and height of the frame are 1160 and 938 pixels 
+        # respectively. In the trajectories dictionary there
+        # is a key named 'setup_points'
         nptest.assert_allclose(self.t.params['_center'], (580, 469), rtol=.1, atol=1.)
         nptest.assert_allclose(self.t.params['radius_px'], 400, rtol=.1, atol=1.)
 

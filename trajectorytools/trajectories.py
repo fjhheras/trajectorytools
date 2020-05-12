@@ -1,8 +1,10 @@
 from copy import deepcopy
-from scipy import signal
-import numpy as np
-import trajectorytools as tt
 
+import numpy as np
+from scipy import signal
+
+import trajectorytools as tt
+import logging
 
 def calculate_center_of_mass(trajectories, params):
     """calculate_center_of_mass
@@ -155,7 +157,7 @@ class Trajectory:
             self.params['time_unit_name'] = time_unit_name
 
     def origin_to(self, new_origin, original_units=True):
-        assert original_units
+        assert original_units # Untested for new units
         self._s = self._s - (new_origin + self.params['displacement']
                              ) / self.params['length_unit']
         if self.own_params:
@@ -243,6 +245,7 @@ class Trajectories(Trajectory):
         return self.__class__(view_trajectories, self.params)
 
     def view(self, start=None, end=None):
+        logging.warning("To be deprecated: use standard slicing instead")
         return self[slice(start, end)]
 
     def __str__(self):
@@ -468,10 +471,7 @@ class FishTrajectories(Trajectories):
 class TrajectoriesWithPoints(Trajectories):
     def __init__(self, trajectories, params, points=None):
         super().__init__(trajectories, params)
-        if points is None:
-            self.points = {}
-        else:
-            self.points = points
+        self.points = points if points is not None else {}
 
     def _dict_to_save(self):
         update_dict = {'points': self.points}
@@ -492,20 +492,6 @@ class TrajectoriesWithPoints(Trajectories):
         points = traj_dict['setup_points']
         twp.points = twp.points_from_px(points)
         return twp
-
-    #@classmethod
-    #def from_idtracker(cls, trajectories_path, **kwargs):
-    #    traj_dict = np.load(trajectories_path,
-    #                        encoding='latin1',
-    #                        allow_pickle=True).item()
-    #    t = Trajectories.from_idtracker_(traj_dict, **kwargs)
-    #    points = traj_dict['setup_points']
-    #    view_trajectories = {k: getattr(t, k) for k in t.keys_to_copy}
-    #    twp = cls(view_trajectories, t.params)
-    #    twp.points = twp.points_from_px(points)
-    #    twp.params['path'] = trajectories_path
-    #    return twp
-
 
     def __getitem__(self, val):
         view_traj_with_points = super().__getitem__(val)
