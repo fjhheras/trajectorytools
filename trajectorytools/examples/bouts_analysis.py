@@ -2,11 +2,11 @@ import os
 import numpy as np
 from matplotlib import pyplot as plt
 import trajectorytools as tt
-from trajectorytools.constants import dir_of_data
+from trajectorytools.constants import test_trajectories_path
 
 
-def plot_bouts(ax, starting_frame, focal):
-    time_range = (starting_frame, starting_frame + 290)
+def plot_bouts(ax, starting_frame, focal, num_frames=220):
+    time_range = (starting_frame, starting_frame + num_frames)
     frame_range = range(time_range[0], time_range[1], 1)
     starting_bouts = np.squeeze(all_bouts[focal][
         np.where((all_bouts[focal][:,0] > frame_range[0]) &
@@ -22,13 +22,11 @@ def plot_bouts(ax, starting_frame, focal):
 
 
 if __name__ == '__main__':
-    #plt.ion()
 
-    test_trajectories_file = os.path.join(dir_of_data, 'test_trajectories.npy')
-    positions = np.load(test_trajectories_file, encoding='latin1')
-    tr = tt.FishTrajectories.from_positions(positions,
-                                            smooth_sigma=.5,
-                                            interpolate_nans=True)
+    # Loading a trajectory file produced by idtracker.ai
+    tr = tt.FishTrajectories.from_idtrackerai(test_trajectories_path,
+                                              smooth_params={'sigma': .5},
+                                              interpolate_nans=True)
 
     find_max_dict = {'prominence': (0.2*tr.speed.std(), None),
                      'distance': 3}
@@ -36,13 +34,12 @@ if __name__ == '__main__':
                      'distance': 3}
     all_bouts = tr.get_bouts(find_max_dict, find_min_dict)
 
-    fig, ax = plt.subplots(10, figsize=(20, 20), sharex=True, sharey=True)
-    for i in range(10):
+    fig, ax = plt.subplots(tr.number_of_individuals, figsize=(20, 20), sharex=True, sharey=True)
+    for i in range(tr.number_of_individuals):
         plot_bouts(ax[i], 0, i)
-        if i == 9:
+        if i == tr.number_of_individuals - 1:
             ax[i].set_xlabel('frame number', fontsize=14)
             ax[i].set_ylabel('speed', fontsize=14)
 
     plt.subplots_adjust(hspace=1.)
-    #plt.ioff()
     plt.show()

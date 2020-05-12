@@ -81,6 +81,8 @@ class Trajectory:
     def __len__(self):
         return len(self._s)
 
+    # Properties and methods with no side-effects
+
     @property
     def number_of_frames(self):
         return self._s.shape[0]
@@ -126,6 +128,12 @@ class Trajectory:
         return np.vstack([np.zeros((1, self.s.shape[1])),
                           np.cumsum(np.sqrt(np.sum(np.diff(self.s, axis=0) ** 2, axis=-1)), axis=0)])
 
+    def estimate_center_and_radius_from_locations(self):
+        center_a, estimated_radius = estimate_center_and_radius(self.s)
+        return center_a, estimated_radius
+
+    # Properties with side-effects
+
     def new_length_unit(self, length_unit, length_unit_name='?'):
         factor = self.params['length_unit'] / length_unit
         self._s = self._s * factor
@@ -166,7 +174,7 @@ class Trajectory:
             self.params['frame_rate'] = new_frame_rate
             self.params['time_unit'] = self.params['time_unit'] * fraction
 
-    """ functions wrt points"""
+    # methods and properties wrt points
     def distance_to(self, point):
         return tt.norm(self.s - point)
 
@@ -190,9 +198,7 @@ class Trajectory:
 
     @property
     def distance_to_center(self):
-        print('Warning: this function is deprecated')
-        print('The original center is not remembered nor used')
-        return self.distance_to_origin()
+        raise Exception('Deprecated: Center trajectories and use distance_to_origin')
 
     @property
     def distance_to_origin(self):
@@ -336,7 +342,7 @@ class Trajectories(Trajectory):
         }
 
         return cls(trajectories, params)
-
+    
     def point_from_px(self, point):
         return (point +
                 self.params['displacement']) / self.params['length_unit']
@@ -358,6 +364,13 @@ class Trajectories(Trajectory):
             raise Exception('Unknown key')
         self.new_length_unit(length_unit, length_unit_name)
         return self
+    
+    # Methods with side effects
+
+    # TODO: Populate center and radius properties automatically
+    # But special care to do it in pixels
+    #def populate_center_and_radius_from_locations(self):
+    #    center, radius = self.estimate_center_and_radius_from_locations()
 
     def new_length_unit(self, *args, **kwargs):
         # Order is important (changes params): first center of mass, then own
