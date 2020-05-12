@@ -86,13 +86,13 @@ class Trajectory:
     # Properties and methods with no side-effects
     # i.e. they do not change class member parameters
     
-    def scalar_from_px(self, point):
+    def point_from_px(self, point):
         return (point +
                 self.params['displacement']) / self.params['length_unit']
 
-    def scalar_to_px(self, point):
+    def point_to_px(self, point):
         return point * self.params['length_unit'] - self.params['displacement']
-    
+
     def vector_from_px(self, vector):
         return vector / self.params['length_unit']
 
@@ -105,7 +105,7 @@ class Trajectory:
 
     @property
     def s(self):
-        return self.scalar_from_px(self._s)
+        return self.point_from_px(self._s)
 
     @property
     def v(self):
@@ -175,6 +175,8 @@ class Trajectory:
 
     def resample(self, new_frame_rate, **kwargs):
         # This function modifies _s, _v and _a
+        # In the future it will not modify the current Trajectory
+        # But it will produce a new one
         if 'frame_rate' not in self.params:
             raise Exception("Frame rate not in trajectories")
         old_frame_rate = self.params['frame_rate']
@@ -356,15 +358,6 @@ class Trajectories(Trajectory):
 
         return cls(trajectories, params)
     
-    def point_from_px(self, point):
-        logging.warning('To be deprecated. Use scalar_from_px')
-        return (point +
-                self.params['displacement']) / self.params['length_unit']
-
-    def point_to_px(self, point):
-        logging.warning('To be deprecated. Use scalar_to_px')
-        return point * self.params['length_unit'] - self.params['displacement']
-
     def normalise_by(self, normaliser):
         if not isinstance(normaliser, str):
             raise Exception('normalise_by needs a string. To normalise by'
@@ -503,7 +496,7 @@ class TrajectoriesWithPoints(Trajectories):
     def points_from_px(self, points):
         new_points = {}
         for key in points:
-            new_points[key] = self.scalar_from_px(points[key])
+            new_points[key] = self.point_from_px(points[key])
         return new_points
 
     def distance_to_point(self, key):
