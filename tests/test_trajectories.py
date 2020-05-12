@@ -94,17 +94,21 @@ class TrajectoriesTestCase2(TrajectoriesTestCase):
 
 class TrajectoriesTestCase3(TrajectoriesTestCase):
     def setUp(self):
-        self.t = Trajectories.from_idtracker(cons.test_trajectories_path)
+        self.t1 = Trajectories.from_idtracker(cons.test_trajectories_path)
         self.t2 = Trajectories.from_idtracker(cons.test_trajectories_path)
+        self.t = self.t1[50:100]
 
     def test_slice_and_unit_change(self, new_length_unit=10, new_time_unit=3):
-
-        t2_slice = self.t2[50:100]
-
-        t2_slice.new_length_unit(new_length_unit)
-        t2_slice.new_time_unit(new_time_unit)
-
-        nptest.assert_allclose(self.t.s, self.t2.s)
+        self.t.new_length_unit(new_length_unit)
+        self.t.new_time_unit(new_time_unit)
+        # Test that original did not change
+        nptest.assert_allclose(self.t1.s, self.t2.s)
+        
+        # Test that slice and change conmute
+        self.t2.new_length_unit(new_length_unit)
+        self.t2.new_time_unit(new_time_unit)
+        t2_sliced = self.t2[50:100]
+        nptest.assert_allclose(t2_sliced.s, self.t.s)
 
 
 class TrajectoriesTestCase4(TrajectoriesTestCase):
@@ -186,7 +190,7 @@ class TrajectoriesWithPointsTestCaseCenter(TrajectoriesWithPointsTestCase):
             cons.test_trajectories_with_points_path, center=False)
         self.t_center = TrajectoriesWithPoints.from_idtracker(
             cons.test_trajectories_with_points_path, center=True)
-
+    
     def test_recenter(self):
         self.t_center.origin_to(np.zeros(2))
         nptest.assert_allclose(self.t_center._s, self.t._s)
