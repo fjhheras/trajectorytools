@@ -1,22 +1,16 @@
-import pathlib
 import tempfile
 import unittest
 
 import numpy as np
 import numpy.testing as nptest
 from trajectorytools import Trajectories, TrajectoriesWithPoints
-from trajectorytools.constants import dir_of_data
+import trajectorytools.constants as cons
 import trajectorytools.socialcontext as ttsocial
-
-trajectories_path = pathlib.Path(dir_of_data) / 'test_trajectories_idtrackerai.npy'
-trajectories_path_border = pathlib.Path(dir_of_data) / 'test_trajectories_idtrackerai_with_border.npy'
-raw_trajectories_path = pathlib.Path(dir_of_data) / 'test_trajectories.npy'
-trajectories_with_points_path = pathlib.Path(dir_of_data) / 'trajectories_with_points.npy'
 
 
 class TrajectoriesTestCase(unittest.TestCase):
     def setUp(self):
-        self.t = Trajectories.from_idtracker(trajectories_path)
+        self.t = Trajectories.from_idtracker(cons.test_trajectories_path)
 
     def test_center_of_mass(self):
         assert(self.t.params is self.t.center_of_mass.params) #Same object
@@ -62,11 +56,11 @@ class TrajectoriesTestCase(unittest.TestCase):
 
 class TrajectoriesTestCaseSaveLoad(TrajectoriesTestCase):
     def setUp(self):
-        t = Trajectories.from_idtracker(trajectories_path)
+        t = Trajectories.from_idtracker(cons.test_trajectories_path)
         temporary_file = tempfile.mkstemp('.npy', 'trajectorytoolstest', '/tmp')[1] 
         t.save(temporary_file)
         self.t = Trajectories.load(temporary_file)
-        self.t1 = Trajectories.from_idtracker(trajectories_path)
+        self.t1 = Trajectories.from_idtracker(cons.test_trajectories_path)
 
     def test_save_and_load_equal(self):
         nptest.assert_equal(self.t1.s, self.t.s)
@@ -100,8 +94,8 @@ class TrajectoriesTestCase2(TrajectoriesTestCase):
 
 class TrajectoriesTestCase3(TrajectoriesTestCase):
     def setUp(self):
-        self.t = Trajectories.from_idtracker(trajectories_path)
-        self.t2 = Trajectories.from_idtracker(trajectories_path)
+        self.t = Trajectories.from_idtracker(cons.test_trajectories_path)
+        self.t2 = Trajectories.from_idtracker(cons.test_trajectories_path)
 
     def test_slice_and_unit_change(self, new_length_unit=10, new_time_unit=3):
 
@@ -155,7 +149,7 @@ class TrajectoriesTestCase4(TrajectoriesTestCase):
 class TrajectoriesWithPointsTestCase(TrajectoriesTestCase):
     def setUp(self):
         self.t = TrajectoriesWithPoints.from_idtracker(
-            trajectories_with_points_path, center=True)
+            cons.test_trajectories_with_points_path, center=True)
     
     def test_correct_class(self):
         assert isinstance(self.t, TrajectoriesWithPoints) 
@@ -163,11 +157,11 @@ class TrajectoriesWithPointsTestCase(TrajectoriesTestCase):
 
 class TrajectoriesWithPointsTestCaseSaveLoad(TrajectoriesWithPointsTestCase):
     def setUp(self):
-        t = TrajectoriesWithPoints.from_idtracker(trajectories_with_points_path)
+        t = TrajectoriesWithPoints.from_idtracker(cons.test_trajectories_with_points_path)
         temporary_file = tempfile.mkstemp('.npy', 'trajectorytoolstest', '/tmp')[1] 
         t.save(temporary_file)
         self.t = TrajectoriesWithPoints.load(temporary_file)
-        self.t1 = TrajectoriesWithPoints.from_idtracker(trajectories_with_points_path)
+        self.t1 = TrajectoriesWithPoints.from_idtracker(cons.test_trajectories_with_points_path)
 
 
     def test_save_and_load_equal(self):
@@ -189,9 +183,9 @@ class TrajectoriesWithPointsTestCaseSaveLoad(TrajectoriesWithPointsTestCase):
 class TrajectoriesWithPointsTestCaseCenter(TrajectoriesWithPointsTestCase):
     def setUp(self):
         self.t = TrajectoriesWithPoints.from_idtracker(
-            trajectories_with_points_path, center=False)
+            cons.test_trajectories_with_points_path, center=False)
         self.t_center = TrajectoriesWithPoints.from_idtracker(
-            trajectories_with_points_path, center=True)
+            cons.test_trajectories_with_points_path, center=True)
 
     def test_recenter(self):
         self.t_center.origin_to(np.zeros(2))
@@ -203,9 +197,9 @@ class TrajectoriesWithPointsTestCaseCenter(TrajectoriesWithPointsTestCase):
 class TrajectoriesWithPointsTestCaseChangeLengthUnit(TrajectoriesWithPointsTestCase):
     def setUp(self):
         self.t = TrajectoriesWithPoints.from_idtracker(
-            trajectories_with_points_path, center=True)
+            cons.test_trajectories_with_points_path, center=True)
         self.t2 = TrajectoriesWithPoints.from_idtracker(
-            trajectories_with_points_path, center=True)
+            cons.test_trajectories_with_points_path, center=True)
         self.new_length_unit = 10
         # Scaling trajectory self.t by 10
         self.factor = self.t.new_length_unit(self.new_length_unit)
@@ -250,9 +244,9 @@ class TrajectoriesWithPointsTestCaseChangeLengthUnit(TrajectoriesWithPointsTestC
 class TrajectoriesWithPointsSlicedTestCaseChangeLengthUnit(TrajectoriesWithPointsTestCase):
     def setUp(self):
         self.t = TrajectoriesWithPoints.from_idtracker(
-            trajectories_with_points_path, center=True)
+            cons.test_trajectories_with_points_path, center=True)
         self.t2 = TrajectoriesWithPoints.from_idtracker(
-            trajectories_with_points_path, center=True)
+            cons.test_trajectories_with_points_path, center=True)
 
 
     def test_check_unit_length_change_in_points(self, new_length_unit=10):
@@ -322,13 +316,13 @@ class TrajectoriesWithPointsSlicedTestCaseChangeLengthUnit(TrajectoriesWithPoint
 
 class RawTrajectoriesTestCase(TrajectoriesTestCase):
     def setUp(self):
-        t = np.load(raw_trajectories_path, allow_pickle=True)
+        t = np.load(cons.test_raw_trajectories_path, allow_pickle=True)
         self.t = Trajectories.from_positions(t)
 
 
 class ArenaRadiusCenterFromBorder(TrajectoriesTestCase):
     def setUp(self):
-        self.t = Trajectories.from_idtracker(trajectories_path_border)
+        self.t = Trajectories.from_idtracker(cons.test_trajectories_path_border)
 
     def test_arena_radius_and_center_from_border(self):
         """
@@ -341,8 +335,8 @@ class ArenaRadiusCenterFromBorder(TrajectoriesTestCase):
 
 class CenterTrajectoriesTestCase(TrajectoriesTestCase):
     def setUp(self):
-        self.t_nocenter = Trajectories.from_idtracker(trajectories_path)
-        self.t = Trajectories.from_idtracker(trajectories_path, center=True)
+        self.t_nocenter = Trajectories.from_idtracker(cons.test_trajectories_path)
+        self.t = Trajectories.from_idtracker(cons.test_trajectories_path, center=True)
     def test_recenter(self):
         self.t.origin_to(np.zeros(2))
         nptest.assert_allclose(self.t_nocenter._s, self.t._s)
@@ -353,7 +347,7 @@ class CenterTrajectoriesTestCase(TrajectoriesTestCase):
 
 class SmoothTrajectoriesTestCase(TrajectoriesTestCase):
     def setUp(self):
-        self.t = Trajectories.from_idtracker(trajectories_path,
+        self.t = Trajectories.from_idtracker(cons.test_trajectories_path,
                                              smooth_params={'sigma':1})
 
 def assert_global_allclose(a, b, rel_error):
@@ -363,8 +357,8 @@ def assert_global_allclose(a, b, rel_error):
 
 class CenterScaleTrajectoriesTestCase(TrajectoriesTestCase):
     def setUp(self):
-        self.t_nocenter = Trajectories.from_idtracker(trajectories_path).normalise_by('radius')
-        self.t = Trajectories.from_idtracker(trajectories_path, center=True).normalise_by('radius')
+        self.t_nocenter = Trajectories.from_idtracker(cons.test_trajectories_path).normalise_by('radius')
+        self.t = Trajectories.from_idtracker(cons.test_trajectories_path, center=True).normalise_by('radius')
         self.rel_error = [1e-14]*2
     def test_recenter(self):
         self.t.origin_to(np.zeros(2))
@@ -377,9 +371,9 @@ class CenterScaleTrajectoriesTestCase(TrajectoriesTestCase):
 
 class DoubleTrajectoriesTestCase(TrajectoriesTestCase):
     def setUp(self):
-        self.t = Trajectories.from_idtracker(trajectories_path,
+        self.t = Trajectories.from_idtracker(cons.test_trajectories_path,
                                              smooth_params={'sigma':2})
-        self.t2 = Trajectories.from_idtracker(trajectories_path,
+        self.t2 = Trajectories.from_idtracker(cons.test_trajectories_path,
                                               smooth_params={'sigma':2})
         self.rel_error = [1e-14]*3
 
@@ -417,9 +411,9 @@ class DownUpResample(DoubleTrajectoriesTestCase):
 
 class ScaleRadiusTrajectoriesTestCase(TrajectoriesTestCase):
     def setUp(self):
-        self.t = Trajectories.from_idtracker(trajectories_path, center=True
+        self.t = Trajectories.from_idtracker(cons.test_trajectories_path, center=True
                                              ).normalise_by('radius')
-        self.t_normal = Trajectories.from_idtracker(trajectories_path)
+        self.t_normal = Trajectories.from_idtracker(cons.test_trajectories_path)
 
     def test_scale(self):
         corrected_s = self.t_normal.s
@@ -447,9 +441,9 @@ class ScaleRadiusTrajectoriesTestCase(TrajectoriesTestCase):
 
 class TrajectoriesRadiusTestCase(TrajectoriesTestCase):
     def setUp(self):
-        self.t_normal = Trajectories.from_idtracker(trajectories_path,
+        self.t_normal = Trajectories.from_idtracker(cons.test_trajectories_path,
                                                     smooth_params={'sigma': 1})
-        self.t = Trajectories.from_idtracker(trajectories_path,
+        self.t = Trajectories.from_idtracker(cons.test_trajectories_path,
                                              smooth_params={'sigma': 1}
                                              ).normalise_by('radius')
 
