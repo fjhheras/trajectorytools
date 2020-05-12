@@ -357,10 +357,12 @@ class Trajectories(Trajectory):
         return cls(trajectories, params)
     
     def point_from_px(self, point):
+        logging.warning('To be deprecated. Use scalar_from_px')
         return (point +
                 self.params['displacement']) / self.params['length_unit']
 
     def point_to_px(self, point):
+        logging.warning('To be deprecated. Use scalar_to_px')
         return point * self.params['length_unit'] - self.params['displacement']
 
     def normalise_by(self, normaliser):
@@ -481,7 +483,7 @@ class FishTrajectories(Trajectories):
 class TrajectoriesWithPoints(Trajectories):
     def __init__(self, trajectories, params, points=None):
         super().__init__(trajectories, params)
-        self.points = points if points is not None else {}
+        self._points = points if points is not None else {}
 
     def _dict_to_save(self):
         update_dict = {'points': self.points}
@@ -499,28 +501,32 @@ class TrajectoriesWithPoints(Trajectories):
     @classmethod
     def from_idtracker_(cls, traj_dict, **kwargs):
         twp = super().from_idtracker_(traj_dict, **kwargs)
-        points = traj_dict['setup_points']
-        twp.points = twp.points_from_px(points)
+        twp._points = traj_dict['setup_points']
         return twp
 
     def __getitem__(self, val):
         view_traj_with_points = super().__getitem__(val)
-        view_traj_with_points.points = self.points
+        view_traj_with_points._points = self._points
         return view_traj_with_points
+    
+    @property
+    def points(self):
+        #TODO: only transform the keys asked for efficiency 
+        return self.points_from_px(self._points)
 
     def points_from_px(self, points):
         new_points = {}
         for key in points:
-            new_points[key] = self.point_from_px(points[key])
+            new_points[key] = self.scalar_from_px(points[key])
         return new_points
 
-    def new_length_unit(self, *args, **kwargs):
-        factor = super().new_length_unit(*args, **kwargs)  # Changes traj
-        new_points = {}
-        for key in self.points:
-            new_points[key] = self.points[key] * factor
-        self.points = new_points
-        return factor
+    #def new_length_unit(self, *args, **kwargs):
+    #    factor = super().new_length_unit(*args, **kwargs)  # Changes traj
+    #    new_points = {}
+    #    for key in self.points:
+    #        new_points[key] = self.points[key] * factor
+    #    self.points = new_points
+    #    return factor
 
     def distance_to_point(self, key):
         return self.distance_to(self.points[key])
@@ -537,13 +543,13 @@ class TrajectoriesWithPoints(Trajectories):
     def acceleration_towards_point(self, key):
         return self.acceleration_towards(self.points[key])
 
-    def origin_to(self, new_origin, original_units=True):
-        assert original_units
-        new_points = {}
-        for key in self.points:
-            correction = (new_origin + self.params['displacement']
-                          ) / self.params['length_unit']
-            new_points[key] = self.points[key] - correction
-        self.points = new_points
-        super().origin_to(new_origin, original_units=original_units)
-        return self
+    #def origin_to(self, new_origin, original_units=True):
+    #    assert original_units
+    #    new_points = {}
+    #    for key in self.points:
+    #        correction = (new_origin + self.params['displacement']
+    #                      ) / self.params['length_unit']
+    #        new_points[key] = self.points[key] - correction
+    #    self.points = new_points
+    #    super().origin_to(new_origin, original_units=original_units)
+    #    return self
