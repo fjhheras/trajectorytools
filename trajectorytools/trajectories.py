@@ -76,9 +76,8 @@ class Trajectory:
         for key in self.keys_to_copy:
             setattr(self, key, trajectories[key])
         if self.own_params:
-            self.params = deepcopy(params)
-        else:
-            self.params = params
+            params = deepcopy(params)
+        self.params = params
 
     def __len__(self):
         return len(self._s)
@@ -141,11 +140,15 @@ class Trajectory:
 
     @property
     def distance_travelled(self):
+        ds = np.sqrt(np.sum(np.diff(self.s, axis=0) ** 2, axis=-1))
         return np.vstack([np.zeros((1, self.s.shape[1])),
-                          np.cumsum(np.sqrt(np.sum(np.diff(self.s, axis=0) ** 2, axis=-1)), axis=0)])
+                          np.cumsum(ds, axis=0)])
 
-    def estimate_center_and_radius_from_locations(self):
-        center_a, estimated_radius = estimate_center_and_radius(self.s)
+    def estimate_center_and_radius_from_locations(self, current_units=True):
+        if current_units:
+            center_a, estimated_radius = estimate_center_and_radius(self.s)
+        else:
+            center_a, estimated_radius = estimate_center_and_radius(self._s)
         return center_a, estimated_radius
 
     # Properties with side-effects
@@ -158,18 +161,19 @@ class Trajectory:
                 self.params['radius'] = self.params['radius'] * factor
             self.params['length_unit'] = length_unit
             self.params['length_unit_name'] = length_unit_name
-        return factor
+        return factor # In the future it will return self
 
     def new_time_unit(self, time_unit, time_unit_name='?'):
         factor = self.params['time_unit'] / time_unit
         if self.own_params:
             self.params['time_unit'] = time_unit
             self.params['time_unit_name'] = time_unit_name
-        return factor
+        return factor # In the future it will return self
 
-    def origin_to(self, new_origin, original_units=True):
-        assert original_units # Untested for new units
+    def origin_to(self, new_origin, current_units=False):
         if self.own_params:
+            if current_units:
+                new_origin = new_origin * self.params['length_unit']
             self.params['displacement'] = -new_origin
         return self
 
@@ -187,6 +191,7 @@ class Trajectory:
         if self.own_params:
             self.params['frame_rate'] = new_frame_rate
             self.params['time_unit'] = self.params['time_unit'] * fraction
+        return self
 
     # methods and properties wrt points
     def distance_to(self, point):
