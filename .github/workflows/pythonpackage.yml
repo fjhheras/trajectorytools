@@ -15,7 +15,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        python-version: [3.6, 3.7, 3.8]
+        python-version: [3.7, 3.8]
 
     steps:
     - uses: actions/checkout@v2
@@ -37,5 +37,3 @@ jobs:
     - name: Test
       run: |
         python -m unittest -v tests/*.py
-    - name: Upload coverage
-      run: coverage report -m
