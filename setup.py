@@ -1,7 +1,7 @@
 from setuptools import setup
 
 setup(name='trajectorytools',
-      version='0.2-alpha',
+      version='0.3-alpha',
       description='trajectorytools',
       url='http://github.com/fjhheras/trajectorytools',
       author='Francisco J.H. Heras',
