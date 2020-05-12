@@ -85,6 +85,19 @@ class Trajectory:
 
     # Properties and methods with no side-effects
     # i.e. they do not change class member parameters
+    
+    def scalar_from_px(self, point):
+        return (point +
+                self.params['displacement']) / self.params['length_unit']
+
+    def scalar_to_px(self, point):
+        return point * self.params['length_unit'] - self.params['displacement']
+    
+    def vector_from_px(self, vector):
+        return vector / self.params['length_unit']
+
+    def vector_to_px(self, vector):
+        return vector * self.params['length_unit']
 
     @property
     def number_of_frames(self):
@@ -92,35 +105,35 @@ class Trajectory:
 
     @property
     def s(self):
-        return self._s.copy()
+        return self.scalar_from_px(self._s)
 
     @property
     def v(self):
-        return self._v.copy()
+        return self.vector_from_px(self._v) * self.params['time_unit']
 
     @property
     def a(self):
-        return self._a.copy()
+        return self.vector_from_px(self._a) * (self.params['time_unit']**2)
 
     @property
     def speed(self):
-        return tt.norm(self._v)
+        return tt.norm(self.v)
 
     @property
     def acceleration(self):
-        return tt.norm(self._a)
+        return tt.norm(self.a)
 
     @property
     def e(self):
-        return tt.normalise(self._v)
+        return tt.normalise(self.v)
 
     @property
     def tg_acceleration(self):
-        return tt.dot(self._a, self.e)
+        return tt.dot(self.a, self.e)
 
     @property
     def curvature(self):
-        return tt.curvature(self._v, self._a)
+        return tt.curvature(self.v, self.a)
 
     @property
     def normal_acceleration(self):
@@ -140,9 +153,6 @@ class Trajectory:
 
     def new_length_unit(self, length_unit, length_unit_name='?'):
         factor = self.params['length_unit'] / length_unit
-        self._s = self._s * factor
-        self._v = self._v * factor
-        self._a = self._a * factor
         if self.own_params:
             if 'radius' in self.params:
                 self.params['radius'] = self.params['radius'] * factor
@@ -152,21 +162,19 @@ class Trajectory:
 
     def new_time_unit(self, time_unit, time_unit_name='?'):
         factor = self.params['time_unit'] / time_unit
-        self._v = self._v / factor
-        self._a = self._a / factor**2
         if self.own_params:
             self.params['time_unit'] = time_unit
             self.params['time_unit_name'] = time_unit_name
+        return factor
 
     def origin_to(self, new_origin, original_units=True):
         assert original_units # Untested for new units
-        self._s = self._s - (new_origin + self.params['displacement']
-                             ) / self.params['length_unit']
         if self.own_params:
             self.params['displacement'] = -new_origin
         return self
 
     def resample(self, new_frame_rate, **kwargs):
+        # This function modifies _s, _v and _a
         if 'frame_rate' not in self.params:
             raise Exception("Frame rate not in trajectories")
         old_frame_rate = self.params['frame_rate']
@@ -195,10 +203,10 @@ class Trajectory:
         return self._projection_vector_towards(point, self.e)
 
     def speed_towards(self, point):
-        return self._projection_vector_towards(point, self._v)
+        return self._projection_vector_towards(point, self.v)
 
     def acceleration_towards(self, point):
-        return self._projection_vector_towards(point, self._a)
+        return self._projection_vector_towards(point, self.a)
 
     @property
     def distance_to_center(self):
@@ -377,19 +385,19 @@ class Trajectories(Trajectory):
     #def populate_center_and_radius_from_locations(self):
     #    center, radius = self.estimate_center_and_radius_from_locations()
 
-    def new_length_unit(self, *args, **kwargs):
-        # Order is important (changes params): first center of mass, then own
-        self.center_of_mass.new_length_unit(*args, **kwargs)
-        return super().new_length_unit(*args, **kwargs)
+    #def new_length_unit(self, *args, **kwargs):
+    #    # Order is important (changes params): first center of mass, then own
+    #    self.center_of_mass.new_length_unit(*args, **kwargs)
+    #    return super().new_length_unit(*args, **kwargs)
 
-    def new_time_unit(self, *args, **kwargs):
-        self.center_of_mass.new_time_unit(*args, **kwargs)
-        super().new_time_unit(*args, **kwargs)
+    #def new_time_unit(self, *args, **kwargs):
+    #    self.center_of_mass.new_time_unit(*args, **kwargs)
+    #    super().new_time_unit(*args, **kwargs)
 
-    def origin_to(self, *args, **kwargs):
-        self.center_of_mass.origin_to(*args, **kwargs)
-        super().origin_to(*args, **kwargs)
-        return self
+    #def origin_to(self, *args, **kwargs):
+    #    self.center_of_mass.origin_to(*args, **kwargs)
+    #    super().origin_to(*args, **kwargs)
+    #    return self
 
     def resample(self, *args, **kwargs):
         self.center_of_mass.resample(*args, **kwargs)
@@ -443,10 +451,10 @@ class FishTrajectories(Trajectories):
 
             # Filter out NaNs
             min_frames = [
-                f for f in min_frames_ if not np.isnan(self._s[f, focal, 0])
+                f for f in min_frames_ if not np.isnan(self.s[f, focal, 0])
             ]
             max_frames = [
-                f for f in max_frames_ if not np.isnan(self._s[f, focal, 0])
+                f for f in max_frames_ if not np.isnan(self.s[f, focal, 0])
             ]
 
             # Obtain couples of consecutive minima and maxima
