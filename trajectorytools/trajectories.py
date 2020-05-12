@@ -387,20 +387,6 @@ class Trajectories(Trajectory):
     #def populate_center_and_radius_from_locations(self):
     #    center, radius = self.estimate_center_and_radius_from_locations()
 
-    #def new_length_unit(self, *args, **kwargs):
-    #    # Order is important (changes params): first center of mass, then own
-    #    self.center_of_mass.new_length_unit(*args, **kwargs)
-    #    return super().new_length_unit(*args, **kwargs)
-
-    #def new_time_unit(self, *args, **kwargs):
-    #    self.center_of_mass.new_time_unit(*args, **kwargs)
-    #    super().new_time_unit(*args, **kwargs)
-
-    #def origin_to(self, *args, **kwargs):
-    #    self.center_of_mass.origin_to(*args, **kwargs)
-    #    super().origin_to(*args, **kwargs)
-    #    return self
-
     def resample(self, *args, **kwargs):
         self.center_of_mass.resample(*args, **kwargs)
         super().resample(*args, **kwargs)
@@ -511,7 +497,7 @@ class TrajectoriesWithPoints(Trajectories):
     
     @property
     def points(self):
-        #TODO: only transform the keys asked for efficiency 
+        #TODO: only transform the keys needed, for efficiency 
         return self.points_from_px(self._points)
 
     def points_from_px(self, points):
@@ -519,14 +505,6 @@ class TrajectoriesWithPoints(Trajectories):
         for key in points:
             new_points[key] = self.scalar_from_px(points[key])
         return new_points
-
-    #def new_length_unit(self, *args, **kwargs):
-    #    factor = super().new_length_unit(*args, **kwargs)  # Changes traj
-    #    new_points = {}
-    #    for key in self.points:
-    #        new_points[key] = self.points[key] * factor
-    #    self.points = new_points
-    #    return factor
 
     def distance_to_point(self, key):
         return self.distance_to(self.points[key])
@@ -543,13 +521,3 @@ class TrajectoriesWithPoints(Trajectories):
     def acceleration_towards_point(self, key):
         return self.acceleration_towards(self.points[key])
 
-    #def origin_to(self, new_origin, original_units=True):
-    #    assert original_units
-    #    new_points = {}
-    #    for key in self.points:
-    #        correction = (new_origin + self.params['displacement']
-    #                      ) / self.params['length_unit']
-    #        new_points[key] = self.points[key] - correction
-    #    self.points = new_points
-    #    super().origin_to(new_origin, original_units=original_units)
-    #    return self
