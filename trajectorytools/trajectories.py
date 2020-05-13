@@ -48,6 +48,7 @@ def radius_and_center_from_traj_dict(locations, traj_dict):
         arena_center, arena_radius = estimate_center_and_radius(
             traj_dict['setup_points']['border'])
     elif 'arena_radius' in traj_dict:
+        logging.warning('Using arena_radius (untested and probably not working)')
         arena_radius = traj_dict['arena_radius']
         arena_center = None
     else:
