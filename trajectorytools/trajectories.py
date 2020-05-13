@@ -1,8 +1,10 @@
 from copy import deepcopy
-from scipy import signal
-import numpy as np
-import trajectorytools as tt
 
+import numpy as np
+from scipy import signal
+
+import trajectorytools as tt
+import logging
 
 def calculate_center_of_mass(trajectories, params):
     """calculate_center_of_mass
@@ -81,6 +83,9 @@ class Trajectory:
     def __len__(self):
         return len(self._s)
 
+    # Properties and methods with no side-effects
+    # i.e. they do not change class member parameters
+
     @property
     def number_of_frames(self):
         return self._s.shape[0]
@@ -126,6 +131,13 @@ class Trajectory:
         return np.vstack([np.zeros((1, self.s.shape[1])),
                           np.cumsum(np.sqrt(np.sum(np.diff(self.s, axis=0) ** 2, axis=-1)), axis=0)])
 
+    def estimate_center_and_radius_from_locations(self):
+        center_a, estimated_radius = estimate_center_and_radius(self.s)
+        return center_a, estimated_radius
+
+    # Properties with side-effects
+    # i.e. they change class member parameters
+
     def new_length_unit(self, length_unit, length_unit_name='?'):
         factor = self.params['length_unit'] / length_unit
         self._s = self._s * factor
@@ -147,7 +159,7 @@ class Trajectory:
             self.params['time_unit_name'] = time_unit_name
 
     def origin_to(self, new_origin, original_units=True):
-        assert original_units
+        assert original_units # Untested for new units
         self._s = self._s - (new_origin + self.params['displacement']
                              ) / self.params['length_unit']
         if self.own_params:
@@ -166,7 +178,7 @@ class Trajectory:
             self.params['frame_rate'] = new_frame_rate
             self.params['time_unit'] = self.params['time_unit'] * fraction
 
-    """ functions wrt points"""
+    # methods and properties wrt points
     def distance_to(self, point):
         return tt.norm(self.s - point)
 
@@ -190,9 +202,7 @@ class Trajectory:
 
     @property
     def distance_to_center(self):
-        print('Warning: this function is deprecated')
-        print('The original center is not remembered nor used')
-        return self.distance_to_origin()
+        raise Exception('Deprecated: Center trajectories with origin_to and use distance_to_origin')
 
     @property
     def distance_to_origin(self):
@@ -237,6 +247,7 @@ class Trajectories(Trajectory):
         return self.__class__(view_trajectories, self.params)
 
     def view(self, start=None, end=None):
+        logging.warning("To be deprecated: use standard slicing instead")
         return self[slice(start, end)]
 
     def __str__(self):
@@ -336,7 +347,7 @@ class Trajectories(Trajectory):
         }
 
         return cls(trajectories, params)
-
+    
     def point_from_px(self, point):
         return (point +
                 self.params['displacement']) / self.params['length_unit']
@@ -358,6 +369,13 @@ class Trajectories(Trajectory):
             raise Exception('Unknown key')
         self.new_length_unit(length_unit, length_unit_name)
         return self
+    
+    # Methods with side effects
+
+    # TODO: Populate center and radius properties automatically
+    # But special care to do it in pixels
+    #def populate_center_and_radius_from_locations(self):
+    #    center, radius = self.estimate_center_and_radius_from_locations()
 
     def new_length_unit(self, *args, **kwargs):
         # Order is important (changes params): first center of mass, then own
@@ -455,10 +473,7 @@ class FishTrajectories(Trajectories):
 class TrajectoriesWithPoints(Trajectories):
     def __init__(self, trajectories, params, points=None):
         super().__init__(trajectories, params)
-        if points is None:
-            self.points = {}
-        else:
-            self.points = points
+        self.points = points if points is not None else {}
 
     def _dict_to_save(self):
         update_dict = {'points': self.points}
@@ -479,20 +494,6 @@ class TrajectoriesWithPoints(Trajectories):
         points = traj_dict['setup_points']
         twp.points = twp.points_from_px(points)
         return twp
-
-    #@classmethod
-    #def from_idtracker(cls, trajectories_path, **kwargs):
-    #    traj_dict = np.load(trajectories_path,
-    #                        encoding='latin1',
-    #                        allow_pickle=True).item()
-    #    t = Trajectories.from_idtracker_(traj_dict, **kwargs)
-    #    points = traj_dict['setup_points']
-    #    view_trajectories = {k: getattr(t, k) for k in t.keys_to_copy}
-    #    twp = cls(view_trajectories, t.params)
-    #    twp.points = twp.points_from_px(points)
-    #    twp.params['path'] = trajectories_path
-    #    return twp
-
 
     def __getitem__(self, val):
         view_traj_with_points = super().__getitem__(val)
