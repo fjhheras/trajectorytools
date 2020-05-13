@@ -84,6 +84,7 @@ class Trajectory:
         return len(self._s)
 
     # Properties and methods with no side-effects
+    # i.e. they do not change class member parameters
 
     @property
     def number_of_frames(self):
@@ -135,6 +136,7 @@ class Trajectory:
         return center_a, estimated_radius
 
     # Properties with side-effects
+    # i.e. they change class member parameters
 
     def new_length_unit(self, length_unit, length_unit_name='?'):
         factor = self.params['length_unit'] / length_unit
