@@ -200,7 +200,7 @@ class Trajectory:
 
     @property
     def distance_to_center(self):
-        raise Exception('Deprecated: Center trajectories and use distance_to_origin')
+        raise Exception('Deprecated: Center trajectories with origin_to and use distance_to_origin')
 
     @property
     def distance_to_origin(self):
