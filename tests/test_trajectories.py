@@ -10,32 +10,18 @@ import trajectorytools.socialcontext as ttsocial
 
 class TrajectoriesTestCase(unittest.TestCase):
     def setUp(self):
-        self.t = Trajectories.from_idtracker(cons.test_trajectories_path)
+        self.t = Trajectories.from_idtrackerai(cons.test_trajectories_path)
+
+    def test_len(self):
+        assert len(self.t) == self.t._a.shape[0]
+        assert len(self.t) == self.t._v.shape[0]
+        assert len(self.t) == self.t._s.shape[0]
 
     def test_center_of_mass(self):
         assert(self.t.params is self.t.center_of_mass.params) #Same object
         nptest.assert_allclose(self.t.s.mean(axis=1), self.t.center_of_mass.s)
         nptest.assert_allclose(self.t.v.mean(axis=1), self.t.center_of_mass.v)
         nptest.assert_allclose(self.t.a.mean(axis=1), self.t.center_of_mass.a)
-
-    def test_check_unit_change(self, new_length_unit=10, new_time_unit=3):
-        length_unit = self.t.params['length_unit']
-        time_unit = self.t.params['time_unit']
-
-        s, v, a = self.t.s, self.t.v, self.t.a
-
-        factor_length = new_length_unit / length_unit
-        factor_time = new_time_unit / time_unit
-
-        self.t.new_length_unit(new_length_unit)
-        nptest.assert_allclose(self.t.s, s/factor_length)
-        nptest.assert_allclose(self.t.v, v/factor_length)
-        nptest.assert_allclose(self.t.a, a/factor_length)
-
-        self.t.new_time_unit(new_time_unit)
-        nptest.assert_allclose(self.t.s, s/factor_length)
-        nptest.assert_allclose(self.t.v, v/factor_length * factor_time)
-        nptest.assert_allclose(self.t.a, a/factor_length * factor_time**2)
 
     def test_slice(self):
         new_t = self.t[50:100]
@@ -54,13 +40,80 @@ class TrajectoriesTestCase(unittest.TestCase):
         nptest.assert_equal(new_t.v, self.t.v[:, individuals])
         nptest.assert_equal(new_t.a, self.t.a[:, individuals])
 
+    def test_to_px(self):
+        nptest.assert_allclose(self.t.point_to_px(self.t.s), 
+                               self.t._s)
+        nptest.assert_allclose(self.t.vector_to_px(self.t.v), 
+                               self.t._v)
+        nptest.assert_allclose(self.t.vector_to_px(self.t.a), 
+                               self.t._a)
+
+    def test_check_unit_change(self, new_length_unit=10, new_time_unit=5):
+        length_unit = self.t.params['length_unit']
+        time_unit = self.t.params['time_unit']
+        factor_length = new_length_unit / length_unit
+        factor_time = new_time_unit / time_unit
+        
+        s, v, a = self.t.s, self.t.v, self.t.a
+        
+        # We check a time unit change first
+        self.t.new_time_unit(new_time_unit)
+        nptest.assert_allclose(self.t.s, s)
+        nptest.assert_allclose(self.t.v, v * factor_time)
+        nptest.assert_allclose(self.t.a, a * factor_time**2)
+        
+        # We check a length unit change 
+        self.t.new_length_unit(new_length_unit)
+        nptest.assert_allclose(self.t.s, s/factor_length)
+        nptest.assert_allclose(self.t.v, v/factor_length * factor_time)
+        nptest.assert_allclose(self.t.a, a/factor_length * factor_time**2)
+
+
+
+class TrajectoriesTestCaseUnitChange(TrajectoriesTestCase):
+    def setUp(self):
+        self.t = Trajectories.from_idtrackerai(cons.test_trajectories_path)
+        self.t_unchanged = Trajectories.from_idtrackerai(cons.test_trajectories_path)
+        self.new_length_unit = 3
+        self.t.new_length_unit(self.new_length_unit)
+
+    def test_check_only_length_change(self):
+        length_unit = self.t_unchanged.params['length_unit']
+        factor_length = self.new_length_unit / length_unit
+
+        s, v, a = self.t_unchanged.s, self.t_unchanged.v, self.t_unchanged.a
+        nptest.assert_allclose(self.t.s, s/factor_length)
+        nptest.assert_allclose(self.t.v, v/factor_length)
+        nptest.assert_allclose(self.t.a, a/factor_length)
+        
+    def test_check_time_change_after_length_change(self):
+        length_unit = self.t_unchanged.params['length_unit']
+        time_unit = self.t_unchanged.params['time_unit']
+        new_time_unit = 3
+        factor_length = self.new_length_unit / length_unit
+        factor_time = new_time_unit / time_unit
+
+        self.t.new_time_unit(new_time_unit)
+        
+        s, v, a = self.t_unchanged.s, self.t_unchanged.v, self.t_unchanged.a
+        nptest.assert_allclose(self.t.s, s/factor_length)
+        nptest.assert_allclose(self.t.v, v/factor_length * factor_time)
+        nptest.assert_allclose(self.t.a, a/factor_length * factor_time**2)
+    
+    def check_estimation_enclosing_circle(self):
+        center, r = self.t.estimate_center_and_radius_from_locations()
+        center_px, r_px = self.t.estimate_center_and_radius_from_locations(current_units=False)
+        np.test.assert_allclose(self.t.point_to_px(center), center_px)
+        np.test.assert_allclose(self.t.point_from_px(center_px), center)
+        np.test.assert_allclose(r_px/r, self.f.params['length_unit'])
+
 class TrajectoriesTestCaseSaveLoad(TrajectoriesTestCase):
     def setUp(self):
-        t = Trajectories.from_idtracker(cons.test_trajectories_path)
+        t = Trajectories.from_idtrackerai(cons.test_trajectories_path)
         temporary_file = tempfile.mkstemp('.npy', 'trajectorytoolstest', '/tmp')[1] 
         t.save(temporary_file)
         self.t = Trajectories.load(temporary_file)
-        self.t1 = Trajectories.from_idtracker(cons.test_trajectories_path)
+        self.t1 = Trajectories.from_idtrackerai(cons.test_trajectories_path)
 
     def test_save_and_load_equal(self):
         nptest.assert_equal(self.t1.s, self.t.s)
@@ -94,17 +147,21 @@ class TrajectoriesTestCase2(TrajectoriesTestCase):
 
 class TrajectoriesTestCase3(TrajectoriesTestCase):
     def setUp(self):
-        self.t = Trajectories.from_idtracker(cons.test_trajectories_path)
-        self.t2 = Trajectories.from_idtracker(cons.test_trajectories_path)
+        self.t1 = Trajectories.from_idtrackerai(cons.test_trajectories_path)
+        self.t2 = Trajectories.from_idtrackerai(cons.test_trajectories_path)
+        self.t = self.t1[50:100]
 
     def test_slice_and_unit_change(self, new_length_unit=10, new_time_unit=3):
-
-        t2_slice = self.t2[50:100]
-
-        t2_slice.new_length_unit(new_length_unit)
-        t2_slice.new_time_unit(new_time_unit)
-
-        nptest.assert_allclose(self.t.s, self.t2.s)
+        self.t.new_length_unit(new_length_unit)
+        self.t.new_time_unit(new_time_unit)
+        # Test that original did not change
+        nptest.assert_allclose(self.t1.s, self.t2.s)
+        
+        # Test that slice and change conmute
+        self.t2.new_length_unit(new_length_unit)
+        self.t2.new_time_unit(new_time_unit)
+        t2_sliced = self.t2[50:100]
+        nptest.assert_allclose(t2_sliced.s, self.t.s)
 
 
 class TrajectoriesTestCase4(TrajectoriesTestCase):
@@ -148,20 +205,19 @@ class TrajectoriesTestCase4(TrajectoriesTestCase):
 
 class TrajectoriesWithPointsTestCase(TrajectoriesTestCase):
     def setUp(self):
-        self.t = TrajectoriesWithPoints.from_idtracker(
+        self.t = TrajectoriesWithPoints.from_idtrackerai(
             cons.test_trajectories_with_points_path, center=True)
     
     def test_correct_class(self):
         assert isinstance(self.t, TrajectoriesWithPoints) 
-
-
+    
 class TrajectoriesWithPointsTestCaseSaveLoad(TrajectoriesWithPointsTestCase):
     def setUp(self):
-        t = TrajectoriesWithPoints.from_idtracker(cons.test_trajectories_with_points_path)
+        t = TrajectoriesWithPoints.from_idtrackerai(cons.test_trajectories_with_points_path)
         temporary_file = tempfile.mkstemp('.npy', 'trajectorytoolstest', '/tmp')[1] 
         t.save(temporary_file)
         self.t = TrajectoriesWithPoints.load(temporary_file)
-        self.t1 = TrajectoriesWithPoints.from_idtracker(cons.test_trajectories_with_points_path)
+        self.t1 = TrajectoriesWithPoints.from_idtrackerai(cons.test_trajectories_with_points_path)
 
 
     def test_save_and_load_equal(self):
@@ -182,11 +238,11 @@ class TrajectoriesWithPointsTestCaseSaveLoad(TrajectoriesWithPointsTestCase):
 
 class TrajectoriesWithPointsTestCaseCenter(TrajectoriesWithPointsTestCase):
     def setUp(self):
-        self.t = TrajectoriesWithPoints.from_idtracker(
+        self.t = TrajectoriesWithPoints.from_idtrackerai(
             cons.test_trajectories_with_points_path, center=False)
-        self.t_center = TrajectoriesWithPoints.from_idtracker(
+        self.t_center = TrajectoriesWithPoints.from_idtrackerai(
             cons.test_trajectories_with_points_path, center=True)
-
+    
     def test_recenter(self):
         self.t_center.origin_to(np.zeros(2))
         nptest.assert_allclose(self.t_center._s, self.t._s)
@@ -196,9 +252,9 @@ class TrajectoriesWithPointsTestCaseCenter(TrajectoriesWithPointsTestCase):
 
 class TrajectoriesWithPointsTestCaseChangeLengthUnit(TrajectoriesWithPointsTestCase):
     def setUp(self):
-        self.t = TrajectoriesWithPoints.from_idtracker(
+        self.t = TrajectoriesWithPoints.from_idtrackerai(
             cons.test_trajectories_with_points_path, center=True)
-        self.t2 = TrajectoriesWithPoints.from_idtracker(
+        self.t2 = TrajectoriesWithPoints.from_idtrackerai(
             cons.test_trajectories_with_points_path, center=True)
         self.new_length_unit = 10
         # Scaling trajectory self.t by 10
@@ -243,9 +299,9 @@ class TrajectoriesWithPointsTestCaseChangeLengthUnit(TrajectoriesWithPointsTestC
 
 class TrajectoriesWithPointsSlicedTestCaseChangeLengthUnit(TrajectoriesWithPointsTestCase):
     def setUp(self):
-        self.t = TrajectoriesWithPoints.from_idtracker(
+        self.t = TrajectoriesWithPoints.from_idtrackerai(
             cons.test_trajectories_with_points_path, center=True)
-        self.t2 = TrajectoriesWithPoints.from_idtracker(
+        self.t2 = TrajectoriesWithPoints.from_idtrackerai(
             cons.test_trajectories_with_points_path, center=True)
 
 
@@ -322,7 +378,7 @@ class RawTrajectoriesTestCase(TrajectoriesTestCase):
 
 class ArenaRadiusCenterFromBorder(TrajectoriesTestCase):
     def setUp(self):
-        self.t = Trajectories.from_idtracker(cons.test_trajectories_path_border)
+        self.t = Trajectories.from_idtrackerai(cons.test_trajectories_path_border)
 
     def test_arena_radius_and_center_from_border(self):
         # The width and height of the frame are 1160 and 938 pixels 
@@ -334,8 +390,8 @@ class ArenaRadiusCenterFromBorder(TrajectoriesTestCase):
 
 class CenterTrajectoriesTestCase(TrajectoriesTestCase):
     def setUp(self):
-        self.t_nocenter = Trajectories.from_idtracker(cons.test_trajectories_path)
-        self.t = Trajectories.from_idtracker(cons.test_trajectories_path, center=True)
+        self.t_nocenter = Trajectories.from_idtrackerai(cons.test_trajectories_path)
+        self.t = Trajectories.from_idtrackerai(cons.test_trajectories_path, center=True)
     def test_recenter(self):
         self.t.origin_to(np.zeros(2))
         nptest.assert_allclose(self.t_nocenter._s, self.t._s)
@@ -346,7 +402,7 @@ class CenterTrajectoriesTestCase(TrajectoriesTestCase):
 
 class SmoothTrajectoriesTestCase(TrajectoriesTestCase):
     def setUp(self):
-        self.t = Trajectories.from_idtracker(cons.test_trajectories_path,
+        self.t = Trajectories.from_idtrackerai(cons.test_trajectories_path,
                                              smooth_params={'sigma':1})
 
 def assert_global_allclose(a, b, rel_error):
@@ -356,8 +412,8 @@ def assert_global_allclose(a, b, rel_error):
 
 class CenterScaleTrajectoriesTestCase(TrajectoriesTestCase):
     def setUp(self):
-        self.t_nocenter = Trajectories.from_idtracker(cons.test_trajectories_path).normalise_by('radius')
-        self.t = Trajectories.from_idtracker(cons.test_trajectories_path, center=True).normalise_by('radius')
+        self.t_nocenter = Trajectories.from_idtrackerai(cons.test_trajectories_path).normalise_by('radius')
+        self.t = Trajectories.from_idtrackerai(cons.test_trajectories_path, center=True).normalise_by('radius')
         self.rel_error = [1e-14]*2
     def test_recenter(self):
         self.t.origin_to(np.zeros(2))
@@ -370,9 +426,9 @@ class CenterScaleTrajectoriesTestCase(TrajectoriesTestCase):
 
 class DoubleTrajectoriesTestCase(TrajectoriesTestCase):
     def setUp(self):
-        self.t = Trajectories.from_idtracker(cons.test_trajectories_path,
+        self.t = Trajectories.from_idtrackerai(cons.test_trajectories_path,
                                              smooth_params={'sigma':2})
-        self.t2 = Trajectories.from_idtracker(cons.test_trajectories_path,
+        self.t2 = Trajectories.from_idtrackerai(cons.test_trajectories_path,
                                               smooth_params={'sigma':2})
         self.rel_error = [1e-14]*3
 
