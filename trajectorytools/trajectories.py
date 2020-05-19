@@ -6,9 +6,10 @@ from scipy import signal
 import trajectorytools as tt
 import logging
 
+
 def calculate_center_of_mass(trajectories, params):
     """calculate_center_of_mass
-    
+
     Produces a CenterMassTrajectory, with the position, velocity and acceleration
     of the center of mass.
 
@@ -36,19 +37,20 @@ def estimate_center_and_radius(locations):
 
 def radius_and_center_from_traj_dict(locations, traj_dict):
     """Obtains radius and center of the arena
-        
+
     If the trajectories contain the arena radius/center information, use it
     Otherwise, return None to estimate radius/center from trajectories
 
     :param locations: Numpy array of locations. Last dim must be (x, y)
     :param traj_dict:
     """
-    
+
     if 'setup_points' in traj_dict and 'border' in traj_dict['setup_points']:
         arena_center, arena_radius = estimate_center_and_radius(
             traj_dict['setup_points']['border'])
     elif 'arena_radius' in traj_dict:
-        logging.warning('Using arena_radius (untested and probably not working)')
+        logging.warning(
+            'Using arena_radius (untested and probably not working)')
         arena_radius = traj_dict['arena_radius']
         arena_center = None
     else:
@@ -85,7 +87,7 @@ class Trajectory:
 
     # Properties and methods with no side-effects
     # i.e. they do not change class member parameters
-    
+
     def point_from_px(self, point):
         return (point +
                 self.params['displacement']) / self.params['length_unit']
@@ -145,8 +147,14 @@ class Trajectory:
         return np.vstack([np.zeros((1, self.s.shape[1])),
                           np.cumsum(ds, axis=0)])
 
-    def estimate_center_and_radius_from_locations(self, current_units=True):
-        if current_units:
+    def estimate_center_and_radius_from_locations(self, in_px=False):
+        """ Assumes that the trajectories are restricted to a circular area and
+        estimates its center and radius from the trajectories
+
+        :param in_px: If True, the results are given in the original
+        frame of reference and scale (usually pixels).
+        """
+        if not in_px:
             center_a, estimated_radius = estimate_center_and_radius(self.s)
         else:
             center_a, estimated_radius = estimate_center_and_radius(self._s)
@@ -162,19 +170,22 @@ class Trajectory:
                 self.params['radius'] = self.params['radius'] * factor
             self.params['length_unit'] = length_unit
             self.params['length_unit_name'] = length_unit_name
-        return factor # In the future it will return self
+        return factor  # In the future it will return self
 
     def new_time_unit(self, time_unit, time_unit_name='?'):
         factor = self.params['time_unit'] / time_unit
         if self.own_params:
             self.params['time_unit'] = time_unit
             self.params['time_unit_name'] = time_unit_name
-        return factor # In the future it will return self
+        return factor  # In the future it will return self
 
-    def origin_to(self, new_origin, current_units=False):
+    def origin_to(self, new_origin):
+        """ Places origin of frame of reference in a given location
+
+        :param new_origin: Point that will become our new origin.
+        It is expressed in the original frame of reference (usually px).
+        """
         if self.own_params:
-            if current_units:
-                new_origin = new_origin * self.params['length_unit']
             self.params['displacement'] = -new_origin
         return self
 
@@ -218,7 +229,8 @@ class Trajectory:
 
     @property
     def distance_to_center(self):
-        raise Exception('Deprecated: Center trajectories with origin_to and use distance_to_origin')
+        raise Exception(
+            'Deprecated: Center trajectories with origin_to and use distance_to_origin')
 
     @property
     def distance_to_origin(self):
@@ -234,11 +246,12 @@ class Trajectories(Trajectory):
         super().__init__(trajectories, params)
         self.center_of_mass = calculate_center_of_mass(trajectories,
                                                        self.params)
+
     def _dict_to_save(self):
         traj_data = {key: self.__dict__[key] for key in self.keys_to_copy}
         params = self.params
-        return {'traj_data': traj_data, 'params': params, 
-                'class_name': self.__class__.__name__} 
+        return {'traj_data': traj_data, 'params': params,
+                'class_name': self.__class__.__name__}
 
     def save(self, filename):
         np.save(filename, self._dict_to_save())
@@ -257,7 +270,7 @@ class Trajectories(Trajectory):
 
     def restrict_individuals(self, val):
         view_trajectories = {
-                k: getattr(self, k)[:, val]
+            k: getattr(self, k)[:, val]
             for k in self.keys_to_copy
         }
         return self.__class__(view_trajectories, self.params)
@@ -363,7 +376,7 @@ class Trajectories(Trajectory):
         }
 
         return cls(trajectories, params)
-    
+
     def normalise_by(self, normaliser):
         if not isinstance(normaliser, str):
             raise Exception('normalise_by needs a string. To normalise by'
@@ -378,13 +391,8 @@ class Trajectories(Trajectory):
             raise Exception('Unknown key')
         self.new_length_unit(length_unit, length_unit_name)
         return self
-    
-    # Methods with side effects
 
-    # TODO: Populate center and radius properties automatically
-    # But special care to do it in pixels
-    #def populate_center_and_radius_from_locations(self):
-    #    center, radius = self.estimate_center_and_radius_from_locations()
+    # Methods with side effects
 
     def resample(self, *args, **kwargs):
         self.center_of_mass.resample(*args, **kwargs)
@@ -473,15 +481,12 @@ class TrajectoriesWithPoints(Trajectories):
     def _dict_to_save(self):
         update_dict = {'points': self.points}
         return {**super()._dict_to_save(), **update_dict}
-   
 
     @classmethod
     def load(cls, filename):
         loaded_dict = np.load(filename, allow_pickle=True).item()
-        return cls(loaded_dict['traj_data'], loaded_dict['params'], 
+        return cls(loaded_dict['traj_data'], loaded_dict['params'],
                    points=loaded_dict['points'])
-
-
 
     @classmethod
     def from_idtracker_(cls, traj_dict, **kwargs):
@@ -493,10 +498,10 @@ class TrajectoriesWithPoints(Trajectories):
         view_traj_with_points = super().__getitem__(val)
         view_traj_with_points._points = self._points
         return view_traj_with_points
-    
+
     @property
     def points(self):
-        #TODO: only transform the keys needed, for efficiency 
+        # TODO: only transform the keys needed, for efficiency
         return self.points_from_px(self._points)
 
     def points_from_px(self, points):
@@ -519,4 +524,3 @@ class TrajectoriesWithPoints(Trajectories):
 
     def acceleration_towards_point(self, key):
         return self.acceleration_towards(self.points[key])
-
