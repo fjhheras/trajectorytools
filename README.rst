@@ -3,13 +3,21 @@ trajectorytools
 ###############
 
 trajectorytools is a library with some utils to study and
-plot trajectories.
+plot 2D trajectories.
 
 Installation
 ============
 
-The whole thing is really starting, so I recommend installing
-locally with a symlink:
+To install requirements:
+.. code-block:: bash
+pip install -r requirements.txt
+
+To install the package:
+
+.. code-block:: bash
+pip install .
+ 
+It is possible to install it locally with a symlink:
   
 .. code-block:: bash
 pip install -e .
@@ -39,6 +47,6 @@ If you use this work in an academic context and you want to acknowledge us, plea
 
 Romero-Ferrero, F., Bergomi, M. G., Hinz, R. C., Heras, F. J., & de Polavieja, G. G. (2019). idtracker.ai: tracking all individuals in small or large collectives of unmarked animals. Nature methods, 1
 
-Heras, F. J., Romero-Ferrero, F., Hinz, R. C., & de Polavieja, G. G. (2018). Deep attention networks reveal the rules of collective motion in zebrafish. bioRxiv, 400747
+Heras, F. J., Romero-Ferrero, F., Hinz, R. C., & de Polavieja, G. G. (2019). Deep attention networks reveal the rules of collective motion in zebrafish. PLoS computational biology, 15(9), e1007354.
 
 
