@@ -100,12 +100,12 @@ class TrajectoriesTestCaseUnitChange(TrajectoriesTestCase):
         nptest.assert_allclose(self.t.v, v/factor_length * factor_time)
         nptest.assert_allclose(self.t.a, a/factor_length * factor_time**2)
     
-    def check_estimation_enclosing_circle(self):
+    def test_estimation_enclosing_circle(self):
         center, r = self.t.estimate_center_and_radius_from_locations()
-        center_px, r_px = self.t.estimate_center_and_radius_from_locations(current_units=False)
-        np.test.assert_allclose(self.t.point_to_px(center), center_px)
-        np.test.assert_allclose(self.t.point_from_px(center_px), center)
-        np.test.assert_allclose(r_px/r, self.f.params['length_unit'])
+        center_px, r_px = self.t.estimate_center_and_radius_from_locations(in_px=True)
+        nptest.assert_allclose(self.t.point_to_px(center), center_px)
+        nptest.assert_allclose(self.t.point_from_px(center_px), center)
+        nptest.assert_allclose(r_px/r, self.t.params['length_unit'])
 
 class TrajectoriesTestCaseSaveLoad(TrajectoriesTestCase):
     def setUp(self):
