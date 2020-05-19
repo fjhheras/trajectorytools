@@ -13,7 +13,7 @@ def calculate_center_of_mass(trajectories, params):
     of the center of mass.
 
     :param trajectories: Dictionary of numpy arrays for position ('_s'),
-    velocity ('_v') and acceleration ('_a')
+                         velocity ('_v') and acceleration ('_a')
     :param params: Dictionary of parameters
     """
     center_of_mass = {
@@ -27,7 +27,7 @@ def estimate_center_and_radius(locations):
     """ Estimates center and radius of the smallest circle containing all points
 
     :param locations: Numpy array of locations. It can be any shape, but last
-    dim must be 2 (x, y)
+                      dim must be 2 (x, y)
     """
     center_x, center_y, estimated_radius = tt.find_enclosing_circle(locations)
     center_a = np.array([center_x, center_y])
@@ -42,6 +42,7 @@ def radius_and_center_from_traj_dict(locations, traj_dict):
 
     :param locations: Numpy array of locations. Last dim must be (x, y)
     :param traj_dict:
+    
     """
     
     if 'setup_points' in traj_dict and 'border' in traj_dict['setup_points']:
@@ -70,10 +71,19 @@ def radius_and_center_from_traj_dict(locations, traj_dict):
 
 
 class Trajectory:
+    """Abstract class trajectory
+    
+    """
+
     keys_to_copy = ['_s', '_v', '_a']
     own_params = True
 
     def __init__(self, trajectories, params):
+        """__init__.
+
+        :param trajectories:
+        :param params:
+        """
         for key in self.keys_to_copy:
             setattr(self, key, trajectories[key])
         if self.own_params:
@@ -283,6 +293,12 @@ class Trajectories(Trajectory):
         """Create Trajectories from a idtracker.ai trajectories file
 
         :param trajectories_path: idtracker.ai generated file
+        :param interpolate_nans: whether to interpolate NaNs
+        :param center: Whether to center trajectories, using a center estimated
+                       from the trajectories.
+        :param smooth_params: Parameters of smoothing
+        :param dtype: Desired dtype of trajectories.
+       
         """
         traj_dict = np.load(trajectories_path,
                             encoding='latin1',
@@ -303,9 +319,10 @@ class Trajectories(Trajectory):
         :param traj_dict: idtracker.ai generated dictionary
         :param interpolate_nans: whether to interpolate NaNs
         :param center: Whether to center trajectories, using a center estimated
-        from the trajectories.
+                       from the trajectories.
         :param smooth_params: Parameters of smoothing
         :param dtype: Desired dtype of trajectories.
+        
         """
 
         t = traj_dict['trajectories'].astype(dtype)
@@ -330,6 +347,7 @@ class Trajectories(Trajectory):
         :param t: Positions nd.array.
         :param interpolate_nans: whether to interpolate NaNs
         :param smooth_params: Arguments for smoothing (see tt.smooth)
+        
         """
         if smooth_params is None:
             smooth_params = {'sigma': -1, 'only_past': False}
@@ -421,6 +439,7 @@ class FishTrajectories(Trajectories):
         of every array are (number_of_bouts, 3). Col-1 is the starting frame
         of the bout, col-2 is the peak of the bout, col-3 is the beginning of
         the next bout
+        
         """
 
         if find_max_dict is None:
