@@ -11,16 +11,19 @@ Installation
 To install requirements:
 
 .. code-block:: bash
+    
     pip install -r requirements.txt
 
 To install the package:
 
 .. code-block:: bash
+    
     pip install .
  
 It is possible to install it locally with a symlink:
   
 .. code-block:: bash
+    
     pip install -e .
    
 In the folder "examples", you can find some example scripts. They
