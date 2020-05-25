@@ -8,6 +8,23 @@ plot 2D trajectories.
 Installation
 ============
 
+From PyPI
+---------
+
+.. code-block:: bash
+
+    pip install trajectorytools
+
+
+From Source
+-----------
+
+To clone this repository:
+
+.. code-block:: bash
+
+    git clone https://github.com/fjhheras/trajectorytools
+
 To install requirements:
 
 .. code-block:: bash
@@ -20,17 +37,12 @@ To install the package:
     
     pip install .
  
-It is possible to install it locally with a symlink:
+or alternatively, locally with a symlink:
   
 .. code-block:: bash
     
     pip install -e .
    
-In the folder "examples", you can find some example scripts. They
-use some example trajectories, which can be found in folder "data".
-All example trajectories were obtained using idtracker.ai on videos 
-recorded in de Polavieja Lab (Champalimaud Research, Lisbon)
-
 Example
 ==========
 
@@ -86,9 +98,15 @@ Example
     anim.prepare()
     anim.show()
 
-More examples in `directory examples`_.
+
+In the `directory examples`_, you can find some more example scripts. 
+Scripts use some example trajectories, which can be found in `data`_.
+All example trajectories were obtained using idtracker.ai on videos 
+recorded in de Polavieja Lab (Champalimaud Research, Lisbon)
 
 .. _directory examples: trajectorytools/examples
+.. _data: trajectorytools/data
+
 
 Authors
 ==========
