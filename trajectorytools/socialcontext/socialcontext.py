@@ -1,4 +1,5 @@
 import scipy.spatial
+import scipy.spatial.distance as spdist
 from sklearn.neighbors import NearestNeighbors
 import numpy as np
 
@@ -11,8 +12,9 @@ def _in_convex_hull(positions):
 
 
 def in_convex_hull(positions):
-    convex_hull_list = [_in_convex_hull(positions_in_frame)
-                        for positions_in_frame in positions]
+    convex_hull_list = [
+        _in_convex_hull(positions_in_frame) for positions_in_frame in positions
+    ]
     return np.stack(convex_hull_list, axis=0)
 
 
@@ -26,9 +28,9 @@ def circumradius(points):
     a = sides[..., 0]
     b = sides[..., 1]
     c = sides[..., 2]
-    s = (a+b+c)/2
-    area = np.sqrt((s-a)*(s-b)*(s-c)*s)
-    return a*b*c/(4*area)
+    s = (a + b + c) / 2
+    area = np.sqrt((s - a) * (s - b) * (s - c) * s)
+    return a * b * c / (4 * area)
 
 
 def _in_alpha_border(positions, alpha=5):
@@ -40,15 +42,17 @@ def _in_alpha_border(positions, alpha=5):
     2. In rejected triangles
     '''
     def radius_too_large(triangles):
-        return circumradius(triangles) > 1/alpha
+        return circumradius(triangles) > 1 / alpha
+
     num_individuals, _ = positions.shape
     delaunay = scipy.spatial.Delaunay(positions)
-    triangles = np.array([
-        positions[triangle] for triangle in delaunay.simplices])
+    triangles = np.array(
+        [positions[triangle] for triangle in delaunay.simplices])
     rejected_triangles = radius_too_large(triangles)
-    points_in_rejected_triangles = [p for triangle
-                                    in delaunay.simplices[rejected_triangles]
-                                    for p in triangle]
+    points_in_rejected_triangles = [
+        p for triangle in delaunay.simplices[rejected_triangles]
+        for p in triangle
+    ]
     in_border = np.zeros(num_individuals, np.bool)
     in_border[points_in_rejected_triangles] = True
     in_border[delaunay.convex_hull] = True
@@ -56,16 +60,21 @@ def _in_alpha_border(positions, alpha=5):
 
 
 def in_alpha_border(positions, alpha=5):
-    alpha_border_list = [_in_alpha_border(positions_in_frame, alpha=alpha)
-                         for positions_in_frame in positions]
+    alpha_border_list = [
+        _in_alpha_border(positions_in_frame, alpha=alpha)
+        for positions_in_frame in positions
+    ]
     return np.stack(alpha_border_list, axis=0)
+
 
 # LOCAL NEIGHBOURS
 
 
-def _neighbours_indices_in_frame(positions, num_neighbours,
-                                 adjacency=False, mode='connectivity'):
-    nbrs = NearestNeighbors(n_neighbors=num_neighbours+1,
+def _neighbours_indices_in_frame(positions,
+                                 num_neighbours,
+                                 adjacency=False,
+                                 mode='connectivity'):
+    nbrs = NearestNeighbors(n_neighbors=num_neighbours + 1,
                             algorithm='ball_tree').fit(positions)
     if adjacency:
         return nbrs.kneighbors_graph(positions, mode=mode).toarray()
@@ -76,33 +85,47 @@ def _neighbours_indices_in_frame(positions, num_neighbours,
 def give_indices(positions, num_neighbours):
     total_time_steps = positions.shape[0]
     individuals = positions.shape[1]
-    next_neighbours = np.empty([total_time_steps, individuals,
-                                num_neighbours+1], dtype=np.int)
+    next_neighbours = np.empty(
+        [total_time_steps, individuals, num_neighbours + 1], dtype=np.int)
     for frame in range(total_time_steps):
         next_neighbours[frame, ...] = _neighbours_indices_in_frame(
-                                    positions[frame], num_neighbours)
+            positions[frame], num_neighbours)
     return next_neighbours
 
 
-def adjacency_matrix(positions, num_neighbours=None, mode='connectivity'):
+def adjacency_matrix(positions,
+                     num_neighbours=None,
+                     mode='connectivity',
+                     use_pdist_if_all_nb=True):
     total_time_steps = positions.shape[0]
     individuals = positions.shape[1]
     if num_neighbours is None:
-        num_neighbours = individuals-1
+        num_neighbours = individuals - 1
     if mode == 'connectivity':
-        adjacency_m = np.empty([total_time_steps, individuals,
-                                individuals], dtype=np.bool)
+        adjacency_m = np.empty([total_time_steps, individuals, individuals],
+                               dtype=np.bool)
     elif mode == 'distance':
-        adjacency_m = np.empty([total_time_steps, individuals,
-                                individuals], dtype=positions.dtype)
+        adjacency_m = np.empty([total_time_steps, individuals, individuals],
+                               dtype=positions.dtype)
     else:
         raise ValueError("mode should be 'connectivity' or 'distance'")
 
-    for frame in range(total_time_steps):
-        adjacency_m[frame, ...] = _neighbours_indices_in_frame(
-                                            positions[frame], num_neighbours,
-                                            adjacency=True, mode=mode)
+    if (num_neighbours == individuals - 1) and use_pdist_if_all_nb:
+        if mode == 'connectivity':
+            adjacency_m[...] = True
+        else:
+            for frame in range(total_time_steps):
+                adjacency_m[frame, ...] = spdist.squareform(
+                    spdist.pdist(positions[frame]))
+    else:
+        for frame in range(total_time_steps):
+            adjacency_m[frame, ...] = _neighbours_indices_in_frame(
+                positions[frame], num_neighbours, adjacency=True, mode=mode)
     return adjacency_m
+
+
+def interindividual_distances(positions):
+    return adjacency_matrix(positions, mode='distance')
 
 
 def restrict(data, indices, individual=None):
@@ -117,14 +140,16 @@ def restrict(data, indices, individual=None):
     num_individuals = data.shape[1]
     coordinates = data.shape[-1]
     if individual is None:
-        output_data = np.empty([total_time_steps, num_individuals,
-                                num_restricted, coordinates], dtype=data.dtype)
+        output_data = np.empty(
+            [total_time_steps, num_individuals, num_restricted, coordinates],
+            dtype=data.dtype)
         for frame in range(total_time_steps):
             output_data[frame, ...] = data[frame, indices[frame, :], :]
     else:
         output_data = np.empty([total_time_steps, num_restricted, coordinates],
                                dtype=data.dtype)
         for frame in range(total_time_steps):
-            output_data[frame, ...] = data[frame, indices[frame, individual], :]
+            output_data[frame, ...] = data[frame,
+                                           indices[frame, individual], :]
 
     return output_data

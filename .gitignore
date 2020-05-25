@@ -49,3 +49,8 @@ coverage.xml
 # Sphinx documentation
 docs/_build
 
+# Editor stuff
+.vim
+.vscode
+
+\.idea/

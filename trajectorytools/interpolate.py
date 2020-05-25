@@ -3,6 +3,7 @@ import traceback
 import logging
 import numpy as np
 from scipy.ndimage.filters import gaussian_filter1d, convolve1d
+from scipy import signal
 
 
 def interpolate_nans(t):
@@ -21,6 +22,35 @@ def interpolate_nans(t):
     # Ugly slow hack, as reshape seems not to return a view always
     back_t = reshaped_t.reshape(shape_t)
     t[...] = back_t
+
+
+def resample(x, up, down, params={}):
+    # Temporary
+    # I submitted this to SciPy as part of the PR#10543
+    axis = 0
+    n_in = x.shape[axis]
+
+    # Substracting background
+    background_line = [
+        x.take(0, axis),
+        (x.take(-1, axis) - x.take(0, axis)) * n_in / (n_in - 1)
+    ]
+    rel_len = np.linspace(0.0, 1.0, n_in, endpoint=False)
+    background_in = np.stack(
+        [background_line[0] + background_line[1] * l for l in rel_len],
+        axis=axis)
+    x = x - background_in.astype(x.dtype)
+
+    resampled_x = signal.resample_poly(x, up, down, axis=0, **params)
+
+    # Adding background back
+    n_out = resampled_x.shape[axis]
+    rel_len = np.linspace(0.0, 1.0, n_out, endpoint=False)
+    background_out = np.stack(
+        [background_line[0] + background_line[1] * l for l in rel_len],
+        axis=axis)
+    resampled_x += background_out.astype(x.dtype)
+    return resampled_x
 
 
 def _nan_helper(y):
@@ -42,10 +72,10 @@ def _nan_helper(y):
 
 
 def find_enclosing_circle_simple(t):
-    center_x = (np.nanmax(t[..., 0]) + np.nanmin(t[..., 0]))/2
-    center_y = (np.nanmax(t[..., 1]) + np.nanmin(t[..., 1]))/2
-    r_x = (np.nanmax(t[..., 0]) - np.nanmin(t[..., 0]))/2
-    r_y = (np.nanmax(t[..., 1]) - np.nanmin(t[..., 1]))/2
+    center_x = (np.nanmax(t[..., 0]) + np.nanmin(t[..., 0])) / 2
+    center_y = (np.nanmax(t[..., 1]) + np.nanmin(t[..., 1])) / 2
+    r_x = (np.nanmax(t[..., 0]) - np.nanmin(t[..., 0])) / 2
+    r_y = (np.nanmax(t[..., 1]) - np.nanmin(t[..., 1])) / 2
     radius = max(r_x, r_y)
     return center_x, center_y, radius
 
@@ -64,9 +94,11 @@ def find_enclosing_circle(t):
             flat_t = t.reshape((-1, 2))
         else:
             flat_t_with_nans = t.reshape((-1, 2))
-            no_nans = np.logical_not(np.any(np.isnan(flat_t_with_nans), axis=1))
+            no_nans = np.logical_not(np.any(np.isnan(flat_t_with_nans),
+                                            axis=1))
             flat_t = flat_t_with_nans[np.where(no_nans)]
-            logging.warning('Some nans found and removed before aplying miniball')
+            logging.warning(
+                'Some nans found and removed before aplying miniball')
         P = [(x[0], x[1]) for x in flat_t]
         mb = miniball.Miniball(P)
         center_x, center_y = mb.center()
@@ -79,9 +111,11 @@ def find_enclosing_circle(t):
         #logging.error(traceback.format_exc())
         #print(sys.exc_info()[0])
         traceback.print_stack()
-        logging.error("Miniball was not used for centre detection. Reason unknown")
+        logging.error(
+            "Miniball was not used for centre detection. Reason unknown")
         center_x, center_y, radius = find_enclosing_circle_simple(t)
     return center_x, center_y, radius
+
 
 def center_trajectories_and_obtain_radius(t, forced_radius=None):
     center_x, center_y, radius = find_enclosing_circle(t)
@@ -90,31 +124,39 @@ def center_trajectories_and_obtain_radius(t, forced_radius=None):
     t[..., 1] -= center_y
     return center_x, center_y, radius
 
+
 def center_trajectories_and_normalise(t, unit_length=None, forced_radius=None):
-    center_x, center_y, radius = center_trajectories_and_obtain_radius(t,
-                                                forced_radius=forced_radius)
+    center_x, center_y, radius = center_trajectories_and_obtain_radius(
+        t, forced_radius=forced_radius)
     if unit_length is None:
         unit_length = radius
     np.divide(t, unit_length, t)
 
-    return radius/unit_length, center_x/unit_length, center_y/unit_length, unit_length
+    return radius / unit_length, center_x / unit_length, center_y / unit_length, unit_length
+
 
 def smooth_several(t, sigma=2, truncate=5, derivatives=[0]):
-    return [smooth(t, sigma=sigma, truncate=truncate,
-                   derivative=derivative) for derivative in derivatives]
+    # No longer recommended to use, particularly for small sigma
+    return [
+        smooth(t, sigma=sigma, truncate=truncate, derivative=derivative)
+        for derivative in derivatives
+    ]
 
 
 def smooth(t, sigma=2, truncate=5, derivative=0, only_past=False):
     if only_past:
-        assert derivative == 0 # Not implemented for more
-        kernel_radius = 2 #TODO: change dynamically with input
-        kernel_size = kernel_radius*2 + 1.0
-        kernel = np.exp(-np.arange(0.0,kernel_size)**2/2/sigma**2)
+        assert derivative == 0  # Not implemented for more
+        kernel_radius = 2  #TODO: change dynamically with input
+        kernel_size = kernel_radius * 2 + 1.0
+        kernel = np.exp(-np.arange(0.0, kernel_size)**2 / 2 / sigma**2)
         kernel /= kernel.sum()
         smoothed = convolve1d(t, kernel, axis=0, origin=-kernel_radius)
     else:
-        smoothed = gaussian_filter1d(t, sigma=sigma, axis=0,
-                                 truncate=truncate, order=derivative)
+        smoothed = gaussian_filter1d(t,
+                                     sigma=sigma,
+                                     axis=0,
+                                     truncate=truncate,
+                                     order=derivative)
     return smoothed
 
 
@@ -129,12 +171,13 @@ def smooth_acceleration(t, **kwargs):
 
 
 def velocity_acceleration_backwards(t, k_v_history=0.0):
-    v = (1-k_v_history)*(t[2:] - t[1:-1]) + k_v_history*(t[2:] - t[:-2])/2
-    a = t[2:] - 2*t[1:-1] + t[:-2]
+    v = (1 - k_v_history) * (t[2:] - t[1:-1]) + k_v_history * (t[2:] -
+                                                               t[:-2]) / 2
+    a = t[2:] - 2 * t[1:-1] + t[:-2]
     return t[2:], v, a
 
 
 def velocity_acceleration(t):
-    v = (t[2:] - t[:-2])/2
-    a = t[2:] - 2*t[1:-1] + t[:-2]
+    v = (t[2:] - t[:-2]) / 2
+    a = t[2:] - 2 * t[1:-1] + t[:-2]
     return t[1:-1], v, a

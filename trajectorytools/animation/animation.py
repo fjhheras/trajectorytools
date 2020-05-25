@@ -16,22 +16,24 @@ class AnimatedScatter(object):
     def prepare(self, interval = 20, limits = [-1, 1, -1, 1],
                 axis_off = True, fig_ax = None):
         frames = self.datasets[0].shape[0] - 1
-        print("Frames:", frames)
-        self.scatters = [Scatter(self.datasets[i], plotter = self.plotters[i]) for i in range(len(self.datasets))]
+        self.scatters = [Scatter(self.datasets[i], plotter = self.plotters[i])
+                         for i in range(len(self.datasets))]
         # Setup the figure and axes...
         if fig_ax is None:
             self.fig, self.ax = plt.subplots()
         else:
             self.fig, self.ax = fig_ax
 
-        self.fig.subplots_adjust(left=0, bottom=0, right=1, top=1, wspace=None, hspace=None)
-        if axis_off:
-            self.ax.axis('off')
+        self.fig.subplots_adjust(left=0, bottom=0, right=1, top=1,
+                                 wspace=None, hspace=None)
+        if axis_off: self.ax.axis('off')
         self.ax.axis(limits)
         self.ax.set_aspect('equal')
         # Then setup FuncAnimation.
-        self.ani = animation.FuncAnimation(self.fig, self.update, interval=interval,
-                                           frames = frames, init_func=self.setup_plot, blit=True, repeat = False)
+        self.ani = animation.FuncAnimation(self.fig, self.update,
+                                           interval=interval, frames = frames,
+                                           init_func=self.setup_plot, blit=True,
+                                           repeat = False)
     def setup_plot(self):
         """Initial drawing of the scatter plot."""
         scat_tuple = ()
@@ -54,7 +56,8 @@ class AnimatedScatter(object):
         self.ani.save(video_file_name,writer=mywriter)
 
     def __add__(self, other):
-        return AnimatedScatter(self.datasets + other.datasets, self.plotters + other.plotters)
+        return AnimatedScatter(self.datasets + other.datasets,
+                               self.plotters + other.plotters)
 
 def scatter(positions, **kwargs):
     plotters = [plotter.simple(**kwargs)]
@@ -62,6 +65,10 @@ def scatter(positions, **kwargs):
 
 def scatter_circle(positions, **kwargs):
     plotters = [plotter.circle(**kwargs)]
+    return AnimatedScatter([positions], plotters = plotters)
+
+def scatter_labels(positions, **kwargs):
+    plotters = [plotter.labels(**kwargs)]
     return AnimatedScatter([positions], plotters = plotters)
 
 def scatter_ellipses(positions, velocities, **kwargs):
