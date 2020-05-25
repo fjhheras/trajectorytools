@@ -1,4 +1,1 @@
-MiniballCpp
-matplotlib
-scikit-learn
-scipy
+.

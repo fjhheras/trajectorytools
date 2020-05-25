@@ -4,13 +4,18 @@ with open("README.rst", "r") as fh:
     long_description = fh.read()
 
 setup(name='trajectorytools',
-      version='0.3-alpha.1',
+      version='0.3-alpha.2',
       description='A tool to study 2D trajectories',
       long_description=long_description,
       url='http://github.com/fjhheras/trajectorytools',
       author='Francisco J.H. Heras',
       author_email='fjhheras@gmail.com',
       license='GPL',
+
+      install_requires = ['MiniballCpp',
+                          'matplotlib',
+                          'scikit-learn',
+                          'scipy'],
 
       packages=['trajectorytools'],
       package_data={'trajectorytools': ['data/*.npy']},
