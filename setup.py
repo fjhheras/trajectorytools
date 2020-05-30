@@ -1,4 +1,4 @@
-from setuptools import setup
+from setuptools import setup, find_packages
 
 with open("README.rst", "r") as fh:
     long_description = fh.read()
@@ -17,7 +17,7 @@ setup(name='trajectorytools',
                         'scikit-learn',
                         'scipy'],
 
-      packages=setuptools.find_packages(),
+      packages=find_packages(),
       package_data={'trajectorytools': ['data/*.npy']},
       include_package_data=True,
       zip_safe=False,
