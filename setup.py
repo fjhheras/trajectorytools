@@ -17,7 +17,7 @@ setup(name='trajectorytools',
                         'scikit-learn',
                         'scipy'],
 
-      packages=['trajectorytools'],
+      packages=setuptools.find_packages(),
       package_data={'trajectorytools': ['data/*.npy']},
       include_package_data=True,
       zip_safe=False,
