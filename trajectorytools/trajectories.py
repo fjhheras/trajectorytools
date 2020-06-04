@@ -143,9 +143,11 @@ class Trajectory:
 
     @property
     def distance_travelled(self):
-        ds = np.sqrt(np.sum(np.diff(self.s, axis=0) ** 2, axis=-1))
-        return np.vstack([np.zeros((1, self.s.shape[1])),
-                          np.cumsum(ds, axis=0)])
+        return tt.geometry.distance_travelled(self.s)
+
+    @property
+    def straightness(self):
+        return tt.geometry.straightness(self.s)
 
     def estimate_center_and_radius_from_locations(self, in_px=False):
         """ Assumes that the trajectories are restricted to a circular area and
@@ -392,7 +394,7 @@ class Trajectories(Trajectory):
         self.new_length_unit(length_unit, length_unit_name)
         return self
 
-    # Methods with side effects
+    # Methods without side effects
 
     def resample(self, *args, **kwargs):
         self.center_of_mass.resample(*args, **kwargs)
