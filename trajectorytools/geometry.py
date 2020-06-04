@@ -56,8 +56,9 @@ def curvature(v, a):
 
 def distance_travelled(s):
     ds = norm(np.diff(s, axis=0))
-    return np.vstack([np.zeros((1, s.shape[1])),
-                      np.cumsum(ds, axis=0)])
+    distance = np.zeros(s.shape[:-1])
+    distance[1:] = np.cumsum(ds, axis=0)
+    return distance
 
 
 def straightness(s, epsilon=EPSILON):
