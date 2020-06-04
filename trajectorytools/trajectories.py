@@ -394,11 +394,12 @@ class Trajectories(Trajectory):
         self.new_length_unit(length_unit, length_unit_name)
         return self
 
-    # Methods without side effects
-
+    # Methods with side effects
     def resample(self, *args, **kwargs):
         self.center_of_mass.resample(*args, **kwargs)
         super().resample(*args, **kwargs)
+    
+    # Properties (without side effects)
 
     @property
     def interindividual_distances(self):
