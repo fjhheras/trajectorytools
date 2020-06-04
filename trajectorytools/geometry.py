@@ -73,7 +73,9 @@ def fixed_to_comoving(data, e_y):
 
 
 def comoving_to_fixed(data, e_y):
-    return matrix_dot(matrix_rotate_to_vector(e_y).transpose(), data)
+    matrices = matrix_rotate_to_vector(e_y)
+    transposed_matrices = np.swapaxes(matrices, -1, -2)
+    return matrix_dot(transposed_matrices, data)
 
 
 def matrix_rotate_to_normalised_vector(e_y):

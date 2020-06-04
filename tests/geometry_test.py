@@ -131,7 +131,12 @@ class TestRotate():
         angles1 = signed_angle_between_vectors(self.t, t_rot)
         angles2 = signed_angle_between_vectors(self.v, e_y)
         np.testing.assert_almost_equal(angles1, angles2)
-    
+   
+    def test_comoving_to_fixed(self):
+        t_rot = fixed_to_comoving(self.t, self.v)
+        t_back = comoving_to_fixed(t_rot, self.v)
+        np.testing.assert_almost_equal(self.t, t_back)
+
     @pytest.fixture(autouse=True)
     def run_around_tests(self):
         v = self.v.copy()
