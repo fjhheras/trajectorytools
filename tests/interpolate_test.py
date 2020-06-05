@@ -24,11 +24,22 @@ class TestCircle():
         assert pytest.approx(center_y, 1e-3) == self.center[1]
         assert pytest.approx(radius, 1e-3) == self.R
 
+    @pytest.mark.parametrize("func_find_circle", [find_enclosing_circle,
+                                                  find_enclosing_circle_simple])
+    def test_consistency_some_nans(self, func_find_circle, num_nans=2):
+        t = self.t.copy()
+        for i in range(num_nans):
+            t[np.random.randint(0, 50),
+              np.random.randint(0, 10), :] = np.nan
+        center_x, center_y, radius = func_find_circle(t)
+        # It is possible but highly improbable that this test fails by chance
+        assert pytest.approx(center_x, 1e-3) == self.center[0]
+        assert pytest.approx(center_y, 1e-3) == self.center[1]
+        assert pytest.approx(radius, 1e-3) == self.R
+
     @pytest.fixture(autouse=True)
     def run_around_tests(self):
         t = self.t
         yield
         # Check there are no side effects
         assert np.all(t == self.t)
-
-
