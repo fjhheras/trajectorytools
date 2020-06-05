@@ -67,8 +67,13 @@ class TrajectoriesTestCase(unittest.TestCase):
         nptest.assert_allclose(self.t.s, s/factor_length)
         nptest.assert_allclose(self.t.v, v/factor_length * factor_time)
         nptest.assert_allclose(self.t.a, a/factor_length * factor_time**2)
-
-
+    
+    def test_straightness(self):
+        straight = self.t.straightness
+        assert np.all(straight <= 1)
+        assert np.all(straight >= 0)
+        assert straight.ndim == 1
+        assert straight.shape[0] == self.t.number_of_individuals
 
 class TrajectoriesTestCaseUnitChange(TrajectoriesTestCase):
     def setUp(self):
@@ -106,6 +111,13 @@ class TrajectoriesTestCaseUnitChange(TrajectoriesTestCase):
         nptest.assert_allclose(self.t.point_to_px(center), center_px)
         nptest.assert_allclose(self.t.point_from_px(center_px), center)
         nptest.assert_allclose(r_px/r, self.t.params['length_unit'])
+    
+    def test_invariance_straightness(self):
+        nptest.assert_allclose(self.t.straightness, self.t_unchanged.straightness)
+    
+    def test_scaling_distance_travelled(self):
+        nptest.assert_allclose(self.t.distance_travelled * self.new_length_unit,
+                               self.t_unchanged.distance_travelled)
 
 class TrajectoriesTestCaseSaveLoad(TrajectoriesTestCase):
     def setUp(self):

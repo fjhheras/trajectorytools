@@ -1,6 +1,7 @@
 import numpy as np
+EPSILON = 1e-16
 
-##### SIMPLE TOOLS
+# SIMPLE TOOLS
 
 
 def dot(x, y, keepdims=False):
@@ -43,7 +44,7 @@ def normalise(a):
     return a / norm(a)[..., np.newaxis]
 
 
-#### GEOMETRY
+# GEOMETRY
 
 
 def curvature(v, a):
@@ -53,7 +54,18 @@ def curvature(v, a):
         norm(v), 3)
 
 
-##### TOOLS FOR ROTATING
+def distance_travelled(s):
+    ds = norm(np.diff(s, axis=0))
+    distance = np.zeros(s.shape[:-1])
+    distance[1:] = np.cumsum(ds, axis=0)
+    return distance
+
+
+def straightness(s, epsilon=EPSILON):
+    norm_displacement = norm(s[-1] - s[0])
+    return (norm_displacement + epsilon) / (distance_travelled(s)[-1] + epsilon)
+
+# TOOLS FOR ROTATING
 
 
 def fixed_to_comoving(data, e_y):
@@ -61,7 +73,9 @@ def fixed_to_comoving(data, e_y):
 
 
 def comoving_to_fixed(data, e_y):
-    return matrix_dot(matrix_rotate_to_vector(e_y).transpose(), data)
+    matrices = matrix_rotate_to_vector(e_y)
+    transposed_matrices = np.swapaxes(matrices, -1, -2)
+    return matrix_dot(transposed_matrices, data)
 
 
 def matrix_rotate_to_normalised_vector(e_y):
