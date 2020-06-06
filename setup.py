@@ -4,7 +4,7 @@ with open("README.rst", "r") as fh:
     long_description = fh.read()
 
 setup(name='trajectorytools',
-      version='0.3-alpha.4',
+      version='0.3.1-alpha',
       description='A tool to study 2D trajectories',
       long_description=long_description,
       url='http://github.com/fjhheras/trajectorytools',

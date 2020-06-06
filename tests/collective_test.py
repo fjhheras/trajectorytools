@@ -60,14 +60,21 @@ class TestAngularMomentum():
         # velocity and location relative to center of mass
         v_ = self.v - V[:, np.newaxis, :]
         s_ = center_in_trajectory(self.s, S)
-        # check theorem
+
+        # Angular momentum
         L = angular_momentum(self.v, self.s, self.p)
+
         L_1 = angular_momentum(v_, s_)  # center 0,0
+        L_1_b = angular_momentum(v_, self.s, S)
+        # Both options for L_1 the same:
+        np.testing.assert_almost_equal(L_1, L_1_b)
+
         L_2 = num_individuals * angular_momentum(
             V[:, np.newaxis, :],
             S[:, np.newaxis, :],
             self.p)
-        # angular momentum around a point is the sum of the angular 
-        # momentum around the center of mass and the angular momentum 
+
+        # angular momentum around a point is the sum of the angular
+        # momentum around the center of mass and the angular momentum
         # of the center of mass around the point
         np.testing.assert_almost_equal(L, L_1 + L_2)
