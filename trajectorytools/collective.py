@@ -35,10 +35,10 @@ def angular_momentum(v, s, center=np.array([0, 0])):
 
     Reduction is performed on the penultimate dimension, which 
     for normal trajectories (3 dims) means individuals, so a
-    single polarisation is calculated per frame.
+    single angular momentum is calculated per frame.
 
     For trajectories with neighbours (4 dims), means neighbours,
-    so a polarisation is calculated per focal.
+    so angular momentum is calculated per focal.
     """
 
     if len(center.shape) == 1:  # A point
