@@ -4,7 +4,7 @@ import logging
 import numpy as np
 from scipy.ndimage.filters import gaussian_filter1d, convolve1d
 from scipy import signal
-
+import warnings
 
 def interpolate_nans(t):
     """Interpolates nans linearly in a trajectory
@@ -118,6 +118,7 @@ def find_enclosing_circle(t):
 
 
 def center_trajectories_and_obtain_radius(t, forced_radius=None):
+    warnings.warn(Warning("To be deprecated"))
     center_x, center_y, radius = find_enclosing_circle(t)
     radius = radius if forced_radius is None else forced_radius
     t[..., 0] -= center_x
@@ -126,6 +127,7 @@ def center_trajectories_and_obtain_radius(t, forced_radius=None):
 
 
 def center_trajectories_and_normalise(t, unit_length=None, forced_radius=None):
+    warnings.warn(Warning("To be deprecated"))
     center_x, center_y, radius = center_trajectories_and_obtain_radius(
         t, forced_radius=forced_radius)
     if unit_length is None:
@@ -136,6 +138,7 @@ def center_trajectories_and_normalise(t, unit_length=None, forced_radius=None):
 
 
 def smooth_several(t, sigma=2, truncate=5, derivatives=[0]):
+    warnings.warn(Warning("To be deprecated"))
     # No longer recommended to use, particularly for small sigma
     return [
         smooth(t, sigma=sigma, truncate=truncate, derivative=derivative)
