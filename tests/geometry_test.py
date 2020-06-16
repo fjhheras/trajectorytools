@@ -3,17 +3,23 @@ import pytest
 
 import trajectorytools as tt
 import trajectorytools.constants as cons
-from trajectorytools.geometry import (angle_between_vectors, comoving_to_fixed,
-                                      distance_travelled, fixed_to_comoving,
-                                      norm, normalise,
-                                      signed_angle_between_vectors,
-                                      straightness)
+from trajectorytools.geometry import (
+    angle_between_vectors,
+    comoving_to_fixed,
+    distance_travelled,
+    fixed_to_comoving,
+    norm,
+    normalise,
+    signed_angle_between_vectors,
+    straightness,
+)
 
 
-class TestWithStraightTrajectory():
+class TestWithStraightTrajectory:
     def setup_class(self, max_length=11):
-        t = np.load(cons.test_raw_trajectories_path,
-                    allow_pickle=True)[:max_length]
+        t = np.load(cons.test_raw_trajectories_path, allow_pickle=True)[
+            :max_length
+        ]
         tt.interpolate_nans(t)
 
         # Modifying the first individual for super-straight movement
@@ -26,15 +32,16 @@ class TestWithStraightTrajectory():
         assert distance_t.ndim == 2
         assert distance_t.shape[0] == self.t.shape[0]
         assert distance_t.shape[1] == self.t.shape[1]
-        np.testing.assert_almost_equal(distance_t[-1, 0],
-                                       (self.t.shape[0] - 1) * np.sqrt(2))
+        np.testing.assert_almost_equal(
+            distance_t[-1, 0], (self.t.shape[0] - 1) * np.sqrt(2)
+        )
 
     def test_straightness(self):
         straight = straightness(self.t)
         assert straight.ndim == 1
         assert straight.shape[0] == self.t.shape[1]
         assert np.all(straight >= 0) and np.all(straight <= 1)
-        np.testing.assert_almost_equal(straight[0], 1.)
+        np.testing.assert_almost_equal(straight[0], 1.0)
 
     @pytest.fixture(autouse=True)
     def run_around_tests(self):
@@ -44,19 +51,19 @@ class TestWithStraightTrajectory():
         assert np.all(t == self.t)
 
 
-
-class TestExtraDimensions():
+class TestExtraDimensions:
     def setup_class(self):
         self.u = np.random.rand(10, 12, 2)
         self.u_2 = self.u.reshape((10, 3, 4, 2))
 
-    @pytest.mark.parametrize("func", [straightness, distance_travelled,
-                                      norm, normalise])
+    @pytest.mark.parametrize(
+        "func", [straightness, distance_travelled, norm, normalise]
+    )
     def test_extra_dimensions(self, func):
         normal = func(self.u)
         reshaped = np.reshape(func(self.u_2), normal.shape)
         np.testing.assert_almost_equal(normal, reshaped)
-    
+
     @pytest.fixture(autouse=True)
     def run_around_tests(self):
         u = self.u.copy()
@@ -67,8 +74,7 @@ class TestExtraDimensions():
         assert np.all(u_2 == self.u_2)
 
 
-
-class TestAngleBetweenVectors():
+class TestAngleBetweenVectors:
     def setup_class(self):
         self.u = np.random.rand(10, 4, 2)
         self.v = np.random.rand(10, 4, 2)
@@ -84,7 +90,7 @@ class TestAngleBetweenVectors():
         np.testing.assert_almost_equal(signed, -signed_flipped)
 
 
-class TestRotate():
+class TestRotate:
     def setup_class(self):
         self.t = np.random.rand(10, 4, 2)
         self.t2 = np.random.rand(10, 4, 2)
@@ -97,14 +103,16 @@ class TestRotate():
             e_y_like_v = np.zeros_like(v)
             e_y_like_v[..., 1] = 1
             np.testing.assert_almost_equal(
-                v_rot, norm(v, keepdims=True)*e_y_like_v)
-        
+                v_rot, norm(v, keepdims=True) * e_y_like_v
+            )
+
     def test_own_t(self):
         t_rot = fixed_to_comoving(self.t, self.t)
         e_y_like_t = np.zeros_like(self.t)
         e_y_like_t[..., 1] = 1
         np.testing.assert_almost_equal(
-            t_rot, norm(self.t, keepdims=True)*e_y_like_t)
+            t_rot, norm(self.t, keepdims=True) * e_y_like_t
+        )
 
     def test_fixed_to_comoving_unnormalised(self):
         t_rot1 = fixed_to_comoving(self.t, self.v)
@@ -131,7 +139,7 @@ class TestRotate():
         angles1 = signed_angle_between_vectors(self.t, t_rot)
         angles2 = signed_angle_between_vectors(self.v, e_y)
         np.testing.assert_almost_equal(angles1, angles2)
-   
+
     def test_comoving_to_fixed(self):
         t_rot = fixed_to_comoving(self.t, self.v)
         t_back = comoving_to_fixed(t_rot, self.v)
@@ -145,6 +153,7 @@ class TestRotate():
         # Check there are no side effects
         assert np.all(v == self.v)
         assert np.all(t == self.t)
+
 
 class TestRotateWithNeighbours(TestRotate):
     def setup_class(self):

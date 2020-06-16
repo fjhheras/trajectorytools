@@ -6,6 +6,7 @@ from scipy.ndimage.filters import gaussian_filter1d, convolve1d
 from scipy import signal
 import warnings
 
+
 def interpolate_nans(t):
     """Interpolates nans linearly in a trajectory
 
@@ -33,12 +34,13 @@ def resample(x, up, down, params={}):
     # Substracting background
     background_line = [
         x.take(0, axis),
-        (x.take(-1, axis) - x.take(0, axis)) * n_in / (n_in - 1)
+        (x.take(-1, axis) - x.take(0, axis)) * n_in / (n_in - 1),
     ]
     rel_len = np.linspace(0.0, 1.0, n_in, endpoint=False)
     background_in = np.stack(
         [background_line[0] + background_line[1] * l for l in rel_len],
-        axis=axis)
+        axis=axis,
+    )
     x = x - background_in.astype(x.dtype)
 
     resampled_x = signal.resample_poly(x, up, down, axis=0, **params)
@@ -48,7 +50,8 @@ def resample(x, up, down, params={}):
     rel_len = np.linspace(0.0, 1.0, n_out, endpoint=False)
     background_out = np.stack(
         [background_line[0] + background_line[1] * l for l in rel_len],
-        axis=axis)
+        axis=axis,
+    )
     resampled_x += background_out.astype(x.dtype)
     return resampled_x
 
@@ -90,15 +93,18 @@ def find_enclosing_circle(t):
     """
     try:
         import miniball
+
         if not np.isnan(t).any():
             flat_t = t.reshape((-1, 2))
         else:
             flat_t_with_nans = t.reshape((-1, 2))
-            no_nans = np.logical_not(np.any(np.isnan(flat_t_with_nans),
-                                            axis=1))
+            no_nans = np.logical_not(
+                np.any(np.isnan(flat_t_with_nans), axis=1)
+            )
             flat_t = flat_t_with_nans[np.where(no_nans)]
             logging.warning(
-                'Some nans found and removed before aplying miniball')
+                "Some nans found and removed before aplying miniball"
+            )
         P = [(x[0], x[1]) for x in flat_t]
         mb = miniball.Miniball(P)
         center_x, center_y = mb.center()
@@ -108,11 +114,12 @@ def find_enclosing_circle(t):
         logging.warning("Please, install https://github.com/weddige/miniball")
         center_x, center_y, radius = find_enclosing_circle_simple(t)
     except Exception:
-        #logging.error(traceback.format_exc())
-        #print(sys.exc_info()[0])
+        # logging.error(traceback.format_exc())
+        # print(sys.exc_info()[0])
         traceback.print_stack()
         logging.error(
-            "Miniball was not used for centre detection. Reason unknown")
+            "Miniball was not used for centre detection. Reason unknown"
+        )
         center_x, center_y, radius = find_enclosing_circle_simple(t)
     return center_x, center_y, radius
 
@@ -129,12 +136,18 @@ def center_trajectories_and_obtain_radius(t, forced_radius=None):
 def center_trajectories_and_normalise(t, unit_length=None, forced_radius=None):
     warnings.warn(Warning("To be deprecated"))
     center_x, center_y, radius = center_trajectories_and_obtain_radius(
-        t, forced_radius=forced_radius)
+        t, forced_radius=forced_radius
+    )
     if unit_length is None:
         unit_length = radius
     np.divide(t, unit_length, t)
 
-    return radius / unit_length, center_x / unit_length, center_y / unit_length, unit_length
+    return (
+        radius / unit_length,
+        center_x / unit_length,
+        center_y / unit_length,
+        unit_length,
+    )
 
 
 def smooth_several(t, sigma=2, truncate=5, derivatives=[0]):
@@ -149,33 +162,32 @@ def smooth_several(t, sigma=2, truncate=5, derivatives=[0]):
 def smooth(t, sigma=2, truncate=5, derivative=0, only_past=False):
     if only_past:
         assert derivative == 0  # Not implemented for more
-        kernel_radius = 2  #TODO: change dynamically with input
+        kernel_radius = 2  # TODO: change dynamically with input
         kernel_size = kernel_radius * 2 + 1.0
-        kernel = np.exp(-np.arange(0.0, kernel_size)**2 / 2 / sigma**2)
+        kernel = np.exp(-np.arange(0.0, kernel_size) ** 2 / 2 / sigma ** 2)
         kernel /= kernel.sum()
         smoothed = convolve1d(t, kernel, axis=0, origin=-kernel_radius)
     else:
-        smoothed = gaussian_filter1d(t,
-                                     sigma=sigma,
-                                     axis=0,
-                                     truncate=truncate,
-                                     order=derivative)
+        smoothed = gaussian_filter1d(
+            t, sigma=sigma, axis=0, truncate=truncate, order=derivative
+        )
     return smoothed
 
 
 def smooth_velocity(t, **kwargs):
-    kwargs['derivative'] = 1
+    kwargs["derivative"] = 1
     return smooth(t, **kwargs)
 
 
 def smooth_acceleration(t, **kwargs):
-    kwargs['derivative'] = 2
+    kwargs["derivative"] = 2
     return smooth(t, **kwargs)
 
 
 def velocity_acceleration_backwards(t, k_v_history=0.0):
-    v = (1 - k_v_history) * (t[2:] - t[1:-1]) + k_v_history * (t[2:] -
-                                                               t[:-2]) / 2
+    v = (1 - k_v_history) * (t[2:] - t[1:-1]) + k_v_history * (
+        t[2:] - t[:-2]
+    ) / 2
     a = t[2:] - 2 * t[1:-1] + t[:-2]
     return t[2:], v, a
 

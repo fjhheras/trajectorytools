@@ -2,6 +2,7 @@ import numpy as np
 import trajectorytools as tt
 import warnings
 
+
 def average_across_individuals(s):
     """ Averages along the penultimate dimension
     """

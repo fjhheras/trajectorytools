@@ -2,16 +2,15 @@ import pytest
 import numpy as np
 
 import trajectorytools.constants as cons
-from trajectorytools.collective import (angular_momentum,
-                                        polarization)
+from trajectorytools.collective import angular_momentum, polarization
 from trajectorytools.geometry import center_in_trajectory
 import trajectorytools as tt
 
 
-class TestExtremeCases():
+class TestExtremeCases:
     def setup_class(self):
         v = np.random.randn(50, 2)
-        self.v_same = np.stack([v]*10, axis=1)
+        self.v_same = np.stack([v] * 10, axis=1)
         self.v_antiparallel = self.v_same.copy()
         self.v_antiparallel[:, ::2, :] *= -1
 
@@ -23,7 +22,7 @@ class TestExtremeCases():
         pol = tt.norm(polarization(self.v_antiparallel))
         assert pytest.approx(pol, 1e-16) == 0
 
-    @pytest.mark.parametrize('num_dims_point', [2, 1])
+    @pytest.mark.parametrize("num_dims_point", [2, 1])
     def test_ang_mom_antiparallel(self, num_dims_point):
         # Random point to measure angular momentum
         if num_dims_point == 2:
@@ -31,9 +30,10 @@ class TestExtremeCases():
         elif num_dims_point == 1:
             point = np.random.randn(50, 2)
         # Random locations (but all in the same point)
-        locations = np.stack([np.random.randn(50, 2)]*10, axis=1)
-        ang_momentum = tt.norm(angular_momentum(
-            self.v_antiparallel, locations))
+        locations = np.stack([np.random.randn(50, 2)] * 10, axis=1)
+        ang_momentum = tt.norm(
+            angular_momentum(self.v_antiparallel, locations)
+        )
         assert pytest.approx(ang_momentum, 1e-16) == 0
 
     @pytest.fixture(autouse=True)
@@ -46,7 +46,7 @@ class TestExtremeCases():
         assert np.all(v_antiparallel == self.v_antiparallel)
 
 
-class TestAngularMomentum():
+class TestAngularMomentum:
     def setup_class(self):
         self.v = np.random.randn(50, 10, 2)
         self.s = np.random.randn(50, 10, 2)
@@ -70,9 +70,8 @@ class TestAngularMomentum():
         np.testing.assert_almost_equal(L_1, L_1_b)
 
         L_2 = num_individuals * angular_momentum(
-            V[:, np.newaxis, :],
-            S[:, np.newaxis, :],
-            self.p)
+            V[:, np.newaxis, :], S[:, np.newaxis, :], self.p
+        )
 
         # angular momentum around a point is the sum of the angular
         # momentum around the center of mass and the angular momentum
