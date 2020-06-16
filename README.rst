@@ -117,7 +117,14 @@ Francisco Romero Ferrero (2017-)
 Contribute
 ==========
 
-Please.
+We welcome contributions. The preferred way to report problems is by creating an issue. The best way to propose changes in the code is to create a pull request. 
+
+We try to follow PEP 8 and we use an autoformatter called black to have a uniform code look. Before submitting pull requests, we would appreciate if you autoformat the code using the following command:
+
+.. code-block:: bash
+    
+    black -l 79 .
+    
 
 License
 =======
