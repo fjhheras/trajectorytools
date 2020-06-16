@@ -26,15 +26,23 @@ jobs:
     - name: Install
       run: |
         python -m pip install --upgrade pip
-        pip install flake8 pytest pytest-cov
+        pip install black flake8 pytest pytest-cov
         if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
         pip install .
+    - name: Check format with black 
+      run: |
+        black -l 79 --check .
     - name: Lint with flake8
       run: |
         # stop the build if there are Python syntax errors or undefined names
-        flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics
-        # exit-zero treats all errors as warnings. The GitHub editor is 127 chars wide
-        flake8 . --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
+        # our line length is 79 (72 for docstrings), and we are strict (stop) if above 88
+        flake8 . --count --select=E9,F63,F7,F82,E501 --max-line-length=88 --show-source --statistics
+        # exit-zero treats all errors as warnings.
+        # ignoring when clashing with black:
+        # - W503 line break before binary operator
+        # - E203 whitespace before ':'
+        # - C0330 Wrong hanging indentation before block
+        flake8 . --count --exit-zero --max-complexity=10 --statistics --ignore=E203,W503,C0330
     - name: Generate coverage report
       run: |
         pip install pytest

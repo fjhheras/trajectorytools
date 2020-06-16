@@ -36,23 +36,6 @@ def ellipse(color="c", size=[0.04, 0.02]):
     return Plotter(first=plot_function, update=update_function)
 
 
-# def identities():
-#    ##Changing this https://matplotlib.org/users/text_intro.html
-#    def plot_function(xy, ax):
-#        for
-#        patches = tuple(plt.text(x[0],x[1],str size[0],size[1],np.degrees(np.arctan2(x[3],x[2])), color = color, animated = True) for x in xy)
-#        for patch in patches:
-#            ax.add_patch(patch)
-#        return patches
-#    def update_function(xy, ax, patches):
-#        for i, patch in enumerate(patches):
-#            patch.center = xy[i,:2]
-#            patch.angle = np.degrees(np.arctan2(xy[i,3],xy[i,2]))
-#            patch.stale = True
-#        return patches
-#    return Plotter(first=plot_function, update=update_function)
-
-
 def simple(marker="o", color=[1, 0, 0]):
     def plot_function(xy, ax):
         return (

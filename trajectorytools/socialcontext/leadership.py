@@ -10,7 +10,8 @@ def restrict_with_delay(data, indices, individual=None, delay=0):
 
     :param data: np.array with dimensions time x individuals x coordinates
     :param indices: np.array with dimensions time x individuals x subset_of_individuals
-    :param individual: label of individual to calculate restriction with delay. If None, calculating for all individuals
+    :param individual: label of individual to calculate restriction 
+    with delay. If None, calculating for all individuals
     :param delay:
 
     This function works as ttsocial.restrict, but
@@ -82,9 +83,12 @@ def dot_product_per_frame_with_delays(
 ):
     """
 
-    :param data: array of orientations (total_frames, num_individuals, 2)
-    :param indices: indices of neighbours (total_frames, num_individuals, num_individuals-1)
-    :param sweeped_delays: arrays of sweeped orientations with lag (num_delays, total_frames-num_delays, num_individuals, num_individuals-1, 2)
+    :param data: array of orientations 
+    (total_frames, num_individuals, 2)
+    :param indices: indices of neighbours 
+    (total_frames, num_individuals, num_individuals-1)
+    :param sweeped_delays: arrays of sweeped orientations with lag 
+    (num_delays, total_frames-num_delays, num_individuals, num_individuals-1, 2)
     :param frame: frame to compute
     :param inplace: (num_delays, num_individuals, num_individual)
     :return: (num_delays, num_individuals, num_individual)
@@ -126,9 +130,12 @@ def sliding_average_dot_product_with_delays(
 ):
     """
 
-    :param data: array of orientations (total_frames, num_individuals, 2)
-    :param indices: indices of neighbours (total_frames, num_individuals, num_individuals-1)
-    :param sweep_delayed_e: arrays of sweeped orientations with lag (num_delays, total_frames-num_delays, num_individuals, num_individuals-1, 2)
+    :param data: array of orientations with shape
+    (total_frames, num_individuals, 2)
+    :param indices: indices of neighbours with shape
+    (total_frames, num_individuals, num_individuals-1)
+    :param sweep_delayed_e: arrays of sweeped orientations with lag 
+    (num_delays, total_frames-num_delays, num_individuals, num_individuals-1, 2)
     :param start_frame: 0
     :param end_frame:
     :param window_size:
@@ -158,14 +165,16 @@ def sliding_average_dot_product_with_delays2(
 ):
     max_delay = sweep_delayed_e.shape[0]
     frames = range(start_frame, end_frame + num_frames_to_average)
-    ## The 2-by-2 xcorrelation in sparse matrix: max delay x num_individuals x num_individuals
+    # The 2-by-2 xcorrelation in sparse matrix:
+    # max delay x num_individuals x num_individuals
     fleshout_list = [
         dot_product_per_frame_with_delays(
             data, indices, sweep_delayed_e, frame
         )
         for frame in frames
     ]
-    ## A binary matrix (num_individuals x num_individuals) telling us whether individuals are neighbours in a given frame
+    # A binary matrix (num_individuals x num_individuals)
+    # telling us whether individuals are neighbours in a given frame
     connection_matrix_list = [
         give_connection_matrix(indices[frame]) for frame in frames
     ]
