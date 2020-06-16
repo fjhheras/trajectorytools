@@ -1,13 +1,11 @@
+# from . import animation
+from . import collective, socialcontext
 from .geometry import *
 from .interpolate import *
 from .trajectories import (
-    Trajectories,
     FishTrajectories,
+    Trajectories,
     TrajectoriesWithPoints,
 )
-
-# from . import animation
-from . import socialcontext
-from . import collective
 
 # from . import plot

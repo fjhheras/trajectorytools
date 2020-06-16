@@ -1,7 +1,7 @@
-import matplotlib.animation as animation
-import matplotlib.pyplot as plt
-import matplotlib.cm as cm
 import matplotlib as mpl
+import matplotlib.animation as animation
+import matplotlib.cm as cm
+import matplotlib.pyplot as plt
 import numpy as np
 
 from . import plotter

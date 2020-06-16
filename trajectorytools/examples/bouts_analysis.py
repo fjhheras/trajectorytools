@@ -1,6 +1,6 @@
-import os
 import numpy as np
 from matplotlib import pyplot as plt
+
 import trajectorytools as tt
 from trajectorytools.constants import test_trajectories_path
 

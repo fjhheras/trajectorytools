@@ -1,10 +1,10 @@
+import logging
 from copy import deepcopy
 
 import numpy as np
 from scipy import signal
 
 import trajectorytools as tt
-import logging
 
 
 def calculate_center_of_mass(trajectories, params):

@@ -1,10 +1,10 @@
-import pytest
 import numpy as np
+import pytest
 
+import trajectorytools as tt
 import trajectorytools.constants as cons
 from trajectorytools.collective import angular_momentum, polarization
 from trajectorytools.geometry import center_in_trajectory
-import trajectorytools as tt
 
 
 class TestExtremeCases:
@@ -32,7 +32,7 @@ class TestExtremeCases:
         # Random locations (but all in the same point)
         locations = np.stack([np.random.randn(50, 2)] * 10, axis=1)
         ang_momentum = tt.norm(
-            angular_momentum(self.v_antiparallel, locations)
+            angular_momentum(self.v_antiparallel, locations, center=point)
         )
         assert pytest.approx(ang_momentum, 1e-16) == 0
 

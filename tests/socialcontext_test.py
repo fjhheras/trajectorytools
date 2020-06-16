@@ -1,9 +1,9 @@
-import pytest
 import numpy as np
+import pytest
 
-import trajectorytools.constants as cons
-from trajectorytools.socialcontext import in_convex_hull, in_alpha_border
 import trajectorytools as tt
+import trajectorytools.constants as cons
+from trajectorytools.socialcontext import in_alpha_border, in_convex_hull
 
 
 def test_convex_hull_vs_alpha_border():

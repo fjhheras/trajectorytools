@@ -1,10 +1,10 @@
-import sys
-import traceback
 import logging
-import numpy as np
-from scipy.ndimage.filters import gaussian_filter1d, convolve1d
-from scipy import signal
+import traceback
 import warnings
+
+import numpy as np
+from scipy import signal
+from scipy.ndimage.filters import convolve1d, gaussian_filter1d
 
 
 def interpolate_nans(t):

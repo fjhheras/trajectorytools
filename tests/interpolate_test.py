@@ -1,12 +1,12 @@
-import pytest
 import numpy as np
+import pytest
 
+import trajectorytools as tt
 import trajectorytools.constants as cons
 from trajectorytools.interpolate import (
     find_enclosing_circle,
     find_enclosing_circle_simple,
 )
-import trajectorytools as tt
 
 
 class TestCircle:

@@ -1,7 +1,7 @@
+import numpy as np
 import scipy.spatial
 import scipy.spatial.distance as spdist
 from sklearn.neighbors import NearestNeighbors
-import numpy as np
 
 
 def _in_convex_hull(positions):

@@ -1,6 +1,7 @@
 from collections import namedtuple
-import numpy as np
+
 import matplotlib as mpl
+import numpy as np
 
 Plotter = namedtuple("Plotter", "first update")
 
@@ -141,7 +142,7 @@ def labels(color="k", fontsize=15, labels=None, colors=None):
                     patch.set_color(color)
 
         if len(labels.shape) == 2:
-            label_list = labels[0].tolist()
+            labels[0].tolist()
 
         return lines
 

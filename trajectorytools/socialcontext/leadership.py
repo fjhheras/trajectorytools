@@ -1,5 +1,7 @@
 import numpy as np
+
 import trajectorytools as tt
+
 from .socialcontext import restrict
 
 
@@ -199,7 +201,7 @@ def dot_product_with_delays_slow(
     data, indices, sweeped_delays, frame, inplace=None
 ):
     # Only for debugging
-    num_restricted = indices.shape[-1]
+    indices.shape[-1]
     num_individuals = data.shape[1]
     max_delay = sweeped_delays.shape[0]
     if inplace is None:

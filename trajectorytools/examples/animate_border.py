@@ -1,5 +1,5 @@
-import numpy as np
 import matplotlib as mpl
+import numpy as np
 
 import trajectorytools as tt
 import trajectorytools.animation as ttanimation

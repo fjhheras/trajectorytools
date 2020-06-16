@@ -1,8 +1,10 @@
 import os
-import numpy as np
+
 import matplotlib.pyplot as plt
-from trajectorytools.constants import dir_of_data
+import numpy as np
+
 import trajectorytools as tt
+from trajectorytools.constants import dir_of_data
 
 if __name__ == "__main__":
 

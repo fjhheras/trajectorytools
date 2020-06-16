@@ -1,8 +1,8 @@
-import numpy as np
 import matplotlib
 import matplotlib.pyplot as plt
-from matplotlib.patches import Ellipse, Circle
+import numpy as np
 from matplotlib.lines import Line2D
+from matplotlib.patches import Circle, Ellipse
 
 # Scene
 

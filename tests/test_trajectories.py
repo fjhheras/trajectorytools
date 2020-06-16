@@ -1,4 +1,3 @@
-import copy
 import tempfile
 import unittest
 

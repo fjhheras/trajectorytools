@@ -1,10 +1,11 @@
 import os
-import numpy as np
+
 import matplotlib as mpl
+import numpy as np
 
 import trajectorytools as tt
-import trajectorytools.plot as ttplot
 import trajectorytools.animation as ttanimation
+import trajectorytools.plot as ttplot
 import trajectorytools.socialcontext as ttsocial
 from trajectorytools.constants import dir_of_data
 

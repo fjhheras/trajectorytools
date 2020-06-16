@@ -1,5 +1,7 @@
 import os
+
 import numpy as np
+
 import trajectorytools as tt
 import trajectorytools.animation as ttanimation
 import trajectorytools.socialcontext as ttsocial
