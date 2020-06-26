@@ -3,6 +3,8 @@ import logging
 import numpy as np
 import scipy
 
+from collections import namedtuple
+
 
 def remove_nans_from_args(f_unwrapped):
     """ Decorator that removes nans from input numpy arrays
@@ -10,9 +12,12 @@ def remove_nans_from_args(f_unwrapped):
 
     def wrapped(*args, **kwargs):
         for arg in args:
-            assert isinstance(arg, np.ndarray)
-            assert arg.ndim == 1
-            assert len(arg) == len(args[0])
+            if not isinstance(arg, np.ndarray):
+                raise TypeError("Input needs to be np array")
+
+            # Maybe move this to functions?
+            if arg.ndim != 1 or len(arg) != len(args[0]):
+                raise ValueError("Input arrays must be 1d with same length")
 
         # Remove nans, if any
         nan_values = np.logical_or(*[np.isnan(arg) for arg in args])
@@ -22,6 +27,12 @@ def remove_nans_from_args(f_unwrapped):
         return f_unwrapped(*args, **kwargs)
 
     return wrapped
+
+
+BinnedStatisticPolarResult = namedtuple(
+    "BinnedStatisticPolarResult",
+    ("statistic", "r_edge", "theta_edge", "binnumber"),
+)
 
 
 @remove_nans_from_args
@@ -43,13 +54,16 @@ def binned_statistic_polar(
     if not isinstance(r, (list, tuple)):
         range_r = (0, range_r)
 
-    return scipy.stats.binned_statistic_2d(
+    results = scipy.stats.binned_statistic_2d(
         r,
         theta,
         values,
         statistic=statistic,
         bins=bins,
         range=[range_r, [-np.pi, np.pi]],
+    )
+    return BinnedStatisticPolarResult(
+        results.statistic, results.x_edge, results.y_edge, results.binnumber
     )
 
 
