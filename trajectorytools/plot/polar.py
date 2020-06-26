@@ -5,6 +5,8 @@ import scipy
 
 from collections import namedtuple
 
+__all__ = ["binned_statistic_polar", "polar_histogram", "plot_polar_histogram"]
+
 
 def remove_nans_from_args(f_unwrapped):
     """ Decorator that removes nans from input numpy arrays
