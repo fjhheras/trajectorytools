@@ -93,12 +93,10 @@ def polar_histogram(r, theta, range_r=5, bins=(7, 12), density=None):
 
     if density:
         # Calculating bin area
-        dr = np.pi * (r_edges[1:] ** 2 - r_edges[0:-1] ** 2)
-        dtheta = (theta_edges[1] - theta_edges[0]) / (2 * np.pi)
-        area = np.repeat(
-            dtheta * dr[:, np.newaxis], theta_edges.shape[0] - 1, 1
-        )
-        H = H / num_samples / area
+        n_sectors = len(theta_edges) - 1
+        area = np.pi * (r_edges[1:] ** 2 - r_edges[:-1] ** 2) / n_sectors
+        # normalising to obtain density
+        H = H / num_samples / area[:, np.newaxis]
 
     return H, r_edges, theta_edges
 

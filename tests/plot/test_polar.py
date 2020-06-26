@@ -34,6 +34,15 @@ class TestPolar:
         expected_result = np.array([[0, 2, 0]] * 3)  # 0,1 | 2,3 | 4,5
         np.testing.assert_equal(hist, expected_result)
 
+    def test_polar_histogram_density(self):
+        hist, _, _ = polar_histogram(
+            *self.args_hist, density=True, bins=3, range_r=5
+        )
+        expected_zero = np.array([[True, False, True]] * 3)
+        expected_positive = np.array([[False, True, False]] * 3)
+        np.testing.assert_equal(hist > 0, expected_positive)
+        np.testing.assert_equal(hist == 0, expected_zero)
+
     @pytest.mark.parametrize(
         "bins_r,bins_theta", [(1, 5), (5, 2), (3, 3), (12, 1)]
     )
