@@ -29,6 +29,12 @@ class TestPolar:
         expected_result = np.array([[np.nan, 0, np.nan]] * 3)
         np.testing.assert_equal(result.statistic, expected_result)
 
+    def test_binned_statistic_nan_expected(self):
+        self.args[-1][::2] = np.nan
+        result = binned_statistic_polar(*self.args, bins=3, range_r=5)
+        expected_result = np.array([[np.nan, 0, np.nan]] * 3)
+        np.testing.assert_equal(result.statistic, expected_result)
+
     def test_polar_histogram_expected(self):
         hist, _, _ = polar_histogram(*self.args_hist, bins=3, range_r=5)
         expected_result = np.array([[0, 2, 0]] * 3)  # 0,1 | 2,3 | 4,5

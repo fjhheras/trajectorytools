@@ -22,10 +22,13 @@ def remove_nans_from_args(f_unwrapped):
                 raise ValueError("Input arrays must be 1d with same length")
 
         # Remove nans, if any
-        nan_values = np.logical_or(*[np.isnan(arg) for arg in args])
-        if np.any(nan_values):
-            logging.info(f"Removing nans from {f_unwrapped} input")
-            args = [arg[~nan_values] for arg in args]
+        finite_values = np.logical_and.reduce(
+            [np.isfinite(arg) for arg in args]
+        )
+        if not np.all(finite_values):
+            print(f"Keeping only finite values in {f_unwrapped} input")
+            logging.info(f"Keeping only finite values in {f_unwrapped} input")
+            args = [arg[finite_values] for arg in args]
         return f_unwrapped(*args, **kwargs)
 
     return wrapped
@@ -53,7 +56,7 @@ def binned_statistic_polar(
     :param range_r: The leftmost and rightmost edges for radious bins.
     Leftmost and rightmost edges of theta are always -pi and pi
     """
-    if not isinstance(r, (list, tuple)):
+    if not isinstance(range_r, (list, tuple)):
         range_r = (0, range_r)
 
     results = scipy.stats.binned_statistic_2d(
@@ -82,7 +85,7 @@ def polar_histogram(r, theta, range_r=5, bins=(7, 12), density=None):
     function at the bin: `bin_count / sample_count / bin_area`
     """
 
-    if not isinstance(r, (list, tuple)):
+    if not isinstance(range_r, (list, tuple)):
         range_r = (0, range_r)
 
     num_samples = len(r)
@@ -147,11 +150,12 @@ def plot_polar_histogram(
 
     # Select color limits:
     if symmetric_color_limits:
-        vmax = np.max(np.abs(values))
+        vmax = np.nanmax(np.abs(values))
         vmin = -vmax
     else:
-        vmax = np.max(values)
-        vmin = 0
+        vmax = np.nanmax(values)
+        vmin = np.nanmin(values)
+    print(vmax, vmin)
 
     # Plot histogram/map
     fig = ax.get_figure()
