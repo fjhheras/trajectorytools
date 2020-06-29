@@ -124,6 +124,7 @@ def plot_polar_histogram(
     theta_edges,
     ax=None,
     cmap=None,
+    limits=None,
     symmetric_color_limits=False,
     interpolation_factor=5,
     angle_convention="clock",
@@ -135,7 +136,11 @@ def plot_polar_histogram(
     :param theta_edges: np.array
     :param ax: matplotlib.axes.Axes. Needs to be `polar=True`
     :param cmap: string with matplotlib colormap
-    :param symmetric_color_limits: bool
+    :param limits: a tuple with the lower and upper limits of the
+    color bar. If None, they are obtained from data.
+    :param symmetric_color_limits: How to obtain lower and upper 
+    limits of colormap from data. If False, limits are (min, max). If
+    True, limits are (-max(abs), max(abs))
     :param interpolation_factor: None or int
     :param angle_convention: If "clock", angles increase clockwise
     and are 0 for positive y axis. If "math", angles increase
@@ -149,13 +154,14 @@ def plot_polar_histogram(
     theta, r = np.meshgrid(theta_edges, r_edges)
 
     # Select color limits:
-    if symmetric_color_limits:
+    if limits is not None:
+        vmin, vmax = limits
+    elif symmetric_color_limits:
         vmax = np.nanmax(np.abs(values))
         vmin = -vmax
     else:
         vmax = np.nanmax(values)
         vmin = np.nanmin(values)
-    print(vmax, vmin)
 
     # Plot histogram/map
     fig = ax.get_figure()
