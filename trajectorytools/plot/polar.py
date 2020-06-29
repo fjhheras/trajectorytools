@@ -47,8 +47,8 @@ def binned_statistic_polar(
     theta: np.ndarray,
     values: np.ndarray,
     statistic: Union[Callable[[np.ndarray], float], str] = "mean",
-    bins: Union[Tuple[int], int] = (7, 12),
-    range_r: Union[Tuple[float], float] = 5,
+    bins: Union[Tuple[int, int], int] = (7, 12),
+    range_r: Union[Tuple[float, float], float] = 5,
 ) -> BinnedStatisticPolarResult:
     """Version of scipy.binned_statistic_2d for polar plots
 
@@ -82,8 +82,8 @@ def binned_statistic_polar(
 def polar_histogram(
     r: np.ndarray,
     theta: np.ndarray,
-    bins: Union[Tuple[int], int] = (7, 12),
-    range_r: Union[Tuple[float], float] = 5,
+    bins: Union[Tuple[int, int], int] = (7, 12),
+    range_r: Union[Tuple[float, float], float] = 5,
     density: bool = False,
 ) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
     """ Version of np.histogram2d for polar plots
@@ -139,26 +139,30 @@ def plot_polar_histogram(
     values: np.ndarray,
     r_edges: np.ndarray,
     theta_edges: np.ndarray,
-    ax: mpl.axes.Axes = None,
-    cmap: str = None,
-    limits: Optional[Tuple[float]] = None,
+    ax: mpl.axes.Axes = None,  # Not sure how to type this (not optional
+    # but hard to find default)
+    cmap: Optional[str] = None,
+    vmin: Optional[float] = None,
+    vmax: Optional[float] = None,
     symmetric_color_limits: bool = False,
     interpolation_factor: float = 5,
     angle_convention: str = "clock",
 ):
     """ Plot color polar plot
 
-    :param values: np.array
-    :param r_edges: np.array
-    :param theta_edges: np.array
+    :param values: Values to color-code 
+    :param r_edges: Edges in radius 
+    :param theta_edges: Edges in angle 
     :param ax: matplotlib.axes.Axes. Needs to be `polar=True`
     :param cmap: matplotlib colormap
-    :param limits: a tuple with the lower and upper limits of the
-    color bar. If None, they are obtained from data.
-    :param symmetric_color_limits: How to obtain lower and upper 
+    :param vmin: lower limit of colorbar range. If None, from data
+    :param vmax: upper limit of colorbar range. If None, from data
+    :param symmetric_color_limits: How to obtain lower and upper
     limits of colormap from data. If False, limits are (min, max). If
     True, limits are (-max(abs), max(abs))
-    :param interpolation_factor: None or int
+    :param interpolation_factor: If None or 1, no interpolation is
+    performed. If int > 1, each sector is broken in interpolation_factor
+    parts, so they look more circular and less polygonal
     :param angle_convention: If "clock", angles increase clockwise
     and are 0 for positive y axis. If "math", angles increase
     counterclockwise and are 0 for positive x axis
@@ -171,14 +175,18 @@ def plot_polar_histogram(
     theta, r = np.meshgrid(theta_edges, r_edges)
 
     # Select color limits:
-    if limits is not None:
-        vmin, vmax = limits
-    elif symmetric_color_limits:
-        vmax = np.nanmax(np.abs(values))
-        vmin = -vmax
+    if symmetric_color_limits:
+        vmax_ = np.nanmax(np.abs(values))
+        vmin_ = -vmax_
     else:
-        vmax = np.nanmax(values)
-        vmin = np.nanmin(values)
+        vmax_ = np.nanmax(values)
+        vmin_ = np.nanmin(values)
+
+    # Only use them if not specified in input
+    if vmin is None:
+        vmin = vmin_
+    if vmax is None:
+        vmax = vmax_
 
     # Plot histogram/map
     fig = ax.get_figure()
