@@ -1,14 +1,15 @@
 import logging
+from collections import namedtuple
+from typing import Callable, Optional, Union, Tuple
 
 import numpy as np
 import scipy
-
-from collections import namedtuple
+import matplotlib as mpl
 
 __all__ = ["binned_statistic_polar", "polar_histogram", "plot_polar_histogram"]
 
 
-def remove_nans_from_args(f_unwrapped):
+def remove_not_finite_from_args(f_unwrapped: Callable) -> Callable:
     """ Decorator that removes nans from input numpy arrays
     """
 
@@ -40,15 +41,20 @@ BinnedStatisticPolarResult = namedtuple(
 )
 
 
-@remove_nans_from_args
+@remove_not_finite_from_args
 def binned_statistic_polar(
-    r, theta, values, statistic="mean", bins=(7, 12), range_r=5
-):
+    r: np.ndarray,
+    theta: np.ndarray,
+    values: np.ndarray,
+    statistic: Union[Callable[[np.ndarray], float], str] = "mean",
+    bins: Union[Tuple[int], int] = (7, 12),
+    range_r: Union[Tuple[float], float] = 5,
+) -> BinnedStatisticPolarResult:
     """Version of scipy.binned_statistic_2d for polar plots
 
-    :param r: 1d np.array 
+    :param r: 1d np.array
     :param theta: 1d np.array
-    :param values: np.array The data on which the statistic will be 
+    :param values: The data on which the statistic will be
     computed. This must be the same shape as r and theta
     :param statistic: The statistic to compute (default is 'mean')
     Check scipy.stats.binned_statistic_2d for possible options.
@@ -72,8 +78,14 @@ def binned_statistic_polar(
     )
 
 
-@remove_nans_from_args
-def polar_histogram(r, theta, range_r=5, bins=(7, 12), density=None):
+@remove_not_finite_from_args
+def polar_histogram(
+    r: np.ndarray,
+    theta: np.ndarray,
+    bins: Union[Tuple[int], int] = (7, 12),
+    range_r: Union[Tuple[float], float] = 5,
+    density: bool = False,
+) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
     """ Version of np.histogram2d for polar plots
     :param r: 1d np.array
     :param theta: 1d np.array
@@ -107,7 +119,12 @@ def polar_histogram(r, theta, range_r=5, bins=(7, 12), density=None):
 ## Plotting functions
 
 
-def interpolate_polarmap_angles(values, theta_edges, r_edges, factor=1):
+def interpolate_polarmap_angles(
+    values: np.ndarray,
+    theta_edges: np.ndarray,
+    r_edges: np.ndarray,
+    factor: float = 1,
+) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
     # interpolate_polarmap_angles has a cosmetic purpose:
     # It smoothes the corners in plot_polar_histogram/pcolormesh
     # so it looks more like a circle and not a polygon
@@ -119,15 +136,15 @@ def interpolate_polarmap_angles(values, theta_edges, r_edges, factor=1):
 
 
 def plot_polar_histogram(
-    values,
-    r_edges,
-    theta_edges,
-    ax=None,
-    cmap=None,
-    limits=None,
-    symmetric_color_limits=False,
-    interpolation_factor=5,
-    angle_convention="clock",
+    values: np.ndarray,
+    r_edges: np.ndarray,
+    theta_edges: np.ndarray,
+    ax: mpl.axes.Axes = None,
+    cmap: str = None,
+    limits: Optional[Tuple[float]] = None,
+    symmetric_color_limits: bool = False,
+    interpolation_factor: float = 5,
+    angle_convention: str = "clock",
 ):
     """ Plot color polar plot
 
@@ -135,7 +152,7 @@ def plot_polar_histogram(
     :param r_edges: np.array
     :param theta_edges: np.array
     :param ax: matplotlib.axes.Axes. Needs to be `polar=True`
-    :param cmap: string with matplotlib colormap
+    :param cmap: matplotlib colormap
     :param limits: a tuple with the lower and upper limits of the
     color bar. If None, they are obtained from data.
     :param symmetric_color_limits: How to obtain lower and upper 
