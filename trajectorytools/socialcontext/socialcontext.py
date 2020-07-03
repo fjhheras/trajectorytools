@@ -2,6 +2,7 @@ import numpy as np
 import scipy.spatial
 import scipy.spatial.distance as spdist
 from sklearn.neighbors import NearestNeighbors
+import warnings
 
 
 def _in_convex_hull(positions):
@@ -73,29 +74,67 @@ def in_alpha_border(positions, alpha=5):
 # LOCAL NEIGHBOURS
 
 
-def _neighbours_indices_in_frame(
-    positions, num_neighbours, adjacency=False, mode="connectivity"
-):
+def neighbour_indices_in_frame(
+    positions: np.ndarray, num_neighbours: int,
+) -> np.ndarray:
+    """ Calculate the indices of the nearest neighbours
+
+    :param positions: array of locations with dimensions
+    (individual x coordinates)
+    :param num_neighbours: number of closest neighbours requested
+    :return: output dime (individual x num_neighbours + 1 x coordinates)
+    """
     nbrs = NearestNeighbors(
         n_neighbors=num_neighbours + 1, algorithm="ball_tree"
     ).fit(positions)
-    if adjacency:
-        return nbrs.kneighbors_graph(positions, mode=mode).toarray()
-    else:
-        return nbrs.kneighbors(positions, return_distance=False)
+    return nbrs.kneighbors(positions, return_distance=False)
 
 
 def give_indices(positions, num_neighbours):
+    warnings.warn(
+        "give_indices to be deprecated. Use neighbour_indices instead"
+    )
+    return neighbour_indices(positions, num_neighbours)
+
+
+def neighbour_indices(
+    positions: np.ndarray, num_neighbours: int
+) -> np.ndarray:
+    """ Calculates the indices of the nearest neighbours
+
+    :param positions: array of locations with dimensions
+    (time x individual x coordinates)
+    :param num_neighbours: number of closest neighbours (does not
+    include the focal, e.g. max is individuals - 1)
+    :return: an array with dimensions
+    (time x individual x num_neighbours + 1 x coordinates)
+    """
     total_time_steps = positions.shape[0]
     individuals = positions.shape[1]
     next_neighbours = np.empty(
         [total_time_steps, individuals, num_neighbours + 1], dtype=np.int
     )
     for frame in range(total_time_steps):
-        next_neighbours[frame, ...] = _neighbours_indices_in_frame(
+        next_neighbours[frame, ...] = neighbour_indices_in_frame(
             positions[frame], num_neighbours
         )
     return next_neighbours
+
+
+def adjacency_matrix_in_frame(
+    positions: np.ndarray, num_neighbours: int, mode: str = "connectivity",
+) -> np.ndarray:
+    """
+    :param positions: array of locations with dimensions
+    (individual x coordinates)
+    :param num_neighbours: number of closest neighbours requested
+    :param mode: adjacency mode "connectivity" or "distance".     
+    :return: output has dimension (individual x individual x coordinates)
+    """
+    nbrs = NearestNeighbors(
+        n_neighbors=num_neighbours + 1, algorithm="ball_tree"
+    ).fit(positions)
+    return nbrs.kneighbors_graph(positions, mode=mode).toarray()
 
 
 def adjacency_matrix(
@@ -129,8 +168,8 @@ def adjacency_matrix(
                 )
     else:
         for frame in range(total_time_steps):
-            adjacency_m[frame, ...] = _neighbours_indices_in_frame(
-                positions[frame], num_neighbours, adjacency=True, mode=mode
+            adjacency_m[frame, ...] = adjacency_matrix_in_frame(
+                positions[frame], num_neighbours, mode=mode
             )
     return adjacency_m
 

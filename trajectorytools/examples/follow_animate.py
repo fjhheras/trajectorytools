@@ -23,7 +23,7 @@ def animate_and_follow(individual=0, num_neighbours=15):
     v = tt.fixed_to_comoving(v_, e_)
     center = tt.fixed_to_comoving(-s_[:, [individual], :], e_)
 
-    indices = ttsocial.give_indices(s, num_neighbours)
+    indices = ttsocial.neighbour_indices(s, num_neighbours)
     sn = ttsocial.restrict(s, indices, individual)
     vn = ttsocial.restrict(v, indices, individual)
 

@@ -63,7 +63,7 @@ def sweep_delays(data, indices, max_delay, individual=None):
 def sweep_delayed_orientation_with_neighbours(orientation, indices, max_delay):
     # Orientation: time x num_individuals x 2
     # Indices: assumed to be exclusive of own
-    # i.e. if they come from ttsocial.give_indices
+    # i.e. if they come from ttsocial.neighbour_indices
     # then the first row must be removed
     total_time_steps = orientation.shape[0] - max_delay
     sweep_delay_e = sweep_delays(orientation, indices, max_delay)
