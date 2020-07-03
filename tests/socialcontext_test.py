@@ -41,8 +41,8 @@ def test_neighbour_indices_vs_adjacency_matrix(num_neighbours):
     # When there is an index in neighbour_indices output, the
     # corresponding elment in the adjacency_matrix must be True
     for _ in range(5):
-        frame = random.randint(0, t.shape[0])
-        individual = random.randint(0, t.shape[1])
+        frame = random.randrange(0, t.shape[0])
+        individual = random.randrange(0, t.shape[1])
 
         indices_neighbours = nb_indices[frame, individual, :]
         indices_no_neighbours = [
@@ -56,7 +56,7 @@ def test_neighbour_indices_vs_adjacency_matrix(num_neighbours):
 def test_neighbour_indices_vs_adjacency_matrix_in_frame(num_neighbours):
     t = np.load(cons.test_raw_trajectories_path, allow_pickle=True)
     tt.interpolate_nans(t)
-    frame = t[random.randint(0, t.shape[0])]
+    frame = t[random.randrange(0, t.shape[0])]
 
     nb_indices = neighbour_indices_in_frame(
         frame, num_neighbours=num_neighbours
@@ -70,7 +70,7 @@ def test_neighbour_indices_vs_adjacency_matrix_in_frame(num_neighbours):
     # When there is an index in neighbour_indices output, the
     # corresponding elment in the adjacency_matrix must be True
     for _ in range(5):
-        individual = random.randint(0, t.shape[1])
+        individual = random.randrange(0, t.shape[1])
 
         indices_neighbours = nb_indices[individual, :]
         indices_no_neighbours = [
