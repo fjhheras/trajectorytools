@@ -82,7 +82,7 @@ def neighbour_indices_in_frame(
     :param positions: array of locations with dimensions
     (individual x coordinates)
     :param num_neighbours: number of closest neighbours requested
-    :return: output dime (individual x num_neighbours + 1 x coordinates)
+    :return: output dime (individual x num_neighbours + 1)
     """
     nbrs = NearestNeighbors(
         n_neighbors=num_neighbours + 1, algorithm="ball_tree"
@@ -106,8 +106,7 @@ def neighbour_indices(
     (time x individual x coordinates)
     :param num_neighbours: number of closest neighbours (does not
     include the focal, e.g. max is individuals - 1)
-    :return: an array with dimensions
-    (time x individual x num_neighbours + 1 x coordinates)
+    :return: array with dims (time x individual x num_neighbours + 1)
     """
     total_time_steps = positions.shape[0]
     individuals = positions.shape[1]
@@ -129,7 +128,7 @@ def adjacency_matrix_in_frame(
     (individual x coordinates)
     :param num_neighbours: number of closest neighbours requested
     :param mode: adjacency mode "connectivity" or "distance".     
-    :return: output has dimension (individual x individual x coordinates)
+    :return: output has dimension (individual x individual)
     """
     nbrs = NearestNeighbors(
         n_neighbors=num_neighbours + 1, algorithm="ball_tree"
