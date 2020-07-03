@@ -6,6 +6,13 @@ from matplotlib.patches import Circle, Ellipse
 
 # Scene
 
+__all__ = [
+    "Fish",
+    "Scene",
+    "plot_individual_distribution",
+    "plot_individual_distribution_of_vector",
+]
+
 
 class Fish:
     default_ellipse_params = {

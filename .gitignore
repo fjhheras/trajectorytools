@@ -54,3 +54,6 @@ docs/_build
 .vscode
 
 \.idea/
+
+# Type checking stuff
+.mypy_cache/
