@@ -1,11 +1,15 @@
 import numpy as np
 import pytest
+import random
 
 import trajectorytools as tt
 import trajectorytools.constants as cons
 from trajectorytools.interpolate import (
     find_enclosing_circle,
     find_enclosing_circle_simple,
+    interpolate_nans,
+    smooth,
+    velocity_acceleration_backwards,
 )
 
 
@@ -53,3 +57,22 @@ class TestCircle:
         yield
         # Check there are no side effects
         assert np.all(t == self.t)
+
+
+class TestRawTrajectories:
+    def setup_method(self):
+        tr = np.load(cons.test_raw_trajectories_path, allow_pickle=True)
+        interpolate_nans(tr)
+        self.tr = tr
+
+    @pytest.mark.parametrize(
+        "frame_fraction,smooth_sigma",
+        [(random.random(), random.random()) for _ in range(5)],
+    )
+    def test_consistent(self, frame_fraction, smooth_sigma):
+        smooth_tr = smooth(self.tr, sigma=smooth_sigma, only_past=True)
+        s, v, a = velocity_acceleration_backwards(smooth_tr)
+        frame = int((len(s) - 2) * frame_fraction)
+        print(f"Testing in frame {frame} with smooth sigma {smooth_sigma}")
+        np.testing.assert_allclose(s[frame] + v[frame + 1], s[frame + 1])
+        np.testing.assert_allclose(v[frame] + a[frame + 1], v[frame + 1])
