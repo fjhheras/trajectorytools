@@ -29,4 +29,4 @@ we are happy to help you implement them during the pull request process.
 ## Attribution
 
 This CONTRIBUTING file is highly influenced by the contributing guidelines in
-(numpy)[https://github.com/numpy/numpy/edit/master/.github/CONTRIBUTING.md]
+[numpy](https://github.com/numpy/numpy/edit/master/.github/CONTRIBUTING.md)
