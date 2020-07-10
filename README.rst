@@ -117,14 +117,11 @@ Francisco Romero Ferrero (2017-)
 Contribute
 ==========
 
-We welcome contributions. The preferred way to report problems is by creating an issue. The best way to propose changes in the code is to create a pull request. 
+We welcome contributions. The preferred way to report problems is by creating an issue. The best way to propose changes in the code is to create a pull request. Please, check our `contribution guidelines`_ and our `code of conduct`_. 
 
-We try to follow PEP 8 and we use an autoformatter called black to have a uniform code look. Before submitting pull requests, we would appreciate if you autoformat the code using the following command:
+.. _contribution guidelines: .github/CONTRIBUTING.md
+.. _code of conduct: .github/CODE_OF_CONDUCT.md
 
-.. code-block:: bash
-    
-    black -l 79 .
-    
 
 License
 =======
