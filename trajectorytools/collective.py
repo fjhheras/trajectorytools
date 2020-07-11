@@ -1,6 +1,9 @@
-import numpy as np
-import trajectorytools as tt
 import warnings
+
+import numpy as np
+
+import trajectorytools as tt
+
 
 def average_across_individuals(s):
     """ Averages along the penultimate dimension

@@ -117,7 +117,11 @@ Francisco Romero Ferrero (2017-)
 Contribute
 ==========
 
-Please.
+We welcome contributions. The preferred way to report problems is by creating an issue. The best way to propose changes in the code is to create a pull request. Please, check our `contribution guidelines`_ and our `code of conduct`_. 
+
+.. _contribution guidelines: .github/CONTRIBUTING.md
+.. _code of conduct: .github/CODE_OF_CONDUCT.md
+
 
 License
 =======
