@@ -2,9 +2,9 @@ import logging
 from copy import deepcopy
 
 import numpy as np
-from scipy import signal
 
 import trajectorytools as tt
+from trajectorytools.fish_bouts import find_bouts_individual
 
 
 def calculate_center_of_mass(trajectories, params):
@@ -454,49 +454,10 @@ class FishTrajectories(Trajectories):
         the next bout
         """
 
-        if find_max_dict is None:
-            find_max_dict = {}
-        if find_min_dict is None:
-            find_min_dict = {}
-
         all_bouts = []
+        speed = self.speed
         for focal in range(self.number_of_individuals):
-            # Find local minima and maxima
-            min_frames_ = signal.find_peaks(
-                -self.speed[:, focal], **find_min_dict
-            )[0]
-            max_frames_ = signal.find_peaks(
-                self.speed[:, focal], **find_max_dict
-            )[0]
-
-            # Filter out NaNs
-            min_frames = [
-                f for f in min_frames_ if not np.isnan(self.s[f, focal, 0])
-            ]
-            max_frames = [
-                f for f in max_frames_ if not np.isnan(self.s[f, focal, 0])
-            ]
-
-            # Obtain couples of consecutive minima and maxima
-            frames = min_frames + max_frames
-            frameismax = [False] * len(min_frames) + [True] * len(max_frames)
-            ordered_frames, ordered_ismax = zip(
-                *sorted(zip(frames, frameismax))
-            )
-            bouts = [
-                ordered_frames[i : i + 2]
-                for i in range(len(ordered_frames) - 1)
-                if not ordered_ismax[i] and ordered_ismax[i + 1]
-            ]
-
-            # Ordering, and adding next_bout
-            starting_bouts, bout_peaks = zip(*bouts)
-            next_bout_start = list(starting_bouts[1:]) + [
-                self.number_of_frames - 1
-            ]
-            bouts = np.asarray(
-                list(zip(starting_bouts, bout_peaks, next_bout_start))
-            )
+            bouts = find_bouts_individual(speed[:, focal])
             all_bouts.append(bouts)
         return all_bouts
 
