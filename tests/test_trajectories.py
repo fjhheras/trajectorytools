@@ -1,3 +1,4 @@
+import random
 import tempfile
 import unittest
 
@@ -613,6 +614,33 @@ class TrajectoriesRadiusTestCase(TrajectoriesTestCase):
         nptest.assert_allclose(
             self.t.a, self.t_normal.a / self.t.params["radius_px"], atol=1e-15
         )
+
+
+class FishTrajectoriesTestCase(TrajectoriesTestCase):
+    def setUp(self):
+        self.t = tt.FishTrajectories.from_idtrackerai(
+            cons.test_trajectories_path
+        )
+
+    def test_simple(self):
+        find_dict = {"prominence": (0.01, None), "distance": 6}
+        all_bouts = self.t.get_bouts(
+            find_min_dict=find_dict, find_max_dict=find_dict
+        )
+        assert len(all_bouts) == self.t.number_of_individuals
+
+        # Choosing one individual at random for test
+        i = random.randrange(self.t.number_of_individuals)
+        bouts = all_bouts[i]
+        speed = self.t.speed[:, i]
+
+        # Last frame of one bout is the first of the next
+        np.testing.assert_almost_equal(bouts[:-1, 2], bouts[1:, 0])
+
+        # Faster in the peak than start/end
+        for b in bouts:
+            assert speed[b[1]] >= speed[b[0]]
+            assert speed[b[1]] >= speed[b[2]]
 
 
 if __name__ == "__main__":
