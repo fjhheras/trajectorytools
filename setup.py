@@ -9,7 +9,7 @@ setup(
     description="A tool to study 2D trajectories",
     long_description=long_description,
     url="http://github.com/fjhheras/trajectorytools",
-    author="Francisco J.H. Heras, Francisco Romero Ferrero",
+    author="Francisco J.H. Heras, Francisco Romero Ferrero, Gonzalo G. de Polavieja",
     author_email="fjhheras@gmail.com",
     license="GPL",
     install_requires=["MiniballCpp", "matplotlib", "scikit-learn", "scipy"],

@@ -108,8 +108,8 @@ recorded in de Polavieja Lab (Champalimaud Research, Lisbon)
 .. _data: trajectorytools/data
 
 
-Authors
-==========
+Project maintainers
+===================
 
 Francisco J.H. Heras (2017-)
 Francisco Romero Ferrero (2017-)
