@@ -5,20 +5,6 @@ import numpy as np
 import trajectorytools as tt
 
 
-def average_across_individuals(s):
-    """ Averages along the penultimate dimension
-    """
-    warnings.warn(Warning("To be deprecated"))
-    return np.mean(s, axis=-2)
-
-
-def sum_across_individuals(s):
-    """ Sums along the penultimate dimension
-    """
-    warnings.warn(Warning("To be deprecated"))
-    return np.sum(s, axis=-2)
-
-
 def polarization(v):
     """ Calculates (the normalised) polarization vector
 

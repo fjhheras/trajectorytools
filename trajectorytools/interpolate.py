@@ -125,7 +125,7 @@ def find_enclosing_circle(t):
 
 
 def center_trajectories_and_obtain_radius(t, forced_radius=None):
-    warnings.warn(Warning("To be deprecated"))
+    # Soon to be changed by a simpler alternative
     center_x, center_y, radius = find_enclosing_circle(t)
     radius = radius if forced_radius is None else forced_radius
     t[..., 0] -= center_x
@@ -134,7 +134,7 @@ def center_trajectories_and_obtain_radius(t, forced_radius=None):
 
 
 def center_trajectories_and_normalise(t, unit_length=None, forced_radius=None):
-    warnings.warn(Warning("To be deprecated"))
+    # Soon to be changed by a simpler alternative
     center_x, center_y, radius = center_trajectories_and_obtain_radius(
         t, forced_radius=forced_radius
     )

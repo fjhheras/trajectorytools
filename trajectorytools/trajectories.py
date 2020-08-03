@@ -1,4 +1,5 @@
 import logging
+import warnings
 from copy import deepcopy
 
 import numpy as np
@@ -216,7 +217,8 @@ class Trajectory:
     def _projection_vector_towards(self, point, vector):
         return tt.dot(tt.normalise(point - self.s), vector)
 
-    def orientation_towards(self, point):  # Soon to be deprecated
+    def orientation_towards(self, point):
+        warnings.warn(Warning("Deprecated. Use angle_towards instead"))
         return self.angle_towards(point)
 
     def angle_towards(self, point):
@@ -281,10 +283,6 @@ class Trajectories(Trajectory):
             k: getattr(self, k)[:, val] for k in self.keys_to_copy
         }
         return self.__class__(view_trajectories, self.params)
-
-    def view(self, start=None, end=None):
-        logging.warning("To be deprecated: use standard slicing instead")
-        return self[slice(start, end)]
 
     def __str__(self):
         if "path" in self.params:
