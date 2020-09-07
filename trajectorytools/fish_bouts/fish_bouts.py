@@ -10,17 +10,17 @@ def find_bouts_individual(
     find_max_dict: Dict[str, Any] = None,
 ) -> np.ndarray:
     """Obtain frames of bouts from the speed of one individual
-        
-        :param speed: array of shape (num frames, )
-        :param find_max_dict: kwargs for scipy.signal.find_peaks
-        :param find_min_dict: kwargs for scipy.signal.find_peaks
 
-        returns
-        :all_bouts: Array of shape (number_of_bouts, 3). Col-1 is the
-                    starting frame of the bout, col-2 is the frame 
-                    where the bout peaks, col-3 is the beginning of
-                    the next bout
-        """
+    :param speed: array of shape (num frames, )
+    :param find_max_dict: kwargs for scipy.signal.find_peaks
+    :param find_min_dict: kwargs for scipy.signal.find_peaks
+
+    returns
+    :all_bouts: Array of shape (number_of_bouts, 3). Col-1 is the
+                starting frame of the bout, col-2 is the frame
+                where the bout peaks, col-3 is the beginning of
+                the next bout
+    """
 
     if find_max_dict is None:
         find_max_dict = {}

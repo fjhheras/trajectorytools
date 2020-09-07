@@ -75,9 +75,10 @@ def in_alpha_border(positions, alpha=5):
 
 
 def neighbour_indices_in_frame(
-    positions: np.ndarray, num_neighbours: int,
+    positions: np.ndarray,
+    num_neighbours: int,
 ) -> np.ndarray:
-    """ Calculate the indices of the nearest neighbours
+    """Calculate the indices of the nearest neighbours
 
     :param positions: array of locations with dimensions
     (individual x coordinates)
@@ -100,7 +101,7 @@ def give_indices(positions, num_neighbours):
 def neighbour_indices(
     positions: np.ndarray, num_neighbours: int
 ) -> np.ndarray:
-    """ Calculates the indices of the nearest neighbours
+    """Calculates the indices of the nearest neighbours
 
     :param positions: array of locations with dimensions
     (time x individual x coordinates)
@@ -121,13 +122,15 @@ def neighbour_indices(
 
 
 def adjacency_matrix_in_frame(
-    positions: np.ndarray, num_neighbours: int, mode: str = "connectivity",
+    positions: np.ndarray,
+    num_neighbours: int,
+    mode: str = "connectivity",
 ) -> np.ndarray:
     """
     :param positions: array of locations with dimensions
     (individual x coordinates)
     :param num_neighbours: number of closest neighbours requested
-    :param mode: adjacency mode "connectivity" or "distance".     
+    :param mode: adjacency mode "connectivity" or "distance".
     :return: output has dimension (individual x individual)
     """
     nbrs = NearestNeighbors(
@@ -181,9 +184,9 @@ def restrict(data, indices, individual=None):
     """restrict_with_delay
 
     :param data: np.array with shape time x individuals x coordinates
-    :param indices: np.array with shape 
+    :param indices: np.array with shape
     time x individuals x subset_of_individuals
-    :param individual: label of individual to calculate restriction 
+    :param individual: label of individual to calculate restriction
     with delay. If None, calculating for all individuals
     """
     num_restricted = indices.shape[-1]

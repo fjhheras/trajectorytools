@@ -25,7 +25,7 @@ def calculate_center_of_mass(trajectories, params):
 
 
 def estimate_center_and_radius(locations):
-    """ Estimates center and radius of the smallest circle containing all points
+    """Estimates center and radius of the smallest circle containing all points
 
     :param locations: Numpy array of locations. It can be any shape, but last
     dim must be 2 (x, y)
@@ -153,7 +153,7 @@ class Trajectory:
         return tt.geometry.straightness(self.s)
 
     def estimate_center_and_radius_from_locations(self, in_px=False):
-        """ Assumes that the trajectories are restricted to a circular area and
+        """Assumes that the trajectories are restricted to a circular area and
         estimates its center and radius from the trajectories
 
         :param in_px: If True, the results are given in the original
@@ -185,7 +185,7 @@ class Trajectory:
         return factor  # In the future it will return self
 
     def origin_to(self, new_origin):
-        """ Places origin of frame of reference in a given location
+        """Places origin of frame of reference in a given location
 
         :param new_origin: Point that will become our new origin.
         It is expressed in the original frame of reference (usually px).
