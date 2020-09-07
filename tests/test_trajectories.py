@@ -1,3 +1,4 @@
+import os
 import random
 import tempfile
 import unittest
@@ -85,6 +86,22 @@ class TrajectoriesTestCase(unittest.TestCase):
                 self.t.normal_acceleration ** 2 + self.t.tg_acceleration ** 2
             ),
         )
+
+    def test_export_csv(self):
+        # Create a temporary csv file
+        fhandle, fpath = tempfile.mkstemp(suffix=".csv")
+        os.close(fhandle)
+        self.t.export_trajectories_to_csv(fpath)
+
+        # Load and compare
+        t = np.loadtxt(fpath, skiprows=1, delimiter=",")
+        t = t.reshape(self.t.number_of_frames, self.t.number_of_individuals, 6)
+        np.testing.assert_almost_equal(t[..., :2], self.t.s)
+        np.testing.assert_almost_equal(t[..., 2:4], self.t.v)
+        np.testing.assert_almost_equal(t[..., 4:], self.t.a)
+
+        # Remove temporary csv file
+        os.remove(fpath)
 
 
 class TrajectoriesTestCaseUnitChange(TrajectoriesTestCase):

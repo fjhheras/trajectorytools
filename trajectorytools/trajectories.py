@@ -272,6 +272,28 @@ class Trajectories(Trajectory):
         loaded_dict = np.load(filename, allow_pickle=True).item()
         return cls(loaded_dict["traj_data"], loaded_dict["params"])
 
+    def export_trajectories_to_csv(self, csvfilename, delimiter=",", **kwargs):
+        """Export trajectories to a csv plain text file.
+
+        :param csvfilename: Name of the csv file to be created
+        :param delimiter: Delimiter (default is ",")
+        :param kwargs: Other keyword arguments for numpy.savetxt
+        """
+        data_to_save = np.concatenate([self.s, self.v, self.a], axis=-1)
+        data_to_save = data_to_save.reshape(self.number_of_frames, -1)
+        data_header = ["x", "y", "vx", "vy", "ax", "ay"]
+        individuals = range(self.number_of_individuals)
+        header = delimiter.join(
+            [f"{h}_{i}" for i in individuals for h in data_header]
+        )
+        np.savetxt(
+            csvfilename,
+            data_to_save,
+            header=header,
+            delimiter=delimiter,
+            **kwargs,
+        )
+
     def __getitem__(self, val):
         view_trajectories = {
             k: getattr(self, k)[val] for k in self.keys_to_copy
