@@ -13,16 +13,16 @@ class TestPolar:
         self.args_hist = [self.r, self.theta]
 
     @pytest.mark.parametrize("entry", range(3))
-    @pytest.mark.xfail(raises=ValueError)
     def test_binned_statistic_value_error(self, entry):
         self.args[entry] = self.args[entry][:5]
-        binned_statistic_polar(*self.args)
+        with pytest.raises(ValueError):
+            binned_statistic_polar(*self.args)
 
     @pytest.mark.parametrize("entry", range(2))
-    @pytest.mark.xfail(raises=ValueError)
     def test_polar_histogram_value_error(self, entry):
         self.args_hist[entry] = self.args[entry][:5]
-        polar_histogram(*self.args_hist)
+        with pytest.raises(ValueError):
+            polar_histogram(*self.args_hist)
 
     def test_binned_statistic_expected(self):
         result = binned_statistic_polar(*self.args, bins=3, range_r=5)
