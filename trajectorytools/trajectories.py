@@ -19,7 +19,7 @@ def calculate_center_of_mass(trajectories, params):
     :param params: Dictionary of parameters
     """
     center_of_mass = {
-        k: np.nanmean(trajectories[k], axis=1) for k in Trajectory.keys_to_copy
+        k: np.mean(trajectories[k], axis=1) for k in Trajectory.keys_to_copy
     }
     return CenterMassTrajectory(center_of_mass, params)
 

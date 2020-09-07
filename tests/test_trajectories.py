@@ -12,9 +12,11 @@ import trajectorytools.socialcontext as ttsocial
 from trajectorytools import Trajectories, TrajectoriesWithPoints
 
 
-class TrajectoriesTestCase(unittest.TestCase):
+class TrajectoriesNoInterpolateTestCase(unittest.TestCase):
     def setUp(self):
-        self.t = Trajectories.from_idtrackerai(cons.test_trajectories_path)
+        self.t = Trajectories.from_idtrackerai(
+            cons.test_trajectories_path, interpolate_nans=False
+        )
 
     def test_len(self):
         assert len(self.t) == self.t._a.shape[0]
@@ -72,13 +74,6 @@ class TrajectoriesTestCase(unittest.TestCase):
         nptest.assert_allclose(self.t.v, v / factor_length * factor_time)
         nptest.assert_allclose(self.t.a, a / factor_length * factor_time ** 2)
 
-    def test_straightness(self):
-        straight = self.t.straightness
-        assert np.all(straight <= 1)
-        assert np.all(straight >= 0)
-        assert straight.ndim == 1
-        assert straight.shape[0] == self.t.number_of_individuals
-
     def test_acceleration(self):
         nptest.assert_allclose(
             self.t.acceleration,
@@ -102,6 +97,18 @@ class TrajectoriesTestCase(unittest.TestCase):
 
         # Remove temporary csv file
         os.remove(fpath)
+
+
+class TrajectoriesTestCase(TrajectoriesNoInterpolateTestCase):
+    def setUp(self):
+        self.t = Trajectories.from_idtrackerai(cons.test_trajectories_path)
+
+    def test_straightness(self):
+        straight = self.t.straightness
+        assert np.all(straight <= 1)
+        assert np.all(straight >= 0)
+        assert straight.ndim == 1
+        assert straight.shape[0] == self.t.number_of_individuals
 
 
 class TrajectoriesTestCaseUnitChange(TrajectoriesTestCase):
