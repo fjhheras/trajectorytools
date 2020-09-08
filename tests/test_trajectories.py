@@ -1,3 +1,4 @@
+import os
 import random
 import tempfile
 import unittest
@@ -11,9 +12,11 @@ import trajectorytools.socialcontext as ttsocial
 from trajectorytools import Trajectories, TrajectoriesWithPoints
 
 
-class TrajectoriesTestCase(unittest.TestCase):
+class TrajectoriesNoInterpolateTestCase(unittest.TestCase):
     def setUp(self):
-        self.t = Trajectories.from_idtrackerai(cons.test_trajectories_path)
+        self.t = Trajectories.from_idtrackerai(
+            cons.test_trajectories_path, interpolate_nans=False
+        )
 
     def test_len(self):
         assert len(self.t) == self.t._a.shape[0]
@@ -71,13 +74,6 @@ class TrajectoriesTestCase(unittest.TestCase):
         nptest.assert_allclose(self.t.v, v / factor_length * factor_time)
         nptest.assert_allclose(self.t.a, a / factor_length * factor_time ** 2)
 
-    def test_straightness(self):
-        straight = self.t.straightness
-        assert np.all(straight <= 1)
-        assert np.all(straight >= 0)
-        assert straight.ndim == 1
-        assert straight.shape[0] == self.t.number_of_individuals
-
     def test_acceleration(self):
         nptest.assert_allclose(
             self.t.acceleration,
@@ -85,6 +81,34 @@ class TrajectoriesTestCase(unittest.TestCase):
                 self.t.normal_acceleration ** 2 + self.t.tg_acceleration ** 2
             ),
         )
+
+    def test_export_csv(self):
+        # Create a temporary csv file
+        fhandle, fpath = tempfile.mkstemp(suffix=".csv")
+        os.close(fhandle)
+        self.t.export_trajectories_to_csv(fpath)
+
+        # Load and compare
+        t = np.loadtxt(fpath, skiprows=1, delimiter=",")
+        t = t.reshape(self.t.number_of_frames, self.t.number_of_individuals, 6)
+        np.testing.assert_almost_equal(t[..., :2], self.t.s)
+        np.testing.assert_almost_equal(t[..., 2:4], self.t.v)
+        np.testing.assert_almost_equal(t[..., 4:], self.t.a)
+
+        # Remove temporary csv file
+        os.remove(fpath)
+
+
+class TrajectoriesTestCase(TrajectoriesNoInterpolateTestCase):
+    def setUp(self):
+        self.t = Trajectories.from_idtrackerai(cons.test_trajectories_path)
+
+    def test_straightness(self):
+        straight = self.t.straightness
+        assert np.all(straight <= 1)
+        assert np.all(straight >= 0)
+        assert straight.ndim == 1
+        assert straight.shape[0] == self.t.number_of_individuals
 
 
 class TrajectoriesTestCaseUnitChange(TrajectoriesTestCase):
