@@ -42,7 +42,16 @@ or alternatively, locally with a symlink:
 .. code-block:: bash
     
     pip install -e .
-   
+
+If you see this error: "gcc: fatal error: cannot execute ‘cc1plus’: 
+execvp: No such file or directory" you need the GNU C++ compiler. 
+To install it in, for example, Ubuntu and derivatives:
+
+.. code-block:: bash
+    
+    sudo apt install g++
+
+
 Example
 ==========
 
