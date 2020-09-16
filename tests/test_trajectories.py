@@ -98,6 +98,12 @@ class TrajectoriesNoInterpolateTestCase(unittest.TestCase):
         # Remove temporary csv file
         os.remove(fpath)
 
+    def test_angle_towards(self):
+        p = np.random.rand(2)
+        angle = self.t.angle_towards(p)
+        signed_angle = self.t.signed_angle_towards(p)
+        np.testing.assert_almost_equal(angle, np.abs(signed_angle))
+
 
 class TrajectoriesTestCase(TrajectoriesNoInterpolateTestCase):
     def setUp(self):
