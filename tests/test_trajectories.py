@@ -272,12 +272,11 @@ class TrajectoriesWithPointsTestCase(TrajectoriesTestCase):
 
     def test_correct_class(self):
         assert isinstance(self.t, TrajectoriesWithPoints)
-    
-    def test_angle_towards(self):
-        angle = self.t.angle_towards_point('left_light')
-        signed_angle = self.t.signed_angle_towards_point('left_light')
-        np.testing.assert_almost_equal(angle, np.abs(signed_angle))
 
+    def test_angle_towards(self):
+        angle = self.t.angle_towards_point("left_light")
+        signed_angle = self.t.signed_angle_towards_point("left_light")
+        np.testing.assert_almost_equal(angle, np.abs(signed_angle))
 
 
 class TrajectoriesWithPointsTestCaseSaveLoad(TrajectoriesWithPointsTestCase):
