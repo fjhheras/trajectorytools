@@ -528,6 +528,9 @@ class TrajectoriesWithPoints(Trajectories):
     def orientation_towards_point(self, key):
         return self.orientation_towards(self.points[key])
 
+    def angle_towards_point(self, key):
+        return self.angle_towards(self.points[key])
+
     def e_towards_point(self, key):
         return self.e_towards(self.points[key])
 
