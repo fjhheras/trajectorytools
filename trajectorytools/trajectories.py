@@ -224,6 +224,9 @@ class Trajectory:
     def angle_towards(self, point):
         return np.arccos(np.clip(self.e_towards(point), -1, 1))
 
+    def signed_angle_towards(self, point):
+        return tt.signed_angle_between_vectors(point - self.s, self.v)
+
     def e_towards(self, point):
         return self._projection_vector_towards(point, self.e)
 
@@ -527,6 +530,12 @@ class TrajectoriesWithPoints(Trajectories):
 
     def orientation_towards_point(self, key):
         return self.orientation_towards(self.points[key])
+
+    def angle_towards_point(self, key):
+        return self.angle_towards(self.points[key])
+
+    def signed_angle_towards_point(self, key):
+        return self.signed_angle_towards(self.points[key])
 
     def e_towards_point(self, key):
         return self.e_towards(self.points[key])
