@@ -116,6 +116,16 @@ recorded in de Polavieja Lab (Champalimaud Research, Lisbon)
 .. _directory examples: trajectorytools/examples
 .. _data: trajectorytools/data
 
+---
+**NOTE**
+
+Note that, due to the computation of velocities and accelerations the
+`traj` object has N-2 frames. By default the missing frames correspond
+to the first and last frames of the video. If you used passed the option
+`"only_past":True` in the `smooth_params`, the missing frames correspond
+to the first two frames of the video.
+
+---
 
 Project maintainers
 ===================

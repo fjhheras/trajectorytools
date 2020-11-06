@@ -322,7 +322,9 @@ class Trajectories(Trajectory):
 
     @classmethod
     def from_idtrackerai(cls, trajectories_path, **kwargs):
-        return cls.from_idtracker(trajectories_path, **kwargs)
+        tr = cls.from_idtracker(trajectories_path, **kwargs)
+        tr.params["construct_method"] = "from_idtrackerai"
+        return tr
 
     @classmethod
     def from_idtracker(cls, trajectories_path, **kwargs):
@@ -335,6 +337,7 @@ class Trajectories(Trajectory):
         ).item()
         tr = cls.from_idtracker_(traj_dict, **kwargs)
         tr.params["path"] = trajectories_path
+        tr.params["construct_method"] = "from_idtracker"
         return tr
 
     @classmethod
@@ -370,6 +373,7 @@ class Trajectories(Trajectory):
 
         traj.params["frame_rate"] = traj_dict.get("frames_per_second", None)
         traj.params["body_length_px"] = traj_dict.get("body_length", None)
+        traj.params["construct_method"] = "from_idtracker_"
         return traj
 
     @classmethod
@@ -409,12 +413,19 @@ class Trajectories(Trajectory):
                 trajectories["_a"],
             ] = tt.velocity_acceleration(t_smooth)
 
+        # TODO: Think to give a hierarchy to the params dictionary
+        # Maybe in the future add a "how_construct" key being a dictionary
+        # with the classmethod called, path, interpolate_nans,
+        # and smooth_params
         params = {
             "displacement": displacement,  # Units: pixels
             "length_unit": 1,  # Units: pixels
             "length_unit_name": "px",
             "time_unit": 1,  # In frames
             "time_unit_name": "frames",
+            "interpolate_nans": interpolate_nans,
+            "smooth_params": smooth_params,
+            "construct_method": "from_positions",
         }
 
         return cls(trajectories, params)
