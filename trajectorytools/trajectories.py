@@ -413,7 +413,7 @@ class Trajectories(Trajectory):
                 trajectories["_a"],
             ] = tt.velocity_acceleration(t_smooth)
 
-        # TODO: Think to give a hierarchy to the params dictionary
+        # TODO: Organise the params dictionary more hierarchically
         # Maybe in the future add a "how_construct" key being a dictionary
         # with the classmethod called, path, interpolate_nans,
         # and smooth_params
