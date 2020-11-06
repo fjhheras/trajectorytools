@@ -321,13 +321,12 @@ class Trajectories(Trajectory):
         )
 
     @classmethod
-    def from_idtrackerai(cls, trajectories_path, **kwargs):
-        tr = cls.from_idtracker(trajectories_path, **kwargs)
-        tr.params["construct_method"] = "from_idtrackerai"
-        return tr
+    def from_idtracker(cls, trajectories_path, **kwargs):
+        warnings.warn(Warning("Deprecated. Use from_idtrackerai instead"))
+        return cls.from_idtrackerai(trajectories_path, **kwargs)
 
     @classmethod
-    def from_idtracker(cls, trajectories_path, **kwargs):
+    def from_idtrackerai(cls, trajectories_path, **kwargs):
         """Create Trajectories from a idtracker.ai trajectories file
 
         :param trajectories_path: idtracker.ai generated file
@@ -337,7 +336,7 @@ class Trajectories(Trajectory):
         ).item()
         tr = cls.from_idtracker_(traj_dict, **kwargs)
         tr.params["path"] = trajectories_path
-        tr.params["construct_method"] = "from_idtracker"
+        tr.params["construct_method"] = "from_idtrackerai"
         return tr
 
     @classmethod
