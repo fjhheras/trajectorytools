@@ -116,6 +116,17 @@ recorded in de Polavieja Lab (Champalimaud Research, Lisbon)
 .. _directory examples: trajectorytools/examples
 .. _data: trajectorytools/data
 
+---
+**NOTE**
+
+Note that, when using constructors like `from_idtrackerai` and `from_positions`, 
+we need to calculate velocity and accelerations from positions. As a result, the
+`traj` object has 2 frames less than the original positions array. By default, the 
+missing frames correspond to the first and last frames of the video. If you used 
+the option `"only_past":True` in `smooth_params`, the missing frames correspond
+to the first two frames of the video.
+
+---
 
 Project maintainers
 ===================
@@ -142,5 +153,4 @@ If you use this work in an academic context and you want to acknowledge us, plea
 Romero-Ferrero, F., Bergomi, M. G., Hinz, R. C., Heras, F. J., & de Polavieja, G. G. (2019). idtracker.ai: tracking all individuals in small or large collectives of unmarked animals. Nature methods, 1
 
 Heras, F. J., Romero-Ferrero, F., Hinz, R. C., & de Polavieja, G. G. (2019). Deep attention networks reveal the rules of collective motion in zebrafish. PLoS computational biology, 15(9), e1007354.
-
 

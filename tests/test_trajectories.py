@@ -595,10 +595,10 @@ class DownUpResample(DoubleTrajectoriesTestCase):
 
 class ScaleRadiusTrajectoriesTestCase(TrajectoriesTestCase):
     def setUp(self):
-        self.t = Trajectories.from_idtracker(
+        self.t = Trajectories.from_idtrackerai(
             cons.test_trajectories_path, center=True
         ).normalise_by("radius")
-        self.t_normal = Trajectories.from_idtracker(
+        self.t_normal = Trajectories.from_idtrackerai(
             cons.test_trajectories_path
         )
 
@@ -628,10 +628,10 @@ class ScaleRadiusTrajectoriesTestCase(TrajectoriesTestCase):
 
 class TrajectoriesRadiusTestCase(TrajectoriesTestCase):
     def setUp(self):
-        self.t_normal = Trajectories.from_idtracker(
+        self.t_normal = Trajectories.from_idtrackerai(
             cons.test_trajectories_path, smooth_params={"sigma": 1}
         )
-        self.t = Trajectories.from_idtracker(
+        self.t = Trajectories.from_idtrackerai(
             cons.test_trajectories_path, smooth_params={"sigma": 1}
         ).normalise_by("radius")
 
