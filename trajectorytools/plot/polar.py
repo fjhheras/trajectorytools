@@ -195,7 +195,7 @@ def plot_polar_histogram(
     fig = ax.get_figure()
     im = ax.pcolormesh(theta, r, values, cmap=cmap, vmin=vmin, vmax=vmax)
     cb = fig.colorbar(im, ax=ax, cmap=cmap)
-    cb.ax.tick_params(labelsize=24)
+    # cb.ax.tick_params(labelsize=24)
 
     if angle_convention == "clock":
         # Adjusting axis and sense of rotation to make it compatible
