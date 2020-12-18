@@ -54,7 +54,12 @@ param_list = [
         {},
         dict(radius=0.5, center_a=(0, 0)),
     ),
-    # If partial info: use it and get the rest from traj
+    # Partial info: use it and get the rest from traj
+    (
+        circular_trajectories(6, radius=0.5, center=(0.1, 0.2)),
+        traj_dict(arena_radius=2, arena_center=(0.1, 0.1)),
+        dict(radius=2, center_a=(0.1, 0.1)),
+    ),
     (
         circular_trajectories(6, radius=0.5, center=(0.1, 0.2)),
         traj_dict(arena_radius=1),
