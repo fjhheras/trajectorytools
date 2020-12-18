@@ -1,5 +1,6 @@
-import pytest
 import numpy as np
+import pytest
+
 from trajectorytools.trajectories import radius_and_center_from_traj_dict
 
 
@@ -41,23 +42,26 @@ def traj_dict(border=None, arena_radius=None, arena_center=None):
 
 
 param_list = [
+    # If border: use it
     (
-        circular_trajectories(3, radius=0.5),
+        circular_trajectories(6, radius=0.5),
         traj_dict(border=circular_trajectory()),
         dict(radius=1, center_a=(0, 0)),
     ),
+    # No info: get from tajectories
     (
-        circular_trajectories(3, radius=0.5),
+        circular_trajectories(6, radius=0.5),
         {},
         dict(radius=0.5, center_a=(0, 0)),
     ),
+    # If partial info: use it and get the rest from traj
     (
-        circular_trajectories(3, radius=0.5, center=(0.1, 0.2)),
+        circular_trajectories(6, radius=0.5, center=(0.1, 0.2)),
         traj_dict(arena_radius=1),
         dict(radius=1, center_a=(0.1, 0.2)),
     ),
     (
-        circular_trajectories(3, radius=0.5, center=(0.1, 0.2)),
+        circular_trajectories(6, radius=0.5, center=(0.1, 0.2)),
         traj_dict(arena_center=(0.0, -0.1)),
         dict(radius=0.5, center_a=(0.0, -0.1)),
     ),
@@ -67,5 +71,9 @@ param_list = [
 @pytest.mark.parametrize("locations,traj_dict,expected", param_list)
 def test_radius_and_center_from_traj_dict(locations, traj_dict, expected):
     radius, center_a = radius_and_center_from_traj_dict(locations, traj_dict)
-    np.testing.assert_allclose(radius, expected["radius"], atol=1e-15)
-    np.testing.assert_allclose(center_a, expected["center_a"], atol=1e-15)
+    np.testing.assert_allclose(
+        radius, expected["radius"], atol=1e-3, rtol=1e-3
+    )
+    np.testing.assert_allclose(
+        center_a, expected["center_a"], atol=1e-3, rtol=1e-3
+    )
