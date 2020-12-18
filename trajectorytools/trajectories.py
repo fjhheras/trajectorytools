@@ -44,31 +44,29 @@ def radius_and_center_from_traj_dict(locations, traj_dict):
     :param locations: Numpy array of locations. Last dim must be (x, y)
     :param traj_dict:
     """
-
     if "setup_points" in traj_dict and "border" in traj_dict["setup_points"]:
-        arena_center, arena_radius = estimate_center_and_radius(
+        center_a, radius = estimate_center_and_radius(
             traj_dict["setup_points"]["border"]
         )
-    elif "arena_radius" in traj_dict:
-        logging.warning(
-            "Using arena_radius (untested and probably not working)"
-        )
-        arena_radius = traj_dict["arena_radius"]
-        arena_center = None
     else:
-        arena_radius, arena_center = None, None
+        arena_radius = traj_dict.get("arena_radius", None)
+        arena_center = traj_dict.get("arena_center", None)
 
-    # Find center and radius. Then override if necessary
-    if arena_radius is None and arena_center is None:
-        center_a, estimated_radius = estimate_center_and_radius(locations)
+        # Find center and radius. Then override if necessary
+        if arena_radius is None or arena_center is None:
+            estimated_center, estimated_radius = estimate_center_and_radius(
+                locations
+            )
 
-    if arena_radius is None:
-        radius = estimated_radius
-    else:
-        radius = arena_radius
+        if arena_radius is None:
+            radius = estimated_radius
+        else:
+            radius = arena_radius
 
-    if arena_center is not None:
-        center_a = arena_center
+        if arena_center is None:
+            center_a = estimated_center
+        else:
+            center_a = arena_center
 
     return radius, center_a
 
