@@ -35,8 +35,10 @@ jobs:
     - name: Lint with flake8
       run: |
         # stop the build if there are Python syntax errors, deprecations or undefined names
-        # our line length is 79 (72 for docstrings), and we are strict (stop) if above 88
-        flake8 . --count --select=E5,E9,W6,F63,F7,F82 --max-line-length=88 --show-source --statistics
+        # our line length is 79 (72 for docstrings), and we are strict (stop) if above 87
+        # Goal: flake8 trajectorytools --extend-ignore=E203,W503,C0330
+        flake8 trajectorytools --max-line-length 87 --extend-ignore=E203,W503,F401,F403,E741 --show-source --statistics
+        #
         # exit-zero treats all errors as warnings.
         # ignoring when clashing with black:
         # - W503 line break before binary operator

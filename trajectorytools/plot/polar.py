@@ -119,7 +119,7 @@ def polar_histogram(
     return H, r_edges, theta_edges
 
 
-## Plotting functions
+# Plotting functions
 
 
 def interpolate_polarmap_angles(
@@ -194,8 +194,7 @@ def plot_polar_histogram(
     # Plot histogram/map
     fig = ax.get_figure()
     im = ax.pcolormesh(theta, r, values, cmap=cmap, vmin=vmin, vmax=vmax)
-    cb = fig.colorbar(im, ax=ax, cmap=cmap)
-    # cb.ax.tick_params(labelsize=24)
+    fig.colorbar(im, ax=ax, cmap=cmap)
 
     if angle_convention == "clock":
         # Adjusting axis and sense of rotation to make it compatible

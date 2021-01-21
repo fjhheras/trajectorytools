@@ -170,7 +170,7 @@ class Scene:
         )
 
 
-### Histogram / diagram stuff below
+# Histogram / diagram stuff below
 
 
 def get_spaced_colors(n, cmap="jet"):
