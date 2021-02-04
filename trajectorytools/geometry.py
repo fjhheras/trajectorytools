@@ -103,8 +103,7 @@ def center_in_individual(data, individual):
 
 
 def angle_between_vectors(x, y):
-    """Angle between vectors, between 0 and pi radians, no sign
-    """
+    """Angle between vectors, between 0 and pi radians, no sign"""
     u, v = normalise(x), normalise(y)
     return np.arccos(np.clip(dot(u, v), -1.0, +1.0))
 

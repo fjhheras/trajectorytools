@@ -5,8 +5,6 @@ import numpy as np
 
 import trajectorytools as tt
 import trajectorytools.animation as ttanimation
-import trajectorytools.plot as ttplot
-import trajectorytools.socialcontext as ttsocial
 from trajectorytools.constants import dir_of_data
 
 if __name__ == "__main__":
@@ -14,7 +12,10 @@ if __name__ == "__main__":
     t = np.load(test_trajectories_file)
     tt.center_trajectories_and_normalise(t)
     tt.interpolate_nans(t)
-    [s_, v_] = tt.smooth_several(t, derivatives=[0, 1])
+
+    t = tt.smooth(t, sigma=0.5)
+    s_, v_, a_ = tt.velocity_acceleration(t)
+
     speed = tt.norm(v_)
     colornorm = mpl.colors.Normalize(
         vmin=speed.min(), vmax=speed.max(), clip=True

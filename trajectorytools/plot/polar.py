@@ -10,8 +10,7 @@ __all__ = ["binned_statistic_polar", "polar_histogram", "plot_polar_histogram"]
 
 
 def remove_not_finite_from_args(f_unwrapped: Callable) -> Callable:
-    """ Decorator that removes nans from input numpy arrays
-    """
+    """Decorator that removes nans from input numpy arrays"""
 
     def wrapped(*args, **kwargs):
         for arg in args:
@@ -86,14 +85,14 @@ def polar_histogram(
     range_r: Union[Tuple[float, float], float] = 5,
     density: bool = False,
 ) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
-    """ Version of np.histogram2d for polar plots
+    """Version of np.histogram2d for polar plots
     :param r: 1d np.array
     :param theta: 1d np.array
     :param range_r: The leftmost and rightmost edges for radious bins.
     Leftmost and rightmost edges of theta are always -pi and pi
     :param bins: The bin specification.
-    :param density: If False, the default, returns the number of 
-    samples in each bin. If True, returns the probability density 
+    :param density: If False, the default, returns the number of
+    samples in each bin. If True, returns the probability density
     function at the bin: `bin_count / sample_count / bin_area`
     """
 
@@ -103,7 +102,11 @@ def polar_histogram(
     num_samples = len(r)
 
     H, r_edges, theta_edges = np.histogram2d(
-        r, theta, bins=bins, range=[range_r, [-np.pi, np.pi]], density=False,
+        r,
+        theta,
+        bins=bins,
+        range=[range_r, [-np.pi, np.pi]],
+        density=False,
     )
 
     if density:
@@ -116,7 +119,7 @@ def polar_histogram(
     return H, r_edges, theta_edges
 
 
-## Plotting functions
+# Plotting functions
 
 
 def interpolate_polarmap_angles(
@@ -148,11 +151,11 @@ def plot_polar_histogram(
     interpolation_factor: float = 5,
     angle_convention: str = "clock",
 ):
-    """ Plot color polar plot
+    """Plot color polar plot
 
-    :param values: Values to color-code 
-    :param r_edges: Edges in radius 
-    :param theta_edges: Edges in angle 
+    :param values: Values to color-code
+    :param r_edges: Edges in radius
+    :param theta_edges: Edges in angle
     :param ax: matplotlib.axes.Axes. Needs to be `polar=True`
     :param cmap: matplotlib colormap
     :param vmin: lower limit of colorbar range. If None, from data
@@ -191,8 +194,7 @@ def plot_polar_histogram(
     # Plot histogram/map
     fig = ax.get_figure()
     im = ax.pcolormesh(theta, r, values, cmap=cmap, vmin=vmin, vmax=vmax)
-    cb = fig.colorbar(im, ax=ax, cmap=cmap)
-    cb.ax.tick_params(labelsize=24)
+    fig.colorbar(im, ax=ax, cmap=cmap)
 
     if angle_convention == "clock":
         # Adjusting axis and sense of rotation to make it compatible

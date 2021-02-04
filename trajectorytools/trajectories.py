@@ -1,10 +1,11 @@
 import logging
+import warnings
 from copy import deepcopy
 
 import numpy as np
-from scipy import signal
 
 import trajectorytools as tt
+from trajectorytools.fish_bouts import find_bouts_individual
 
 
 def calculate_center_of_mass(trajectories, params):
@@ -18,13 +19,13 @@ def calculate_center_of_mass(trajectories, params):
     :param params: Dictionary of parameters
     """
     center_of_mass = {
-        k: np.nanmean(trajectories[k], axis=1) for k in Trajectory.keys_to_copy
+        k: np.mean(trajectories[k], axis=1) for k in Trajectory.keys_to_copy
     }
     return CenterMassTrajectory(center_of_mass, params)
 
 
 def estimate_center_and_radius(locations):
-    """ Estimates center and radius of the smallest circle containing all points
+    """Estimates center and radius of the smallest circle containing all points
 
     :param locations: Numpy array of locations. It can be any shape, but last
     dim must be 2 (x, y)
@@ -43,31 +44,29 @@ def radius_and_center_from_traj_dict(locations, traj_dict):
     :param locations: Numpy array of locations. Last dim must be (x, y)
     :param traj_dict:
     """
-
     if "setup_points" in traj_dict and "border" in traj_dict["setup_points"]:
-        arena_center, arena_radius = estimate_center_and_radius(
+        center_a, radius = estimate_center_and_radius(
             traj_dict["setup_points"]["border"]
         )
-    elif "arena_radius" in traj_dict:
-        logging.warning(
-            "Using arena_radius (untested and probably not working)"
-        )
-        arena_radius = traj_dict["arena_radius"]
-        arena_center = None
     else:
-        arena_radius, arena_center = None, None
+        arena_radius = traj_dict.get("arena_radius", None)
+        arena_center = traj_dict.get("arena_center", None)
 
-    # Find center and radius. Then override if necessary
-    if arena_radius is None and arena_center is None:
-        center_a, estimated_radius = estimate_center_and_radius(locations)
+        # Find center and radius. Then override if necessary
+        if arena_radius is None or arena_center is None:
+            estimated_center, estimated_radius = estimate_center_and_radius(
+                locations
+            )
 
-    if arena_radius is None:
-        radius = estimated_radius
-    else:
-        radius = arena_radius
+        if arena_radius is None:
+            radius = estimated_radius
+        else:
+            radius = arena_radius
 
-    if arena_center is not None:
-        center_a = arena_center
+        if arena_center is None:
+            center_a = estimated_center
+        else:
+            center_a = arena_center
 
     return radius, center_a
 
@@ -152,7 +151,7 @@ class Trajectory:
         return tt.geometry.straightness(self.s)
 
     def estimate_center_and_radius_from_locations(self, in_px=False):
-        """ Assumes that the trajectories are restricted to a circular area and
+        """Assumes that the trajectories are restricted to a circular area and
         estimates its center and radius from the trajectories
 
         :param in_px: If True, the results are given in the original
@@ -184,7 +183,7 @@ class Trajectory:
         return factor  # In the future it will return self
 
     def origin_to(self, new_origin):
-        """ Places origin of frame of reference in a given location
+        """Places origin of frame of reference in a given location
 
         :param new_origin: Point that will become our new origin.
         It is expressed in the original frame of reference (usually px).
@@ -216,11 +215,15 @@ class Trajectory:
     def _projection_vector_towards(self, point, vector):
         return tt.dot(tt.normalise(point - self.s), vector)
 
-    def orientation_towards(self, point):  # Soon to be deprecated
+    def orientation_towards(self, point):
+        warnings.warn(Warning("Deprecated. Use angle_towards instead"))
         return self.angle_towards(point)
 
     def angle_towards(self, point):
         return np.arccos(np.clip(self.e_towards(point), -1, 1))
+
+    def signed_angle_towards(self, point):
+        return tt.signed_angle_between_vectors(point - self.s, self.v)
 
     def e_towards(self, point):
         return self._projection_vector_towards(point, self.e)
@@ -270,6 +273,28 @@ class Trajectories(Trajectory):
         loaded_dict = np.load(filename, allow_pickle=True).item()
         return cls(loaded_dict["traj_data"], loaded_dict["params"])
 
+    def export_trajectories_to_csv(self, csvfilename, delimiter=",", **kwargs):
+        """Export trajectories to a csv plain text file.
+
+        :param csvfilename: Name of the csv file to be created
+        :param delimiter: Delimiter (default is ",")
+        :param kwargs: Other keyword arguments for numpy.savetxt
+        """
+        data_to_save = np.concatenate([self.s, self.v, self.a], axis=-1)
+        data_to_save = data_to_save.reshape(self.number_of_frames, -1)
+        data_header = ["x", "y", "vx", "vy", "ax", "ay"]
+        individuals = range(self.number_of_individuals)
+        header = delimiter.join(
+            [f"{h}_{i}" for i in individuals for h in data_header]
+        )
+        np.savetxt(
+            csvfilename,
+            data_to_save,
+            header=header,
+            delimiter=delimiter,
+            **kwargs,
+        )
+
     def __getitem__(self, val):
         view_trajectories = {
             k: getattr(self, k)[val] for k in self.keys_to_copy
@@ -281,10 +306,6 @@ class Trajectories(Trajectory):
             k: getattr(self, k)[:, val] for k in self.keys_to_copy
         }
         return self.__class__(view_trajectories, self.params)
-
-    def view(self, start=None, end=None):
-        logging.warning("To be deprecated: use standard slicing instead")
-        return self[slice(start, end)]
 
     def __str__(self):
         if "path" in self.params:
@@ -298,11 +319,12 @@ class Trajectories(Trajectory):
         )
 
     @classmethod
-    def from_idtrackerai(cls, trajectories_path, **kwargs):
-        return cls.from_idtracker(trajectories_path, **kwargs)
+    def from_idtracker(cls, trajectories_path, **kwargs):
+        warnings.warn(Warning("Deprecated. Use from_idtrackerai instead"))
+        return cls.from_idtrackerai(trajectories_path, **kwargs)
 
     @classmethod
-    def from_idtracker(cls, trajectories_path, **kwargs):
+    def from_idtrackerai(cls, trajectories_path, **kwargs):
         """Create Trajectories from a idtracker.ai trajectories file
 
         :param trajectories_path: idtracker.ai generated file
@@ -312,6 +334,7 @@ class Trajectories(Trajectory):
         ).item()
         tr = cls.from_idtracker_(traj_dict, **kwargs)
         tr.params["path"] = trajectories_path
+        tr.params["construct_method"] = "from_idtrackerai"
         return tr
 
     @classmethod
@@ -347,6 +370,7 @@ class Trajectories(Trajectory):
 
         traj.params["frame_rate"] = traj_dict.get("frames_per_second", None)
         traj.params["body_length_px"] = traj_dict.get("body_length", None)
+        traj.params["construct_method"] = "from_idtracker_"
         return traj
 
     @classmethod
@@ -386,12 +410,19 @@ class Trajectories(Trajectory):
                 trajectories["_a"],
             ] = tt.velocity_acceleration(t_smooth)
 
+        # TODO: Organise the params dictionary more hierarchically
+        # Maybe in the future add a "how_construct" key being a dictionary
+        # with the classmethod called, path, interpolate_nans,
+        # and smooth_params
         params = {
             "displacement": displacement,  # Units: pixels
             "length_unit": 1,  # Units: pixels
             "length_unit_name": "px",
             "time_unit": 1,  # In frames
             "time_unit_name": "frames",
+            "interpolate_nans": interpolate_nans,
+            "smooth_params": smooth_params,
+            "construct_method": "from_positions",
         }
 
         return cls(trajectories, params)
@@ -454,49 +485,10 @@ class FishTrajectories(Trajectories):
         the next bout
         """
 
-        if find_max_dict is None:
-            find_max_dict = {}
-        if find_min_dict is None:
-            find_min_dict = {}
-
         all_bouts = []
+        speed = self.speed
         for focal in range(self.number_of_individuals):
-            # Find local minima and maxima
-            min_frames_ = signal.find_peaks(
-                -self.speed[:, focal], **find_min_dict
-            )[0]
-            max_frames_ = signal.find_peaks(
-                self.speed[:, focal], **find_max_dict
-            )[0]
-
-            # Filter out NaNs
-            min_frames = [
-                f for f in min_frames_ if not np.isnan(self.s[f, focal, 0])
-            ]
-            max_frames = [
-                f for f in max_frames_ if not np.isnan(self.s[f, focal, 0])
-            ]
-
-            # Obtain couples of consecutive minima and maxima
-            frames = min_frames + max_frames
-            frameismax = [False] * len(min_frames) + [True] * len(max_frames)
-            ordered_frames, ordered_ismax = zip(
-                *sorted(zip(frames, frameismax))
-            )
-            bouts = [
-                ordered_frames[i : i + 2]
-                for i in range(len(ordered_frames) - 1)
-                if not ordered_ismax[i] and ordered_ismax[i + 1]
-            ]
-
-            # Ordering, and adding next_bout
-            starting_bouts, bout_peaks = zip(*bouts)
-            next_bout_start = list(starting_bouts[1:]) + [
-                self.number_of_frames - 1
-            ]
-            bouts = np.asarray(
-                list(zip(starting_bouts, bout_peaks, next_bout_start))
-            )
+            bouts = find_bouts_individual(speed[:, focal])
             all_bouts.append(bouts)
         return all_bouts
 
@@ -546,6 +538,12 @@ class TrajectoriesWithPoints(Trajectories):
 
     def orientation_towards_point(self, key):
         return self.orientation_towards(self.points[key])
+
+    def angle_towards_point(self, key):
+        return self.angle_towards(self.points[key])
+
+    def signed_angle_towards_point(self, key):
+        return self.signed_angle_towards(self.points[key])
 
     def e_towards_point(self, key):
         return self.e_towards(self.points[key])

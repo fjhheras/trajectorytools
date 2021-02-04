@@ -1,4 +1,56 @@
 import trajectorytools as tt
+import numpy as np
+import scipy.signal
+from typing import Any, Dict
+
+
+def find_bouts_individual(
+    speed: np.ndarray,
+    find_min_dict: Dict[str, Any] = None,
+    find_max_dict: Dict[str, Any] = None,
+) -> np.ndarray:
+    """Obtain frames of bouts from the speed of one individual
+
+    :param speed: array of shape (num frames, )
+    :param find_max_dict: kwargs for scipy.signal.find_peaks
+    :param find_min_dict: kwargs for scipy.signal.find_peaks
+
+    returns
+    :all_bouts: Array of shape (number_of_bouts, 3). Col-1 is the
+                starting frame of the bout, col-2 is the frame
+                where the bout peaks, col-3 is the beginning of
+                the next bout
+    """
+
+    if find_max_dict is None:
+        find_max_dict = {}
+    if find_min_dict is None:
+        find_min_dict = {}
+
+    number_of_frames = speed.shape[0]
+
+    # Find local minima and maxima
+    min_frames_ = scipy.signal.find_peaks(-speed, **find_min_dict)[0]
+    max_frames_ = scipy.signal.find_peaks(speed, **find_max_dict)[0]
+
+    # Filter out NaNs
+    min_frames = [f for f in min_frames_ if not np.isnan(speed[f])]
+    max_frames = [f for f in max_frames_ if not np.isnan(speed[f])]
+
+    # Obtain couples of consecutive minima and maxima
+    frames = min_frames + max_frames
+    frameismax = [False] * len(min_frames) + [True] * len(max_frames)
+    ordered_frames, ordered_ismax = zip(*sorted(zip(frames, frameismax)))
+    bouts = [
+        ordered_frames[i : i + 2]
+        for i in range(len(ordered_frames) - 1)
+        if not ordered_ismax[i] and ordered_ismax[i + 1]
+    ]
+
+    # Ordering, and adding next_bout
+    starting_bouts, bout_peaks = zip(*bouts)
+    next_bout_start = list(starting_bouts[1:]) + [number_of_frames - 1]
+    return np.array(list(zip(starting_bouts, bout_peaks, next_bout_start)))
 
 
 def bout_statistics():
