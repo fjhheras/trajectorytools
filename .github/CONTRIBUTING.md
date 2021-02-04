@@ -22,6 +22,7 @@ including the line length limit of 79 for python code and 72 for docs/comments.
 a uniform code look. Before submitting pull requests, we would appreciate if 
 you autoformat the code using the following command: `black -l 79 .`
 + Whenever possible, we create tests for any new code.
++ We are keeping a [CHANGELOG](../CHANGELOG.md)
 
 If you are like us some years ago and have problems following these rules,
 we are happy to help you implement them during the pull request process.
