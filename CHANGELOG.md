@@ -27,6 +27,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 - Minor refactoring (`find_bouts_individual`)
 - Black version 20.8
 - updated README to warn about the two missing frames due to the computation of the velocity and acceleration.
+- [created CHANGELOG](https://github.com/fjhheras/trajectorytools/pull/33)
 
 ## [0.3.2] - 2020-07-11
 
