@@ -473,7 +473,7 @@ class Trajectories(Trajectory):
 
 
 class FishTrajectories(Trajectories):
-    def get_bouts(self, find_max_dict=None, find_min_dict=None):
+    def get_bouts(self, find_min_dict=None, find_max_dict=None):
         """Obtain bouts start and peak for all individuals
 
         :param find_max_dict: named arguments passed to scipy.signal.find_peaks
