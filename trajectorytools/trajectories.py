@@ -237,7 +237,8 @@ class Trajectory:
     @property
     def distance_to_center(self):
         raise Exception(
-            "Deprecated: Center trajectories with origin_to and use distance_to_origin"
+            "Deprecated: "
+            "Center trajectories with origin_to and use distance_to_origin"
         )
 
     @property
@@ -488,7 +489,9 @@ class FishTrajectories(Trajectories):
         all_bouts = []
         speed = self.speed
         for focal in range(self.number_of_individuals):
-            bouts = find_bouts_individual(speed[:, focal])
+            bouts = find_bouts_individual(
+                speed[:, focal], find_min_dict, find_max_dict
+            )
             all_bouts.append(bouts)
         return all_bouts
 
