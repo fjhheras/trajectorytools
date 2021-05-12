@@ -102,7 +102,11 @@ def polar_histogram(
     num_samples = len(r)
 
     H, r_edges, theta_edges = np.histogram2d(
-        r, theta, bins=bins, range=[range_r, [-np.pi, np.pi]], density=False,
+        r,
+        theta,
+        bins=bins,
+        range=[range_r, [-np.pi, np.pi]],
+        density=False,
     )
 
     if density:

@@ -9,15 +9,15 @@ def _find_interlaced_peaks(
     signal: np.ndarray, find_dict: Dict[str, Any] = None
 ):
     """Finds peaks and minima-between-peaks of a signal
-    
-    :param signal: array of shape (num timepoints, )  
-    :param find_dict: kwargs for scipy.signal.find_peaks  
 
-    returns  
+    :param signal: array of shape (num timepoints, )
+    :param find_dict: kwargs for scipy.signal.find_peaks
+
+    returns
     :peaks: Array of shape (number_of_peaks, ) of indices of peaks in the
-    signal  
+    signal
     :minima: Array of shape (number_of_peaks - 1, ) of minima between the
-    peaks of the signal  
+    peaks of the signal
     """
     peaks = scipy.signal.find_peaks(signal, **find_dict)[0]
     minima = []

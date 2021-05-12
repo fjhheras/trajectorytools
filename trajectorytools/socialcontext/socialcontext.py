@@ -75,7 +75,8 @@ def in_alpha_border(positions, alpha=5):
 
 
 def neighbour_indices_in_frame(
-    positions: np.ndarray, num_neighbours: int,
+    positions: np.ndarray,
+    num_neighbours: int,
 ) -> np.ndarray:
     """Calculate the indices of the nearest neighbours
 
@@ -121,7 +122,9 @@ def neighbour_indices(
 
 
 def adjacency_matrix_in_frame(
-    positions: np.ndarray, num_neighbours: int, mode: str = "connectivity",
+    positions: np.ndarray,
+    num_neighbours: int,
+    mode: str = "connectivity",
 ) -> np.ndarray:
     """
     :param positions: array of locations with dimensions

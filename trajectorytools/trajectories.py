@@ -11,7 +11,7 @@ from trajectorytools.fish_bouts import find_bouts_individual
 def calculate_center_of_mass(trajectories, params):
     """calculate_center_of_mass
 
-    Produces a CenterMassTrajectory, with the position, velocity and 
+    Produces a CenterMassTrajectory, with the position, velocity and
     acceleration of the center of mass.
 
     :param trajectories: Dictionary of numpy arrays for position ('_s'),
