@@ -492,7 +492,11 @@ class FishTrajectories(Trajectories):
             bouts = find_bouts_individual(
                 speed=speed[:, focal],
                 find_min_dict=find_min_dict,
+<<<<<<< HEAD
                 find_max_dict=find_max_dict,
+=======
+                find_max_dict=find_max_dict
+>>>>>>> b61c3def58a144ad09da4a22a18e719db65ea29b
             )
             all_bouts.append(bouts)
         return all_bouts
