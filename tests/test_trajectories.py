@@ -652,22 +652,31 @@ class FishTrajectoriesTestCase(TrajectoriesTestCase):
         )
 
     def test_simple(self):
+        """Tests whether bouts are well-defined both for when specifying maxima
+        peaks and for when specifying minima peaks.
+        """
         find_dict = {"prominence": (0.01, None), "distance": 6}
-        all_bouts = self.t.get_bouts(
-            find_min_dict=find_dict, find_max_dict=find_dict
-        )
-        assert len(all_bouts) == self.t.number_of_individuals
+        all_bouts_min = self.t.get_bouts(find_min_dict=find_dict)
+        assert len(all_bouts_min) == self.t.number_of_individuals
+
+        all_bouts_max = self.t.get_bouts(find_max_dict=find_dict)
+        assert len(all_bouts_max) == self.t.number_of_individuals
 
         # Choosing one individual at random for test
         i = random.randrange(self.t.number_of_individuals)
-        bouts = all_bouts[i]
+        bouts_min = all_bouts_min[i]
+        bouts_max = all_bouts_max[i]
         speed = self.t.speed[:, i]
 
         # Last frame of one bout is the first of the next
-        np.testing.assert_almost_equal(bouts[:-1, 2], bouts[1:, 0])
+        np.testing.assert_almost_equal(bouts_min[:-1, 2], bouts_min[1:, 0])
+        np.testing.assert_almost_equal(bouts_max[:-1, 2], bouts_max[1:, 0])
 
         # Faster in the peak than start/end
-        for b in bouts:
+        for b in bouts_min:
+            assert speed[b[1]] >= speed[b[0]]
+            assert speed[b[1]] >= speed[b[2]]
+        for b in bouts_max:
             assert speed[b[1]] >= speed[b[0]]
             assert speed[b[1]] >= speed[b[2]]
 
