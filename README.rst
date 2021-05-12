@@ -133,6 +133,7 @@ Project maintainers
 
 Francisco J.H. Heras (2017-)
 Francisco Romero Ferrero (2017-)
+Dean Rance (2021-)
 
 Contribute
 ==========
