@@ -61,7 +61,8 @@ def find_bouts_individual(
         )
     else:
         warnings.warn(
-            "Using both find_min_dict and find_max_dict is deprecated. "
+            "Using both find_min_dict and find_max_dict is deprecated, as it "
+            "can miss maxima and minima of bouts, yielding erroneous results. "
             "In future, specify only one such argument.",
             DeprecationWarning,
         )
