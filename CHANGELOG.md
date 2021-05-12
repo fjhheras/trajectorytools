@@ -6,6 +6,14 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ## [0.3.4] - Future release
 
+### Changed
+
+- Adding deprecation warning for `find_bouts_individual` when both `find_min_dict` and `find_max_dict` are used
+
+### Fixed
+
+- `FishTrajectories.get_bouts` no longer ignores `find_min_dict`, `find_max_dict` inputs, test updated accordingly
+
 ## [0.3.3] - Current release
 
 ### Added

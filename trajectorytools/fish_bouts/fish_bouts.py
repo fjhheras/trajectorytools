@@ -2,6 +2,29 @@ import trajectorytools as tt
 import numpy as np
 import scipy.signal
 from typing import Any, Dict
+import warnings
+
+
+def _find_interlaced_peaks(
+    signal: np.ndarray, find_dict: Dict[str, Any] = None
+):
+    """Finds peaks and minima-between-peaks of a signal
+
+    :param signal: array of shape (num timepoints, )
+    :param find_dict: kwargs for scipy.signal.find_peaks
+
+    returns
+    :peaks: Array of shape (number_of_peaks, ) of indices of peaks in the
+    signal
+    :minima: Array of shape (number_of_peaks - 1, ) of minima between the
+    peaks of the signal
+    """
+    peaks = scipy.signal.find_peaks(signal, **find_dict)[0]
+    minima = []
+    for start, end in zip(peaks[:-1], peaks[1:]):
+        local_min = signal[start:end].argmin() + start
+        minima.append(local_min)
+    return np.array(peaks), np.array(minima)
 
 
 def find_bouts_individual(
@@ -22,16 +45,29 @@ def find_bouts_individual(
                 the next bout
     """
 
-    if find_max_dict is None:
-        find_max_dict = {}
-    if find_min_dict is None:
-        find_min_dict = {}
-
     number_of_frames = speed.shape[0]
 
     # Find local minima and maxima
-    min_frames_ = scipy.signal.find_peaks(-speed, **find_min_dict)[0]
-    max_frames_ = scipy.signal.find_peaks(speed, **find_max_dict)[0]
+    if (find_max_dict is None) and (find_min_dict is None):
+        find_min_dict = {}  # default to  finding minima with scipy
+
+    if find_max_dict is None:
+        min_frames_, max_frames_ = _find_interlaced_peaks(
+            signal=-speed, find_dict=find_min_dict
+        )
+    elif find_min_dict is None:
+        max_frames_, min_frames_ = _find_interlaced_peaks(
+            signal=speed, find_dict=find_max_dict
+        )
+    else:
+        warnings.warn(
+            "Using both find_min_dict and find_max_dict is deprecated, as it "
+            "can miss maxima and minima of bouts, yielding erroneous results. "
+            "In future, specify only one such argument.",
+            DeprecationWarning,
+        )
+        min_frames_ = scipy.signal.find_peaks(-speed, **find_min_dict)[0]
+        max_frames_ = scipy.signal.find_peaks(speed, **find_max_dict)[0]
 
     # Filter out NaNs
     min_frames = [f for f in min_frames_ if not np.isnan(speed[f])]
@@ -62,8 +98,8 @@ def bout_statistics():
 
     def gliding_time(tr, bout, focal):
         """
-        It can only be interpreted as gliding time if the end of the current bout
-        coincides with the beginning of the next bout
+        It can only be interpreted as gliding time if the end of the current
+        bout coincides with the beginning of the next bout
         """
         return bout[2] - bout[1]
 
