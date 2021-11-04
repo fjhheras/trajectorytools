@@ -1,4 +1,4 @@
-from trajectorytools.trajectories.idtrackerai import import_idtrackerai_dict
+from trajectorytools.trajectories import import_idtrackerai_dict
 from .trajectories import Trajectories
 import numpy as np
 from scipy.spatial.distance import cdist
