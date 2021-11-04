@@ -1,3 +1,4 @@
+from trajectorytools.trajectories.idtrackerai import import_idtrackerai_dict
 from .trajectories import Trajectories
 import numpy as np
 from scipy.spatial.distance import cdist
@@ -46,3 +47,31 @@ def from_several_positions(t_list: List[np.ndarray], **kwargs) -> Trajectories:
     """
     t_concatenated = _concatenate_np(t_list)
     return Trajectories.from_positions(t_concatenated, **kwargs)
+
+
+def _concatenate_idtrackerai_dicts(traj_dicts):
+    """Concatenates several idtrackerai dictionaries.
+
+    The output contains:
+    - a concatenation of the trajectories
+    - the values of the first diccionary for all other keys
+    """
+    traj_dict_cat = traj_dicts[0].copy()
+    traj_cat = _concatenate_np(
+        [traj_dict["trajectories"] for traj_dict in traj_dicts]
+    )
+    traj_dict_cat["trajectories"] = traj_cat
+    return traj_dict_cat
+
+
+def from_several_idtracker_files(trajectories_paths, **kwargs):
+    traj_dicts = []
+    for trajectories_path in trajectories_paths:
+        traj_dict = np.load(
+            trajectories_path, encoding="latin1", allow_pickle=True
+        ).item()
+        traj_dicts.append(traj_dict)
+    traj_dict = _concatenate_idtrackerai_dicts(traj_dicts)
+    tr = import_idtrackerai_dict(traj_dict, **kwargs)
+    tr.params["path"] = trajectories_paths
+    tr.params["construct_method"] = "from_several_idtracker_files"
