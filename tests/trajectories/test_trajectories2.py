@@ -5,7 +5,7 @@ from trajectorytools.trajectories import radius_and_center_from_traj_dict
 
 
 def circular_trajectory(radius=1, center=(0, 0)):
-    length = 100
+    length = 1000
     max_rad = 5  # Almost a complete circle
     omega = max_rad / length
     # Calculation
