@@ -4,7 +4,7 @@ from scipy.spatial.distance import cdist
 from scipy.optimize import linear_sum_assignment
 from typing import List
 
-## Utils
+# Utils
 
 
 def _best_ids(xa: np.ndarray, xb: np.ndarray) -> np.ndarray:
@@ -37,7 +37,7 @@ def _concatenate_np(t_list: List[np.ndarray]) -> np.ndarray:
     return _concatenate_two_np(t_list[0], _concatenate_np(t_list[1:]))
 
 
-## Obtain trajectories from concatenation
+# Obtain trajectories from concatenation
 
 
 def from_several_positions(t_list: List[np.ndarray], **kwargs) -> Trajectories:
