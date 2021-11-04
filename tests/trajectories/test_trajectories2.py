@@ -1,11 +1,13 @@
 import numpy as np
 import pytest
 
-from trajectorytools.trajectories import radius_and_center_from_traj_dict
+from trajectorytools.trajectories.trajectories import (
+    _radius_and_center_from_traj_dict,
+)
 
 
 def circular_trajectory(radius=1, center=(0, 0)):
-    length = 100
+    length = 1000
     max_rad = 5  # Almost a complete circle
     omega = max_rad / length
     # Calculation
@@ -76,7 +78,7 @@ param_list = [
 @pytest.mark.parametrize("locations,traj_dict,expected", param_list)
 @pytest.mark.xfail
 def test_radius_and_center_from_traj_dict(locations, traj_dict, expected):
-    radius, center_a = radius_and_center_from_traj_dict(locations, traj_dict)
+    radius, center_a = _radius_and_center_from_traj_dict(locations, traj_dict)
     np.testing.assert_allclose(
         radius, expected["radius"], atol=1e-3, rtol=1e-3
     )
