@@ -109,3 +109,4 @@ def from_several_idtracker_files(trajectories_paths, chunks=None, **kwargs):
     tr = import_idtrackerai_dict(traj_dict, **kwargs)
     tr.params["path"] = trajectories_paths
     tr.params["construct_method"] = "from_several_idtracker_files"
+    return tr
