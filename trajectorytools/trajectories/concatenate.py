@@ -88,7 +88,7 @@ def is_idtrackerai_session(path):
 def get_trajectories(idtrackerai_collection_folder):
     """Return a list of all trajectory files available in an idtrackerai collection folder
     """
-    file_contents = os.listdir(imgstore_folder)
+    file_contents = os.listdir(idtrackerai_collection_folder)
     idtrackerai_sessions = []
     for folder in file_contents:
         if is_idtrackerai_session(folder):
