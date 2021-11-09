@@ -101,7 +101,7 @@ def get_trajectories(idtrackerai_collection_folder):
             idtrackerai_sessions.append(folder)
 
     trajectories_paths = {os.path.basename(session): pick_trajectory_file(session) for session in idtrackerai_sessions}
-    trajectories_paths = {k: v for k, v in trajectories_paths if not v is None}
+    trajectories_paths = {k: v for k, v in trajectories_paths.items() if not v is None}
     return trajectories_paths
 
 def from_several_idtracker_files(trajectories_paths, chunks=None, **kwargs):
