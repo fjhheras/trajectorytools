@@ -89,6 +89,7 @@ def get_trajectories(idtrackerai_collection_folder):
     """Return a list of all trajectory files available in an idtrackerai collection folder
     """
     file_contents = os.listdir(idtrackerai_collection_folder)
+
     file_contents = [os.path.join(idtrackerai_collection_folder, folder) for folder in file_contents]
     
     idtrackerai_sessions = []
@@ -97,6 +98,7 @@ def get_trajectories(idtrackerai_collection_folder):
             idtrackerai_sessions.append(folder)
 
     trajectories_paths = [pick_trajectory_file(session) for session in idtrackerai_sessions]
+    trajectories_paths = [path for path in trajectories_path if not path is None]
     return trajectories_paths
 
 def from_several_idtracker_files(trajectories_paths, chunks=None, **kwargs):
