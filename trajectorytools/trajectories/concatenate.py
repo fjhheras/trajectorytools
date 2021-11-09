@@ -9,6 +9,7 @@ from scipy.spatial.distance import cdist
 from scipy.optimize import linear_sum_assignment
 from typing import List
 import tqdm
+
 # Utils
 
 
@@ -114,7 +115,7 @@ def from_several_idtracker_files(trajectories_paths, chunks=None, verbose=False,
 
     traj_dicts = []
     if verbose:
-        pb = tqdm.tqdm(total = len(trajectories_path))
+        pb = tqdm.tqdm(total = len(trajectories_paths))
         
     for trajectories_path in trajectories_paths:
         traj_dict = np.load(
