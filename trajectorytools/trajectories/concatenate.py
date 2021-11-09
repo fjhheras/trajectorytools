@@ -74,9 +74,9 @@ def pick_trajectory_file(session_folder):
     trajectories = os.path.join(session_folder, "trajectories", "trajectories.npy")
     trajectories_wo_gaps = os.path.join(session_folder, "trajectories_wo_gaps", "trajectories_wo_gaps.npy")
 
-    if os.path.exist(trajectories_wo_gaps):
+    if os.path.exists(trajectories_wo_gaps):
         return trajectories_wo_gaps
-    elif os.path.exist(trajectories):
+    elif os.path.exists(trajectories):
         return trajectories
 
 
