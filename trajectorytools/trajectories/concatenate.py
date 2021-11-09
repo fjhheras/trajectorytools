@@ -32,10 +32,9 @@ def _best_ids(xa: np.ndarray, xb: np.ndarray) -> np.ndarray:
 
 
 def _concatenate_two_np(ta: np.ndarray, tb: np.ndarray):
-    # Shape of ta, tb: (individuals, frames, 2)
-    best_ids = _best_ids(ta[:, -1], tb[:, 0])
-    return np.concatenate([ta, tb[best_ids]], axis=1)    
-    
+    # Shape of ta, tb: (frames, individuals, 2)
+    best_ids = _best_ids(ta[-1, :], tb[0, :])
+    return np.concatenate([ta, tb[:, best_ids, :]], axis=0)
 
 def _concatenate_np(t_list: List[np.ndarray], pb=None) -> np.ndarray:
 
@@ -43,10 +42,10 @@ def _concatenate_np(t_list: List[np.ndarray], pb=None) -> np.ndarray:
         result = t_list[0]
     else:
         result = _concatenate_two_np(t_list[0], _concatenate_np(t_list[1:], pb=pb))
-    
+
     if not pb is None:
         pb.update(1)
-    
+
     return result
 
 # Obtain trajectories from concatenation
@@ -101,7 +100,7 @@ def get_trajectories(idtrackerai_collection_folder):
     file_contents = os.listdir(idtrackerai_collection_folder)
 
     file_contents = [os.path.join(idtrackerai_collection_folder, folder) for folder in file_contents]
-    
+
     idtrackerai_sessions = []
     for folder in file_contents:
         if is_idtrackerai_session(folder):
@@ -116,7 +115,7 @@ def from_several_idtracker_files(trajectories_paths, chunks=None, verbose=False,
     traj_dicts = []
     if verbose:
         pb = tqdm.tqdm(total = len(trajectories_paths))
-        
+
     for trajectories_path in trajectories_paths:
         traj_dict = np.load(
             trajectories_path, encoding="latin1", allow_pickle=True
