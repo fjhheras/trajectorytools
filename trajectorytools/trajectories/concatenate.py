@@ -1,3 +1,6 @@
+import re
+import os.path
+
 from trajectorytools.trajectories import import_idtrackerai_dict
 from .trajectories import Trajectories
 import numpy as np
@@ -64,7 +67,38 @@ def _concatenate_idtrackerai_dicts(traj_dicts):
     return traj_dict_cat
 
 
-def from_several_idtracker_files(trajectories_paths, **kwargs):
+def pick_trajectory_file(session_folder):
+    """Select the best trajectories file
+    available in an idtrackerai session
+    """
+    trajectories = os.path.join(session_folder, "trajectories", "trajectories.npy")
+    trajectories_wo_gaps = os.path.join(session_folder, "trajectories_wo_gaps", "trajectories_wo_gaps.npy")
+
+    if os.path.exist(trajectories_wo_gaps):
+        return trajectories_wo_gaps
+    elif os.path.exist(trajectories):
+        return trajectories
+
+
+def is_idtrackerai_session(path):
+    """Check whether the passed path is an idtrackerai session
+    """
+    return re.search("session_", folder) and os.path.isdir(folder)
+
+def get_trajectories(idtrackerai_collection_folder):
+    """Return a list of all trajectory files available in an idtrackerai collection folder
+    """
+    file_contents = os.listdir(imgstore_folder)
+    idtrackerai_sessions = []
+    for folder in file_contents:
+        if is_idtrackerai_session(folder):
+            idtrackerai_sessions.append(folder)
+
+    trajectories_paths = [pick_trajectory_file(session) for session in idtrackerai_sessions]
+    return trajectories
+
+def from_several_idtracker_files(trajectories_paths, chunks=None, **kwargs):
+
     traj_dicts = []
     for trajectories_path in trajectories_paths:
         traj_dict = np.load(
