@@ -33,13 +33,19 @@ def _best_ids(xa: np.ndarray, xb: np.ndarray) -> np.ndarray:
 def _concatenate_two_np(ta: np.ndarray, tb: np.ndarray):
     # Shape of ta, tb: (individuals, frames, 2)
     best_ids = _best_ids(ta[:, -1], tb[:, 0])
-    return np.concatenate([ta, tb[best_ids]], axis=1)
+    result = np.concatenate([ta, tb[best_ids]], axis=1)
+    if not pb is None:
+        pb.update(1)
+    
+    return result
 
+def _concatenate_np(t_list: List[np.ndarray], pb=None) -> np.ndarray:
 
-def _concatenate_np(t_list: List[np.ndarray]) -> np.ndarray:
     if len(t_list) == 1:
+        if not pb is None:
+            pb.update(1)
         return t_list[0]
-    return _concatenate_two_np(t_list[0], _concatenate_np(t_list[1:]))
+    return  _concatenate_two_np(t_list[0], _concatenate_np(t_list[1:], pb=pb))
 
 
 # Obtain trajectories from concatenation
@@ -53,7 +59,7 @@ def from_several_positions(t_list: List[np.ndarray], **kwargs) -> Trajectories:
     return Trajectories.from_positions(t_concatenated, **kwargs)
 
 
-def _concatenate_idtrackerai_dicts(traj_dicts):
+def _concatenate_idtrackerai_dicts(traj_dicts, **kwargs):
     """Concatenates several idtrackerai dictionaries.
 
     The output contains:
@@ -62,7 +68,7 @@ def _concatenate_idtrackerai_dicts(traj_dicts):
     """
     traj_dict_cat = traj_dicts[0].copy()
     traj_cat = _concatenate_np(
-        [traj_dict["trajectories"] for traj_dict in traj_dicts]
+        [traj_dict["trajectories"] for traj_dict in traj_dicts], **kwargs
     )
     traj_dict_cat["trajectories"] = traj_cat
     return traj_dict_cat
@@ -104,15 +110,19 @@ def get_trajectories(idtrackerai_collection_folder):
     trajectories_paths = {k: v for k, v in trajectories_paths.items() if not v is None}
     return trajectories_paths
 
-def from_several_idtracker_files(trajectories_paths, chunks=None, **kwargs):
+def from_several_idtracker_files(trajectories_paths, chunks=None, verbose=False, **kwargs):
 
     traj_dicts = []
+    if verbose:
+        pb = tqdm.tqdm(total = len(trajectories_path))
+        
     for trajectories_path in trajectories_paths:
         traj_dict = np.load(
             trajectories_path, encoding="latin1", allow_pickle=True
         ).item()
         traj_dicts.append(traj_dict)
-    traj_dict = _concatenate_idtrackerai_dicts(traj_dicts)
+
+    traj_dict = _concatenate_idtrackerai_dicts(traj_dicts, pb=pb)
     tr = import_idtrackerai_dict(traj_dict, **kwargs)
     tr.params["path"] = trajectories_paths
     tr.params["construct_method"] = "from_several_idtracker_files"
