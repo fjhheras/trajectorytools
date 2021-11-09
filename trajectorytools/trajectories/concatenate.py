@@ -34,20 +34,20 @@ def _best_ids(xa: np.ndarray, xb: np.ndarray) -> np.ndarray:
 def _concatenate_two_np(ta: np.ndarray, tb: np.ndarray):
     # Shape of ta, tb: (individuals, frames, 2)
     best_ids = _best_ids(ta[:, -1], tb[:, 0])
-    result = np.concatenate([ta, tb[best_ids]], axis=1)
-    if not pb is None:
-        pb.update(1)
+    return np.concatenate([ta, tb[best_ids]], axis=1)    
     
-    return result
 
 def _concatenate_np(t_list: List[np.ndarray], pb=None) -> np.ndarray:
 
     if len(t_list) == 1:
-        if not pb is None:
-            pb.update(1)
-        return t_list[0]
-    return  _concatenate_two_np(t_list[0], _concatenate_np(t_list[1:], pb=pb))
-
+        result = t_list[0]
+    else:
+        result = _concatenate_two_np(t_list[0], _concatenate_np(t_list[1:], pb=pb))
+    
+    if not pb is None:
+        pb.update(1)
+    
+    return result
 
 # Obtain trajectories from concatenation
 
