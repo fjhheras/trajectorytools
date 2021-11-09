@@ -8,7 +8,6 @@ import numpy as np
 from scipy.spatial.distance import cdist
 from scipy.optimize import linear_sum_assignment
 from typing import List
-import tqdm
 
 # Utils
 
@@ -36,17 +35,11 @@ def _concatenate_two_np(ta: np.ndarray, tb: np.ndarray):
     best_ids = _best_ids(ta[-1, :], tb[0, :])
     return np.concatenate([ta, tb[:, best_ids, :]], axis=0)
 
-def _concatenate_np(t_list: List[np.ndarray], pb=None) -> np.ndarray:
+def _concatenate_np(t_list: List[np.ndarray]) -> np.ndarray:
 
     if len(t_list) == 1:
-        result = t_list[0]
-    else:
-        result = _concatenate_two_np(t_list[0], _concatenate_np(t_list[1:], pb=pb))
-
-    if not pb is None:
-        pb.update(1)
-
-    return result
+        return t_list[0]
+    return _concatenate_two_np(t_list[0], _concatenate_np(t_list[1:]))
 
 # Obtain trajectories from concatenation
 
@@ -113,8 +106,6 @@ def get_trajectories(idtrackerai_collection_folder):
 def from_several_idtracker_files(trajectories_paths, chunks=None, verbose=False, **kwargs):
 
     traj_dicts = []
-    if verbose:
-        pb = tqdm.tqdm(total = len(trajectories_paths))
 
     for trajectories_path in trajectories_paths:
         traj_dict = np.load(
@@ -122,7 +113,7 @@ def from_several_idtracker_files(trajectories_paths, chunks=None, verbose=False,
         ).item()
         traj_dicts.append(traj_dict)
 
-    traj_dict = _concatenate_idtrackerai_dicts(traj_dicts, pb=pb)
+    traj_dict = _concatenate_idtrackerai_dicts(traj_dicts)
     tr = import_idtrackerai_dict(traj_dict, **kwargs)
     tr.params["path"] = trajectories_paths
     tr.params["construct_method"] = "from_several_idtracker_files"
