@@ -83,7 +83,7 @@ def pick_trajectory_file(session_folder):
 def is_idtrackerai_session(path):
     """Check whether the passed path is an idtrackerai session
     """
-    return re.search("session_", folder) and os.path.isdir(folder)
+    return re.search("session_", path) and os.path.isdir(path)
 
 def get_trajectories(idtrackerai_collection_folder):
     """Return a list of all trajectory files available in an idtrackerai collection folder
