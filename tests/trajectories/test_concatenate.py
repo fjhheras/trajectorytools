@@ -10,9 +10,16 @@ rng = np.random.default_rng(0)
 @pytest.mark.parametrize("num_splits", [2, 7])
 @pytest.mark.parametrize("number_of_individuals", [2, 5, 9])
 def test_concatenate_np(num_splits, number_of_individuals):
+
+    # generate a dataset
     tr_np = circular_trajectories(number_of_individuals)
-    tr_split = np.array_split(tr_np, num_splits, axis=1)
+    # make num_splits splits, so the trajectory is splitted in num_splits virtual chunks
+    # each virtual chunk or split should have the same number of individuals but only 1/num_splits of the frames
+    # the frame index is on the first axis (axis=0), so we split along axis 0
+    tr_split = np.array_split(tr_np, num_splits, axis=0)
+    # concatenate the virtual splits, which should yield the same original dataset
     tr_np_concat = _concatenate_np(tr_split)
+    # assert that!
     np_testing.assert_equal(tr_np, tr_np_concat)
 
 
