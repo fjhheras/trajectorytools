@@ -1,6 +1,5 @@
 import re
 import os.path
-import warnings
 
 from trajectorytools.trajectories import import_idtrackerai_dict
 from .trajectories import Trajectories
@@ -52,7 +51,7 @@ def from_several_positions(t_list: List[np.ndarray], **kwargs) -> Trajectories:
     return Trajectories.from_positions(t_concatenated, **kwargs)
 
 
-def _concatenate_idtrackerai_dicts(traj_dicts, **kwargs):
+def _concatenate_idtrackerai_dicts(traj_dicts):
     """Concatenates several idtrackerai dictionaries.
 
     The output contains:
@@ -61,7 +60,7 @@ def _concatenate_idtrackerai_dicts(traj_dicts, **kwargs):
     """
     traj_dict_cat = traj_dicts[0].copy()
     traj_cat = _concatenate_np(
-        [traj_dict["trajectories"] for traj_dict in traj_dicts], **kwargs
+        [traj_dict["trajectories"] for traj_dict in traj_dicts]
     )
     traj_dict_cat["trajectories"] = traj_cat
     return traj_dict_cat
@@ -79,7 +78,7 @@ def pick_trajectory_file(session_folder):
     elif os.path.exists(trajectories):
         return trajectories
     else:
-        warnings.warn(f"No trajectory found in {session_folder}")
+        raise Exception(f"Session {session_folder} has no trajectories")
 
 
 def is_idtrackerai_session(path):
