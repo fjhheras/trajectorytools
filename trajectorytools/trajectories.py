@@ -357,6 +357,10 @@ class Trajectories(Trajectory):
         :param dtype: Desired dtype of trajectories.
         """
 
+        # Quickfix for Issue 39
+        if traj_dict.get("setup_points", None) is None:
+            traj_dict["setup_points"] = {}
+
         t = traj_dict["trajectories"].astype(dtype)
         traj = cls.from_positions(
             t, interpolate_nans=interpolate_nans, smooth_params=smooth_params
