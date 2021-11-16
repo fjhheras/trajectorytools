@@ -13,6 +13,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 ### Fixed
 
 - `FishTrajectories.get_bouts` no longer ignores `find_min_dict`, `find_max_dict` inputs, test updated accordingly
+- `TrajectoriesWithPoints` no longer fails if the value for "setup_points" is None (Issue #39)
 
 ## [0.3.3] - Current release
 
