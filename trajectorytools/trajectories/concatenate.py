@@ -1,6 +1,5 @@
 import re
 import os.path
-import warnings
 
 from trajectorytools.trajectories import import_idtrackerai_dict
 from .trajectories import Trajectories
@@ -79,7 +78,7 @@ def pick_trajectory_file(session_folder):
     elif os.path.exists(trajectories):
         return trajectories
     else:
-        warnings.warn(f"No trajectory found in {session_folder}")
+        raise Exception(f"Session {session_folder} has no trajectories")
 
 
 def is_idtrackerai_session(path):
