@@ -52,7 +52,7 @@ def from_several_positions(t_list: List[np.ndarray], **kwargs) -> Trajectories:
     return Trajectories.from_positions(t_concatenated, **kwargs)
 
 
-def _concatenate_idtrackerai_dicts(traj_dicts, **kwargs):
+def _concatenate_idtrackerai_dicts(traj_dicts):
     """Concatenates several idtrackerai dictionaries.
 
     The output contains:
@@ -61,7 +61,7 @@ def _concatenate_idtrackerai_dicts(traj_dicts, **kwargs):
     """
     traj_dict_cat = traj_dicts[0].copy()
     traj_cat = _concatenate_np(
-        [traj_dict["trajectories"] for traj_dict in traj_dicts], **kwargs
+        [traj_dict["trajectories"] for traj_dict in traj_dicts]
     )
     traj_dict_cat["trajectories"] = traj_cat
     return traj_dict_cat
