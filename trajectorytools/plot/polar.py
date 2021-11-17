@@ -26,7 +26,6 @@ def remove_not_finite_from_args(f_unwrapped: Callable) -> Callable:
             [np.isfinite(arg) for arg in args]
         )
         if not np.all(finite_values):
-            print(f"Keeping only finite values in {f_unwrapped} input")
             logging.info(f"Keeping only finite values in {f_unwrapped} input")
             args = [arg[finite_values] for arg in args]
         return f_unwrapped(*args, **kwargs)

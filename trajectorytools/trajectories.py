@@ -11,8 +11,8 @@ from trajectorytools.fish_bouts import find_bouts_individual
 def calculate_center_of_mass(trajectories, params):
     """calculate_center_of_mass
 
-    Produces a CenterMassTrajectory, with the position, velocity and acceleration
-    of the center of mass.
+    Produces a CenterMassTrajectory, with the position, velocity and
+    acceleration of the center of mass.
 
     :param trajectories: Dictionary of numpy arrays for position ('_s'),
     velocity ('_v') and acceleration ('_a')
@@ -237,7 +237,8 @@ class Trajectory:
     @property
     def distance_to_center(self):
         raise Exception(
-            "Deprecated: Center trajectories with origin_to and use distance_to_origin"
+            "Deprecated: "
+            "Center trajectories with origin_to and use distance_to_origin"
         )
 
     @property
@@ -356,6 +357,10 @@ class Trajectories(Trajectory):
         :param dtype: Desired dtype of trajectories.
         """
 
+        # Quickfix for Issue 39
+        if traj_dict.get("setup_points", None) is None:
+            traj_dict["setup_points"] = {}
+
         t = traj_dict["trajectories"].astype(dtype)
         traj = cls.from_positions(
             t, interpolate_nans=interpolate_nans, smooth_params=smooth_params
@@ -472,7 +477,7 @@ class Trajectories(Trajectory):
 
 
 class FishTrajectories(Trajectories):
-    def get_bouts(self, find_max_dict=None, find_min_dict=None):
+    def get_bouts(self, find_min_dict=None, find_max_dict=None):
         """Obtain bouts start and peak for all individuals
 
         :param find_max_dict: named arguments passed to scipy.signal.find_peaks
@@ -488,7 +493,11 @@ class FishTrajectories(Trajectories):
         all_bouts = []
         speed = self.speed
         for focal in range(self.number_of_individuals):
-            bouts = find_bouts_individual(speed[:, focal])
+            bouts = find_bouts_individual(
+                speed=speed[:, focal],
+                find_min_dict=find_min_dict,
+                find_max_dict=find_max_dict,
+            )
             all_bouts.append(bouts)
         return all_bouts
 

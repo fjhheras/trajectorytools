@@ -5,7 +5,7 @@ with open("README.rst", "r") as fh:
 
 setup(
     name="trajectorytools",
-    version="0.3.3-alpha",
+    version="0.3.4-alpha",
     description="A tool to study 2D trajectories",
     long_description=long_description,
     url="http://github.com/fjhheras/trajectorytools",
