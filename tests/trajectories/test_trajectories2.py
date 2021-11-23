@@ -27,7 +27,8 @@ def circular_trajectories(number_of_individuals, radius=1, center=(0, 0)):
         [
             circular_trajectory(radius=radius, center=center)
             for _ in range(number_of_individuals)
-        ], axis=1
+        ],
+        axis=1,
     )
 
 
