@@ -81,7 +81,8 @@ def _pick_trajectory_file(trajectories_folder):
     will be selected last
     """
     trajectory_files = sorted(
-        [os.path.splitext(f)[0] for f in os.listdir(trajectories_folder)]
+        [f for f in os.listdir(trajectories_folder)],
+        key=lambda x: os.path.splitext(x)[0]
     )
     return os.path.join(trajectories_folder, trajectory_files[-1])
 
