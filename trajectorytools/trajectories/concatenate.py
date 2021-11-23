@@ -34,11 +34,13 @@ def _concatenate_two_np(ta: np.ndarray, tb: np.ndarray):
     best_ids = _best_ids(ta[-1, :], tb[0, :])
     return np.concatenate([ta, tb[:, best_ids, :]], axis=0)
 
+
 def _concatenate_np(t_list: List[np.ndarray]) -> np.ndarray:
 
     if len(t_list) == 1:
         return t_list[0]
     return _concatenate_two_np(t_list[0], _concatenate_np(t_list[1:]))
+
 
 # Obtain trajectories from concatenation
 
@@ -70,8 +72,12 @@ def pick_trajectory_file(session_folder):
     """Select the best trajectories file
     available in an idtrackerai session
     """
-    trajectories = os.path.join(session_folder, "trajectories", "trajectories.npy")
-    trajectories_wo_gaps = os.path.join(session_folder, "trajectories_wo_gaps", "trajectories_wo_gaps.npy")
+    trajectories = os.path.join(
+        session_folder, "trajectories", "trajectories.npy"
+    )
+    trajectories_wo_gaps = os.path.join(
+        session_folder, "trajectories_wo_gaps", "trajectories_wo_gaps.npy"
+    )
 
     if os.path.exists(trajectories_wo_gaps):
         return trajectories_wo_gaps
@@ -82,27 +88,37 @@ def pick_trajectory_file(session_folder):
 
 
 def is_idtrackerai_session(path):
-    """Check whether the passed path is an idtrackerai session
-    """
+    """Check whether the passed path is an idtrackerai session"""
     return re.search("session_.*", path) and os.path.isdir(path)
 
+
 def get_trajectories(idtrackerai_collection_folder):
-    """Return a list of all trajectory files available in an idtrackerai collection folder
-    """
+    """Return a list of all trajectory files available in an idtrackerai collection folder"""
     file_contents = os.listdir(idtrackerai_collection_folder)
 
-    file_contents = [os.path.join(idtrackerai_collection_folder, folder) for folder in file_contents]
+    file_contents = [
+        os.path.join(idtrackerai_collection_folder, folder)
+        for folder in file_contents
+    ]
 
     idtrackerai_sessions = []
     for folder in file_contents:
         if is_idtrackerai_session(folder):
             idtrackerai_sessions.append(folder)
 
-    trajectories_paths = {os.path.basename(session): pick_trajectory_file(session) for session in idtrackerai_sessions}
-    trajectories_paths = {k: v for k, v in trajectories_paths.items() if not v is None}
+    trajectories_paths = {
+        os.path.basename(session): pick_trajectory_file(session)
+        for session in idtrackerai_sessions
+    }
+    trajectories_paths = {
+        k: v for k, v in trajectories_paths.items() if not v is None
+    }
     return trajectories_paths
 
-def from_several_idtracker_files(trajectories_paths, chunks=None, verbose=False, **kwargs):
+
+def from_several_idtracker_files(
+    trajectories_paths, chunks=None, verbose=False, **kwargs
+):
 
     traj_dicts = []
 
