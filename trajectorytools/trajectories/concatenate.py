@@ -110,7 +110,7 @@ def pick_w_wo_gaps(session_folder):
 
 def is_idtrackerai_session(path):
     """Check whether the passed path is an idtrackerai session"""
-    return re.search("session_.*", path) and os.path.isdir(path)
+    return os.path.exists(os.path.join(path, "video_object.npy"))
 
 
 def get_trajectories(idtrackerai_collection_folder):
