@@ -9,7 +9,8 @@ test_trajectories_path = (
     pathlib.Path(dir_of_data) / "test_trajectories_idtrackerai.npy"
 )
 test_trajectories_path_border = (
-    pathlib.Path(dir_of_data) / "test_trajectories_idtrackerai_with_border.npy"
+    pathlib.Path(dir_of_data)
+    / "test_trajectories_idtrackerai_with_border.npy"
 )
 test_raw_trajectories_path = (
     pathlib.Path(dir_of_data) / "test_trajectories.npy"

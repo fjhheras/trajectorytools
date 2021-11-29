@@ -112,7 +112,9 @@ def signed_angle_between_vectors(x, y):
     """A different algorithms to calculate angle between vectors,
     between -pi and pi radians
     """
-    angle = np.arctan2(y[..., 1], y[..., 0]) - np.arctan2(x[..., 1], x[..., 0])
+    angle = np.arctan2(y[..., 1], y[..., 0]) - np.arctan2(
+        x[..., 1], x[..., 0]
+    )
     return (angle + np.pi) % (2 * np.pi) - np.pi
 
 

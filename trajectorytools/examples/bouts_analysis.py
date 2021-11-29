@@ -26,7 +26,9 @@ def plot_bouts(ax, starting_frame, focal, num_frames=220):
             1,
         ]
     )
-    ax.plot(np.asarray(frame_range), tr.speed[frame_range, focal], c="b")
+    ax.plot(
+        np.asarray(frame_range), tr.speed[frame_range, focal], c="b"
+    )
     for starting_bout in starting_bouts:
         ax.axvline(x=starting_bout, c="g")
     for bout_peak in bout_peaks:
@@ -42,7 +44,10 @@ if __name__ == "__main__":
         interpolate_nans=True,
     )
 
-    find_max_dict = {"prominence": (0.2 * tr.speed.std(), None), "distance": 3}
+    find_max_dict = {
+        "prominence": (0.2 * tr.speed.std(), None),
+        "distance": 3,
+    }
     find_min_dict = {
         "prominence": (0.01 * tr.speed.std(), None),
         "distance": 3,
@@ -50,7 +55,10 @@ if __name__ == "__main__":
     all_bouts = tr.get_bouts(find_max_dict, find_min_dict)
 
     fig, ax = plt.subplots(
-        tr.number_of_individuals, figsize=(20, 20), sharex=True, sharey=True
+        tr.number_of_individuals,
+        figsize=(20, 20),
+        sharex=True,
+        sharey=True,
     )
     for i in range(tr.number_of_individuals):
         plot_bouts(ax[i], 0, i)

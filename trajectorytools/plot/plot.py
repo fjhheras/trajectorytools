@@ -41,7 +41,10 @@ class Fish:
 
         if ellipse_params is None:
             ellipse_params = {}
-        ellipse_params = {**self.default_ellipse_params, **ellipse_params}
+        ellipse_params = {
+            **self.default_ellipse_params,
+            **ellipse_params,
+        }
         ellipse_params["angle"] = np.degrees(np.arctan2(v[1], v[0]))
         self.body = Ellipse(xy=xy, **ellipse_params)
         self.velocity_line = Line2D(
@@ -92,7 +95,9 @@ class Fish:
             v[0] = 0.0
         self._v = v
         self.body.angle = np.degrees(np.arctan2(v[1], v[0]))
-        self.velocity_marker.center = self.position + v * self.vel_factor
+        self.velocity_marker.center = (
+            self.position + v * self.vel_factor
+        )
         self.velocity_line.set_data(
             [self.position[0], self.xy_vel[0]],
             [self.position[1], self.xy_vel[1]],
@@ -109,7 +114,12 @@ class Fish:
 
 class Scene:
     def __init__(
-        self, fish, ax, target=None, focal_acceleration=False, vel_factor=0.3
+        self,
+        fish,
+        ax,
+        target=None,
+        focal_acceleration=False,
+        vel_factor=0.3,
     ):
         for f in fish:
             fish_artist = Fish(
@@ -120,7 +130,9 @@ class Scene:
             )
             fish_artist.add_to_axis(ax)
         if target is not None:
-            ax.add_artist(plt.Circle((target[0], target[1]), 0.05, color="k"))
+            ax.add_artist(
+                plt.Circle((target[0], target[1]), 0.05, color="k")
+            )
         if focal_acceleration is not None:
             ax.plot(
                 [0, focal_acceleration[0]],
@@ -180,7 +192,9 @@ def get_spaced_colors(n, cmap="jet"):
 
 def subplots_row_and_colums(number_of_individuals):
     number_of_columns = int(np.sqrt(number_of_individuals))
-    number_of_rows = int(np.ceil(number_of_individuals / number_of_columns))
+    number_of_rows = int(
+        np.ceil(number_of_individuals / number_of_columns)
+    )
     return number_of_rows, number_of_columns
 
 
@@ -190,7 +204,9 @@ def no_ticks(ax):
 
 
 def with_ordering(old_func):
-    def new_func(scalar_or_vector, order_by=None, indices=None, **kwargs):
+    def new_func(
+        scalar_or_vector, order_by=None, indices=None, **kwargs
+    ):
         number_of_individuals = scalar_or_vector.shape[1]
         if order_by is None:
             if indices is None:
@@ -208,7 +224,9 @@ def with_ordering(old_func):
 
 
 @with_ordering
-def plot_individual_distribution(variable, indices, nbins=25, ticks=False):
+def plot_individual_distribution(
+    variable, indices, nbins=25, ticks=False
+):
     number_of_individuals = len(indices)
     number_of_rows, number_of_columns = subplots_row_and_colums(
         number_of_individuals
@@ -244,11 +262,15 @@ def plot_individual_distribution_of_vector(
     v_max = 0
     min_x, max_x = (
         np.percentile(vector[:, :, 0][~np.isnan(vector[:, :, 0])], 1),
-        np.percentile(vector[:, :, 0][~np.isnan(vector[:, :, 0])], 99),
+        np.percentile(
+            vector[:, :, 0][~np.isnan(vector[:, :, 0])], 99
+        ),
     )
     min_y, max_y = (
         np.percentile(vector[:, :, 1][~np.isnan(vector[:, :, 1])], 1),
-        np.percentile(vector[:, :, 1][~np.isnan(vector[:, :, 1])], 99),
+        np.percentile(
+            vector[:, :, 1][~np.isnan(vector[:, :, 1])], 99
+        ),
     )
     print("X from {} to {}".format(min_x, max_x))
     print("Y from {} to {}".format(min_y, max_y))
@@ -257,7 +279,9 @@ def plot_individual_distribution_of_vector(
     ax = []
     H = []
     for i, identity in enumerate(indices):
-        ax.append(ax_arr[int(i / number_of_columns), i % number_of_columns])
+        ax.append(
+            ax_arr[int(i / number_of_columns), i % number_of_columns]
+        )
         H.append(
             np.histogram2d(
                 vector[:, identity, 0][

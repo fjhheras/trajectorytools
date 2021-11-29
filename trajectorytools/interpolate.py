@@ -38,7 +38,10 @@ def resample(x, up, down, params={}):
     ]
     rel_len = np.linspace(0.0, 1.0, n_in, endpoint=False)
     background_in = np.stack(
-        [background_line[0] + background_line[1] * l for l in rel_len],
+        [
+            background_line[0] + background_line[1] * l
+            for l in rel_len
+        ],
         axis=axis,
     )
     x = x - background_in.astype(x.dtype)
@@ -49,7 +52,10 @@ def resample(x, up, down, params={}):
     n_out = resampled_x.shape[axis]
     rel_len = np.linspace(0.0, 1.0, n_out, endpoint=False)
     background_out = np.stack(
-        [background_line[0] + background_line[1] * l for l in rel_len],
+        [
+            background_line[0] + background_line[1] * l
+            for l in rel_len
+        ],
         axis=axis,
     )
     resampled_x += background_out.astype(x.dtype)
@@ -111,7 +117,9 @@ def find_enclosing_circle(t):
         radius = np.sqrt(mb.squared_radius())
     except ImportError:
         logging.warning("Miniball was not used for centre detection")
-        logging.warning("Please, install https://github.com/weddige/miniball")
+        logging.warning(
+            "Please, install https://github.com/weddige/miniball"
+        )
         center_x, center_y, radius = find_enclosing_circle_simple(t)
     except Exception:
         # logging.error(traceback.format_exc())
@@ -133,9 +141,15 @@ def center_trajectories_and_obtain_radius(t, forced_radius=None):
     return center_x, center_y, radius
 
 
-def center_trajectories_and_normalise(t, unit_length=None, forced_radius=None):
+def center_trajectories_and_normalise(
+    t, unit_length=None, forced_radius=None
+):
     # Soon to be changed by a simpler alternative
-    center_x, center_y, radius = center_trajectories_and_obtain_radius(
+    (
+        center_x,
+        center_y,
+        radius,
+    ) = center_trajectories_and_obtain_radius(
         t, forced_radius=forced_radius
     )
     if unit_length is None:
@@ -154,7 +168,9 @@ def smooth_several(t, sigma=2, truncate=5, derivatives=[0]):
     warnings.warn(Warning("To be deprecated"))
     # No longer recommended to use, particularly for small sigma
     return [
-        smooth(t, sigma=sigma, truncate=truncate, derivative=derivative)
+        smooth(
+            t, sigma=sigma, truncate=truncate, derivative=derivative
+        )
         for derivative in derivatives
     ]
 
@@ -164,12 +180,20 @@ def smooth(t, sigma=2, truncate=5, derivative=0, only_past=False):
         assert derivative == 0  # Not implemented for more
         kernel_radius = 2  # TODO: change dynamically with input
         kernel_size = kernel_radius * 2 + 1.0
-        kernel = np.exp(-np.arange(0.0, kernel_size) ** 2 / 2 / sigma ** 2)
+        kernel = np.exp(
+            -np.arange(0.0, kernel_size) ** 2 / 2 / sigma ** 2
+        )
         kernel /= kernel.sum()
-        smoothed = convolve1d(t, kernel, axis=0, origin=-kernel_radius)
+        smoothed = convolve1d(
+            t, kernel, axis=0, origin=-kernel_radius
+        )
     else:
         smoothed = gaussian_filter1d(
-            t, sigma=sigma, axis=0, truncate=truncate, order=derivative
+            t,
+            sigma=sigma,
+            axis=0,
+            truncate=truncate,
+            order=derivative,
         )
     return smoothed
 

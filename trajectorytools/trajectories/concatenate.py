@@ -45,7 +45,9 @@ def _concatenate_np(t_list: List[np.ndarray]) -> np.ndarray:
 # Obtain trajectories from concatenation
 
 
-def from_several_positions(t_list: List[np.ndarray], **kwargs) -> Trajectories:
+def from_several_positions(
+    t_list: List[np.ndarray], **kwargs
+) -> Trajectories:
     """Obtains a single trajectory object from a concatenation
     of several arrays representing locations
     """
@@ -82,7 +84,7 @@ def _pick_trajectory_file(trajectories_folder):
     """
     trajectory_files = sorted(
         [f for f in os.listdir(trajectories_folder)],
-        key=lambda x: os.path.splitext(x)[0]
+        key=lambda x: os.path.splitext(x)[0],
     )
     return os.path.join(trajectories_folder, trajectory_files[-1])
 
@@ -91,7 +93,9 @@ def pick_w_wo_gaps(session_folder):
     """Select the best trajectories file
     available in an idtrackerai session
     """
-    trajectories_wo_gaps = os.path.join(session_folder, "trajectories_wo_gaps")
+    trajectories_wo_gaps = os.path.join(
+        session_folder, "trajectories_wo_gaps"
+    )
     trajectories = os.path.join(session_folder, "trajectories")
 
     if os.path.exists(trajectories_wo_gaps):
@@ -99,7 +103,9 @@ def pick_w_wo_gaps(session_folder):
     elif os.path.exists(trajectories):
         return _pick_trajectory_file(trajectories)
     else:
-        raise Exception(f"Session {session_folder} has no trajectories")
+        raise Exception(
+            f"Session {session_folder} has no trajectories"
+        )
 
 
 def is_idtrackerai_session(path):
