@@ -8,7 +8,9 @@ from trajectorytools.constants import test_raw_trajectories_path
 
 if __name__ == "__main__":
     # Loading test trajectories as a numpy array of locations
-    test_trajectories = np.load(test_raw_trajectories_path, allow_pickle=True)
+    test_trajectories = np.load(
+        test_raw_trajectories_path, allow_pickle=True
+    )
 
     # We will process the numpy array, interpolate nans and smooth it.
     # To do this, we will use the Trajectories API
@@ -41,7 +43,9 @@ if __name__ == "__main__":
     mapper = mpl.cm.ScalarMappable(norm=colornorm, cmap=mpl.cm.RdBu)
     color = mapper.to_rgba(in_border)
 
-    anim1 = ttanimation.scatter_vectors(traj.s, velocities=traj.v, k=0.3)
+    anim1 = ttanimation.scatter_vectors(
+        traj.s, velocities=traj.v, k=0.3
+    )
     anim2 = ttanimation.scatter_ellipses_color(traj.s, traj.v, color)
     anim = anim1 + anim2
 

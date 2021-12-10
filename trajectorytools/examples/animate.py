@@ -8,7 +8,9 @@ import trajectorytools.animation as ttanimation
 from trajectorytools.constants import dir_of_data
 
 if __name__ == "__main__":
-    test_trajectories_file = os.path.join(dir_of_data, "test_trajectories.npy")
+    test_trajectories_file = os.path.join(
+        dir_of_data, "test_trajectories.npy"
+    )
     t = np.load(test_trajectories_file)
     tt.center_trajectories_and_normalise(t)
     tt.interpolate_nans(t)

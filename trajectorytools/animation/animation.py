@@ -16,7 +16,11 @@ class AnimatedScatter(object):
         self.plotters = plotters
 
     def prepare(
-        self, interval=20, limits=[-1, 1, -1, 1], axis_off=True, fig_ax=None
+        self,
+        interval=20,
+        limits=[-1, 1, -1, 1],
+        axis_off=True,
+        fig_ax=None,
     ):
         frames = self.datasets[0].shape[0] - 1
         self.scatters = [
@@ -70,7 +74,8 @@ class AnimatedScatter(object):
 
     def __add__(self, other):
         return AnimatedScatter(
-            self.datasets + other.datasets, self.plotters + other.plotters
+            self.datasets + other.datasets,
+            self.plotters + other.plotters,
         )
 
 

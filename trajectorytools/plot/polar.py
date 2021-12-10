@@ -6,7 +6,11 @@ import numpy as np
 import scipy
 import matplotlib as mpl
 
-__all__ = ["binned_statistic_polar", "polar_histogram", "plot_polar_histogram"]
+__all__ = [
+    "binned_statistic_polar",
+    "polar_histogram",
+    "plot_polar_histogram",
+]
 
 
 def remove_not_finite_from_args(f_unwrapped: Callable) -> Callable:
@@ -19,14 +23,18 @@ def remove_not_finite_from_args(f_unwrapped: Callable) -> Callable:
 
             # Maybe move this to functions?
             if arg.ndim != 1 or len(arg) != len(args[0]):
-                raise ValueError("Input arrays must be 1d with same length")
+                raise ValueError(
+                    "Input arrays must be 1d with same length"
+                )
 
         # Remove nans, if any
         finite_values = np.logical_and.reduce(
             [np.isfinite(arg) for arg in args]
         )
         if not np.all(finite_values):
-            logging.info(f"Keeping only finite values in {f_unwrapped} input")
+            logging.info(
+                f"Keeping only finite values in {f_unwrapped} input"
+            )
             args = [arg[finite_values] for arg in args]
         return f_unwrapped(*args, **kwargs)
 
@@ -72,7 +80,10 @@ def binned_statistic_polar(
         range=[range_r, [-np.pi, np.pi]],
     )
     return BinnedStatisticPolarResult(
-        results.statistic, results.x_edge, results.y_edge, results.binnumber
+        results.statistic,
+        results.x_edge,
+        results.y_edge,
+        results.binnumber,
     )
 
 
@@ -111,7 +122,9 @@ def polar_histogram(
     if density:
         # Calculating bin area
         n_sectors = len(theta_edges) - 1
-        area = np.pi * (r_edges[1:] ** 2 - r_edges[:-1] ** 2) / n_sectors
+        area = (
+            np.pi * (r_edges[1:] ** 2 - r_edges[:-1] ** 2) / n_sectors
+        )
         # normalising to obtain density
         H = H / num_samples / area[:, np.newaxis]
 
@@ -192,7 +205,9 @@ def plot_polar_histogram(
 
     # Plot histogram/map
     fig = ax.get_figure()
-    im = ax.pcolormesh(theta, r, values, cmap=cmap, vmin=vmin, vmax=vmax)
+    im = ax.pcolormesh(
+        theta, r, values, cmap=cmap, vmin=vmin, vmax=vmax
+    )
     fig.colorbar(im, ax=ax, cmap=cmap)
 
     if angle_convention == "clock":

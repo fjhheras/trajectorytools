@@ -19,7 +19,8 @@ def calculate_center_of_mass(trajectories, params):
     :param params: Dictionary of parameters
     """
     center_of_mass = {
-        k: np.mean(trajectories[k], axis=1) for k in Trajectory.keys_to_copy
+        k: np.mean(trajectories[k], axis=1)
+        for k in Trajectory.keys_to_copy
     }
     return CenterMassTrajectory(center_of_mass, params)
 
@@ -30,7 +31,9 @@ def estimate_center_and_radius(locations):
     :param locations: Numpy array of locations. It can be any shape, but last
     dim must be 2 (x, y)
     """
-    center_x, center_y, estimated_radius = tt.find_enclosing_circle(locations)
+    center_x, center_y, estimated_radius = tt.find_enclosing_circle(
+        locations
+    )
     center_a = np.array([center_x, center_y])
     return center_a, estimated_radius
 
@@ -44,7 +47,10 @@ def _radius_and_center_from_traj_dict(locations, traj_dict):
     :param locations: Numpy array of locations. Last dim must be (x, y)
     :param traj_dict:
     """
-    if "setup_points" in traj_dict and "border" in traj_dict["setup_points"]:
+    if (
+        "setup_points" in traj_dict
+        and "border" in traj_dict["setup_points"]
+    ):
         center_a, radius = estimate_center_and_radius(
             traj_dict["setup_points"]["border"]
         )
@@ -54,9 +60,10 @@ def _radius_and_center_from_traj_dict(locations, traj_dict):
 
         # Find center and radius. Then override if necessary
         if arena_radius is None or arena_center is None:
-            estimated_center, estimated_radius = estimate_center_and_radius(
-                locations
-            )
+            (
+                estimated_center,
+                estimated_radius,
+            ) = estimate_center_and_radius(locations)
 
         if arena_radius is None:
             radius = estimated_radius
@@ -105,18 +112,26 @@ def import_idtrackerai_dict(
         cls = Trajectories
 
     traj = cls.from_positions(
-        t, interpolate_nans=interpolate_nans, smooth_params=smooth_params
+        t,
+        interpolate_nans=interpolate_nans,
+        smooth_params=smooth_params,
     )
 
-    radius, center_ = _radius_and_center_from_traj_dict(traj._s, traj_dict)
-    traj.params.update(dict(radius=radius, radius_px=radius, _center=center_))
+    radius, center_ = _radius_and_center_from_traj_dict(
+        traj._s, traj_dict
+    )
+    traj.params.update(
+        dict(radius=radius, radius_px=radius, _center=center_)
+    )
     if center:
         traj.origin_to(traj.params["_center"])
 
     if "setup_points" in traj_dict:
         traj._points = traj_dict["setup_points"]
 
-    traj.params["frame_rate"] = traj_dict.get("frames_per_second", None)
+    traj.params["frame_rate"] = traj_dict.get(
+        "frames_per_second", None
+    )
     traj.params["body_length_px"] = traj_dict.get("body_length", None)
     traj.params["construct_method"] = "from_idtracker_"
     return traj
@@ -145,7 +160,10 @@ class Trajectory:
         ]
 
     def point_to_px(self, point):
-        return point * self.params["length_unit"] - self.params["displacement"]
+        return (
+            point * self.params["length_unit"]
+            - self.params["displacement"]
+        )
 
     def vector_from_px(self, vector):
         return vector / self.params["length_unit"]
@@ -167,7 +185,9 @@ class Trajectory:
 
     @property
     def a(self):
-        return self.vector_from_px(self._a) * (self.params["time_unit"] ** 2)
+        return self.vector_from_px(self._a) * (
+            self.params["time_unit"] ** 2
+        )
 
     @property
     def speed(self):
@@ -209,9 +229,13 @@ class Trajectory:
         frame of reference and scale (usually pixels).
         """
         if not in_px:
-            center_a, estimated_radius = estimate_center_and_radius(self.s)
+            center_a, estimated_radius = estimate_center_and_radius(
+                self.s
+            )
         else:
-            center_a, estimated_radius = estimate_center_and_radius(self._s)
+            center_a, estimated_radius = estimate_center_and_radius(
+                self._s
+            )
         return center_a, estimated_radius
 
     # Properties with side-effects
@@ -251,12 +275,20 @@ class Trajectory:
             raise Exception("Frame rate not in trajectories")
         old_frame_rate = self.params["frame_rate"]
         fraction = new_frame_rate / old_frame_rate
-        self._s = tt.resample(self._s, new_frame_rate, old_frame_rate, kwargs)
-        self._v = tt.resample(self._v, new_frame_rate, old_frame_rate, kwargs)
-        self._a = tt.resample(self._a, new_frame_rate, old_frame_rate, kwargs)
+        self._s = tt.resample(
+            self._s, new_frame_rate, old_frame_rate, kwargs
+        )
+        self._v = tt.resample(
+            self._v, new_frame_rate, old_frame_rate, kwargs
+        )
+        self._a = tt.resample(
+            self._a, new_frame_rate, old_frame_rate, kwargs
+        )
         if self.own_params:
             self.params["frame_rate"] = new_frame_rate
-            self.params["time_unit"] = self.params["time_unit"] * fraction
+            self.params["time_unit"] = (
+                self.params["time_unit"] * fraction
+            )
         return self
 
     # methods and properties wrt points
@@ -267,7 +299,9 @@ class Trajectory:
         return tt.dot(tt.normalise(point - self.s), vector)
 
     def orientation_towards(self, point):
-        warnings.warn(Warning("Deprecated. Use angle_towards instead"))
+        warnings.warn(
+            Warning("Deprecated. Use angle_towards instead")
+        )
         return self.angle_towards(point)
 
     def angle_towards(self, point):
@@ -309,7 +343,9 @@ class Trajectories(Trajectory):
         )
 
     def _dict_to_save(self):
-        traj_data = {key: self.__dict__[key] for key in self.keys_to_copy}
+        traj_data = {
+            key: self.__dict__[key] for key in self.keys_to_copy
+        }
         params = self.params
         return {
             "traj_data": traj_data,
@@ -325,14 +361,18 @@ class Trajectories(Trajectory):
         loaded_dict = np.load(filename, allow_pickle=True).item()
         return cls(loaded_dict["traj_data"], loaded_dict["params"])
 
-    def export_trajectories_to_csv(self, csvfilename, delimiter=",", **kwargs):
+    def export_trajectories_to_csv(
+        self, csvfilename, delimiter=",", **kwargs
+    ):
         """Export trajectories to a csv plain text file.
 
         :param csvfilename: Name of the csv file to be created
         :param delimiter: Delimiter (default is ",")
         :param kwargs: Other keyword arguments for numpy.savetxt
         """
-        data_to_save = np.concatenate([self.s, self.v, self.a], axis=-1)
+        data_to_save = np.concatenate(
+            [self.s, self.v, self.a], axis=-1
+        )
         data_to_save = data_to_save.reshape(self.number_of_frames, -1)
         data_header = ["x", "y", "vx", "vy", "ax", "ay"]
         individuals = range(self.number_of_individuals)
@@ -372,7 +412,9 @@ class Trajectories(Trajectory):
 
     @classmethod
     def from_idtracker(cls, trajectories_path, **kwargs):
-        warnings.warn(Warning("Deprecated. Use from_idtrackerai instead"))
+        warnings.warn(
+            Warning("Deprecated. Use from_idtrackerai instead")
+        )
         return cls.from_idtrackerai(trajectories_path, **kwargs)
 
     @classmethod
@@ -381,10 +423,14 @@ class Trajectories(Trajectory):
 
         :param trajectories_path: idtracker.ai generated file
         """
-        return import_idtrackerai_file(trajectories_path, **kwargs, cls=cls)
+        return import_idtrackerai_file(
+            trajectories_path, **kwargs, cls=cls
+        )
 
     @classmethod
-    def from_positions(cls, t, interpolate_nans=True, smooth_params=None):
+    def from_positions(
+        cls, t, interpolate_nans=True, smooth_params=None
+    ):
         """Trajectory from positions
 
         :param t: Positions nd.array.

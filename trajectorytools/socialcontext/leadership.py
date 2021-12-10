@@ -25,7 +25,9 @@ def restrict_with_delay(data, indices, individual=None, delay=0):
         restricted_indices = indices[:-delay]
     else:
         raise NotImplementedError
-    return restrict(delayed_data, restricted_indices, individual=individual)
+    return restrict(
+        delayed_data, restricted_indices, individual=individual
+    )
 
 
 def sweep_delays(data, indices, max_delay, individual=None):
@@ -49,7 +51,12 @@ def sweep_delays(data, indices, max_delay, individual=None):
         )
     else:
         output = np.empty(
-            [max_delay, total_time_steps, num_restricted, coordinates],
+            [
+                max_delay,
+                total_time_steps,
+                num_restricted,
+                coordinates,
+            ],
             dtype=data.dtype,
         )
     for delay in range(max_delay):
@@ -60,7 +67,9 @@ def sweep_delays(data, indices, max_delay, individual=None):
     return output
 
 
-def sweep_delayed_orientation_with_neighbours(orientation, indices, max_delay):
+def sweep_delayed_orientation_with_neighbours(
+    orientation, indices, max_delay
+):
     # Orientation: time x num_individuals x 2
     # Indices: assumed to be exclusive of own
     # i.e. if they come from ttsocial.neighbour_indices
@@ -98,7 +107,8 @@ def dot_product_per_frame_with_delays(
     max_delay = sweeped_delays.shape[0]
     if inplace is None:
         inplace = np.zeros(
-            [max_delay, num_individuals, num_individuals], dtype=data.dtype
+            [max_delay, num_individuals, num_individuals],
+            dtype=data.dtype,
         )
     for i in range(num_individuals):
         sweeped_delays_r = sweeped_delays[:, frame, i, :]
@@ -180,14 +190,16 @@ def sliding_average_dot_product_with_delays2(
     ]
     output = []
     for i in range(end_frame - start_frame):
-        sum_fleshout = sum(fleshout_list[i : (i + num_frames_to_average)])
+        sum_fleshout = sum(
+            fleshout_list[i : (i + num_frames_to_average)]
+        )
         sum_connections = sum(
             connection_matrix_list[i : (i + num_frames_to_average)]
         )
         for t in range(max_delay):
-            sum_fleshout[t][np.where(sum_connections > 0)] /= sum_connections[
+            sum_fleshout[t][
                 np.where(sum_connections > 0)
-            ]
+            ] /= sum_connections[np.where(sum_connections > 0)]
         output.append(sum_fleshout)
     return output
 
@@ -195,7 +207,9 @@ def sliding_average_dot_product_with_delays2(
 def give_connection_matrix(indices_in_frame, inplace=None):
     num_individuals = indices_in_frame.shape[0]
     if inplace is None:
-        connection_matrix = np.zeros([num_individuals, num_individuals])
+        connection_matrix = np.zeros(
+            [num_individuals, num_individuals]
+        )
     else:
         connection_matrix = inplace
     for i in range(num_individuals):
@@ -215,7 +229,8 @@ def dot_product_with_delays_slow(
     max_delay = sweeped_delays.shape[0]
     if inplace is None:
         inplace = np.zeros(
-            [max_delay, num_individuals, num_individuals], dtype=data.dtype
+            [max_delay, num_individuals, num_individuals],
+            dtype=data.dtype,
         )
     for i in range(num_individuals):
         for ij, j in enumerate(indices[frame, i]):

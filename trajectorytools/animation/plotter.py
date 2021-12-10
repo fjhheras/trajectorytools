@@ -27,7 +27,9 @@ def ellipse(color="c", size=[0.04, 0.02]):
         for i, patch in enumerate(patches):
             patch.center = xy[i, :2]
             patch.angle = np.degrees(np.arctan2(xy[i, 3], xy[i, 2]))
-            if len(xy[i, :]) > 4:  # If there is color information, use it
+            if (
+                len(xy[i, :]) > 4
+            ):  # If there is color information, use it
                 patch.set_facecolor(xy[i, 4:])
                 patch.set_edgecolor(xy[i, 4:])
             patch.stale = True
@@ -81,7 +83,9 @@ def vectors(color="b", k=1):
 def circle(color="k", radius=1):
     def plot_function(xy, ax):
         patches = tuple(
-            mpl.patches.Circle((x[0], x[1]), radius, fill=False, animated=True)
+            mpl.patches.Circle(
+                (x[0], x[1]), radius, fill=False, animated=True
+            )
             for x in xy
         )
         for patch in patches:
@@ -102,7 +106,9 @@ def labels(color="k", fontsize=15, labels=None, colors=None):
             label_list = labels[0].tolist()
         else:
             label_list = labels.tolist()
-        patches = tuple(ax.text(x[0], x[1], l) for l, x in zip(label_list, xy))
+        patches = tuple(
+            ax.text(x[0], x[1], l) for l, x in zip(label_list, xy)
+        )
         if colors is not None:
             if isinstance(colors[0], list):
                 color_list = colors[0]

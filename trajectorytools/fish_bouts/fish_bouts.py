@@ -66,8 +66,12 @@ def find_bouts_individual(
             "In future, specify only one such argument.",
             DeprecationWarning,
         )
-        min_frames_ = scipy.signal.find_peaks(-speed, **find_min_dict)[0]
-        max_frames_ = scipy.signal.find_peaks(speed, **find_max_dict)[0]
+        min_frames_ = scipy.signal.find_peaks(
+            -speed, **find_min_dict
+        )[0]
+        max_frames_ = scipy.signal.find_peaks(speed, **find_max_dict)[
+            0
+        ]
 
     # Filter out NaNs
     min_frames = [f for f in min_frames_ if not np.isnan(speed[f])]
@@ -76,7 +80,9 @@ def find_bouts_individual(
     # Obtain couples of consecutive minima and maxima
     frames = min_frames + max_frames
     frameismax = [False] * len(min_frames) + [True] * len(max_frames)
-    ordered_frames, ordered_ismax = zip(*sorted(zip(frames, frameismax)))
+    ordered_frames, ordered_ismax = zip(
+        *sorted(zip(frames, frameismax))
+    )
     bouts = [
         ordered_frames[i : i + 2]
         for i in range(len(ordered_frames) - 1)
@@ -85,8 +91,12 @@ def find_bouts_individual(
 
     # Ordering, and adding next_bout
     starting_bouts, bout_peaks = zip(*bouts)
-    next_bout_start = list(starting_bouts[1:]) + [number_of_frames - 1]
-    return np.array(list(zip(starting_bouts, bout_peaks, next_bout_start)))
+    next_bout_start = list(starting_bouts[1:]) + [
+        number_of_frames - 1
+    ]
+    return np.array(
+        list(zip(starting_bouts, bout_peaks, next_bout_start))
+    )
 
 
 def bout_statistics():
