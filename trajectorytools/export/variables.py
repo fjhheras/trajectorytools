@@ -138,6 +138,7 @@ INDIVIDUAL_VARIALBES = [
     {"name": "focal_fwd_accel", "func": focal_fwd_accel},
 ]
 
+
 # Individual-neighbour varialbes (frames, num_indiv, num_indiv)
 def _relative_positions_rotated(tr):
     s_rotated = np.empty(
@@ -194,6 +195,7 @@ INDIVIDUAL_NEIGHBOUR_VARIABLES = [
     {"name": "nb_cos_angle", "func": nb_cos_angle},
     {"name": "nb_distance", "func": nb_distance},
 ]
+
 
 # GROUP VARIABLES (num_frames,)
 def mean_distance_to_center_of_group(tr):

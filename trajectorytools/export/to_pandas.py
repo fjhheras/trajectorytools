@@ -100,7 +100,7 @@ def tr_variable_to_df(tr, var):
         var_df = generate_var_df(x, y[:, np.newaxis], x_name, y_name)
     else:
         print(f"With var {var}")
-        print(f"With obj {tr}")
+        print(f"With tr {tr}")
         raise Exception(
             f"Number of dimensions of y array is {y.ndim} not valid"
         )
