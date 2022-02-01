@@ -6,7 +6,7 @@ from typing import Dict, List, Optional
 import numpy as np
 import pandas as pd
 
-from variables import get_variable
+from .variables import get_variable
 
 
 def melt_df(df: pd.DataFrame, value_name: str, var_name: str):
@@ -38,8 +38,9 @@ def generate_var_df(
 
 
 def get_focal_nb_ids(key: str, identities: List):
-    focal_neighbour_ids_conds = list(itertools.product(identities, identities))
-    focals, neighbours = list(zip(*focal_neighbour_ids_conds))
+    focals, neighbours = list(
+        zip(*[(id_, id_nb) for id_ in identities for id_nb in identities])
+    )
     dict_vars = {
         key: focals,
         f"{key}_nb": neighbours,
@@ -47,36 +48,7 @@ def get_focal_nb_ids(key: str, identities: List):
     return dict_vars
 
 
-def is_focal_nb_variable(tr, var_array):
-    if len(var_array.shape) == 3:
-        frames_cond = len(var_array) == tr.number_of_frames
-        num_indiv_cond = var_array.shape[1] == tr.number_of_individuals
-        focal_nb_cond = var_array.shape[1] == var_array.shape[2]
-        return frames_cond and num_indiv_cond and focal_nb_cond
-    else:
-        return False
-
-
-def is_individual_variable(tr, var_array):
-    if len(var_array.shape) == 2:
-        frames_cond = len(var_array) == tr.number_of_frames
-        num_indiv_cond = var_array.shape[1] == tr.number_of_individuals
-        return frames_cond and num_indiv_cond
-    else:
-        return False
-
-
-def is_group_variable(tr, var_array):
-    if len(var_array.shape) == 1:
-        frames_cond = len(var_array) == tr.number_of_frames
-        return frames_cond
-    else:
-        return False
-
-
 def tr_variable_to_df(tr, var):
-    identities = list(range(tr.number_of_individuals))
-
     # Get variables
     try:
         y = get_variable(var, tr)
@@ -84,23 +56,24 @@ def tr_variable_to_df(tr, var):
         print(f"Cannot extract {var} from {tr}")
         return None
 
-    print(y.shape)
     x = np.arange(len(tr))
     x_name = "frame"
     y_name = var["name"]
 
-    if is_focal_nb_variable(tr, y):  # (frames, num_indiv, num_indiv)
+    if y.shape == (
+        tr.number_of_frames,
+        tr.number_of_individuals,
+        tr.number_of_individuals,
+    ):
         y = np.reshape(y, (y.shape[0], -1))
-        identity_dict = get_focal_nb_ids("identity", identities)
+        identity_dict = get_focal_nb_ids("identity", tr.identity_labels)
         var_df = generate_var_df(x, y, x_name, y_name, identity_dict)
-    elif is_individual_variable(tr, y):  # (num_frames, num_indiv)
-        identity_dict = {"identity": identities}
+    elif y.shape == (tr.number_of_frames, tr.number_of_individuals):
+        identity_dict = {"identity": tr.identity_labels}
         var_df = generate_var_df(x, y, x_name, y_name, identity_dict)
-    elif is_group_variable(tr, y):  # (num_frames,)
+    elif y.shape == (tr.number_of_frames,):
         var_df = generate_var_df(x, y[:, np.newaxis], x_name, y_name)
     else:
-        print(f"With var {var}")
-        print(f"With tr {tr}")
         raise Exception(
             f"Number of dimensions of y array is {y.ndim} not valid"
         )
@@ -109,8 +82,7 @@ def tr_variable_to_df(tr, var):
 
 
 def tr_variables_to_df(tr, variables: List):
-    assert len(variables) > 0
-    assert tr is not None
+    assert variables
 
     vars_dfs = []
     for variable in variables:
@@ -118,7 +90,6 @@ def tr_variables_to_df(tr, variables: List):
         if vars_df is not None:
             vars_dfs.append(vars_df)
 
-    print([len(df) for df in vars_dfs])
     assert all([len(df) == len(vars_dfs[0]) for df in vars_dfs])
 
     all_cols = [c for df in vars_dfs for c in df.columns]
@@ -164,4 +135,4 @@ if __name__ == "__main__":
     )
     indiv_df = tr_variables_to_df(tr, INDIVIDUAL_VARIALBES)
     indiv_nb_df = tr_variables_to_df(tr, INDIVIDUAL_NEIGHBOUR_VARIABLES)
-    indiv_nb_df = tr_variables_to_df(tr, GROUP_VARIABLES)
+    group_df = tr_variables_to_df(tr, GROUP_VARIABLES)

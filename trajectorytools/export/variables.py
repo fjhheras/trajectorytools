@@ -4,9 +4,7 @@ import trajectorytools.socialcontext as ttsocial
 
 
 def get_variable(variable, tr):
-    print(f"Using function {variable['func']}")
     kwargs = variable.get("kwargs", {})
-    print(f"With kwargs {kwargs}")
     return variable["func"](tr, **kwargs)
 
 
@@ -67,6 +65,10 @@ def tg_acceleration(tr):
     return tr.tg_acceleration
 
 
+def abs_tg_acceleration(tr):
+    return np.abs(tr.tg_acceleration)
+
+
 def distance_to_center_of_group(tr):
     distance_to_group_center = tt.norm(
         tr.center_of_mass.s[:, np.newaxis, :] - tr.s
@@ -76,7 +78,7 @@ def distance_to_center_of_group(tr):
 
 def local_polarization(tr, number_of_neighbours=4):
     indices = ttsocial.neighbour_indices(tr.s, number_of_neighbours)
-    en = ttsocial.restrict(tr.e, indices)[..., 1:, :]
+    en = ttsocial.restrict(tr.e, indices)
     local_polarization = tt.norm(tt.collective.polarization(en))
     return local_polarization
 
@@ -124,6 +126,7 @@ INDIVIDUAL_VARIALBES = [
     {"name": "normal_acceleration", "func": normal_acceleration},
     {"name": "abs_normal_acceleration", "func": abs_normal_acceleration},
     {"name": "tg_acceleration", "func": tg_acceleration},
+    {"name": "abs_tg_acceleration", "func": abs_tg_acceleration},
     {
         "name": "distance_to_center_of_group",
         "func": distance_to_center_of_group,
